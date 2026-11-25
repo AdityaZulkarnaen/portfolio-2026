@@ -96,7 +96,6 @@ export function Header({ shortName, timezone, location }: Props) {
           })}
         </ul>
         <span className="slate inline-flex items-center gap-2 border-l border-line pr-3 pl-3.5 text-bone-400 tabular-nums" aria-hidden="true">
-          <span className="size-1.5 animate-pulse-ring rounded-full bg-tide-400 motion-off:animate-none" />
           YK <LocalTime timeZone={timezone} />
         </span>
       </nav>

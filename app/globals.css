@@ -30,7 +30,6 @@
   /* Loops (all stopped by the `motion-off` variant) */
   --animate-grain: grain 1s steps(6) infinite;
   --animate-ken-burns: ken-burns 8s linear both;
-  --animate-pulse-ring: pulse-ring 2.4s var(--ease-fluid) infinite;
   --animate-spin-slow: spin 6s linear infinite;
   --animate-orbit: spin 160s linear infinite;
   --animate-fade-up: fade-up 0.8s var(--ease-out-expo) both;
@@ -48,10 +47,6 @@
   @keyframes ken-burns {
     from { transform: scale(1.08) translate3d(0, 0, 0); }
     to { transform: scale(1.2) translate3d(-1.6%, -2.4%, 0); }
-  }
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 rgb(63 201 190 / 0.55); }
-    70%, 100% { box-shadow: 0 0 0 8px rgb(63 201 190 / 0); }
   }
   @keyframes fade-up {
     from { transform: translateY(6px); opacity: 0; }

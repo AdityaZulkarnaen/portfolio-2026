@@ -35,10 +35,7 @@ export function Experience({ items }: { items: ExperienceItem[] }) {
               <span className="absolute top-1/2 left-0 size-[5px] -translate-1/2 rounded-full bg-bone-100" />
             </div>
             <div className="slate grid content-start gap-1.5 text-bone-400 tabular-nums md:col-span-3">
-              <span className="flex items-center gap-2 text-bone-100">
-                {item.endDate === null ? (
-                  <span aria-hidden="true" className="size-1.5 animate-pulse-ring rounded-full bg-tide-400 motion-off:animate-none" />
-                ) : null}
+              <span className="text-bone-100">
                 {timecodeRange(item.startDate, item.endDate)}
               </span>
               <span>{String(i + 1).padStart(2, "0")} / {String(sorted.length).padStart(2, "0")}</span>

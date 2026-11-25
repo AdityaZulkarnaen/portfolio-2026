@@ -100,11 +100,11 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
   );
 }
 
-/** Full-colour logo tile + name, held in grayscale until hover or focus. Case-study clients link inward. */
+/** Full-colour logo tile + name; hover lifts the tile and brightens the name. Case-study clients link inward. */
 function ClientLogo({ client }: { client: Client }) {
   const body = (
     <>
-      <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ink-800 grayscale motion-safe:transition-[filter] motion-safe:duration-(--dur-base) group-hover/logo:grayscale-0 group-focus-visible/logo:grayscale-0">
+      <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ink-800 motion-safe:transition-transform motion-safe:duration-(--dur-base) motion-safe:ease-fluid group-hover/logo:-translate-y-0.5 group-focus-visible/logo:-translate-y-0.5">
         {client.logo ? (
           <Image
             src={client.logo.src}
@@ -121,13 +121,15 @@ function ClientLogo({ client }: { client: Client }) {
         )}
       </span>
       <span className="grid min-w-0 gap-1">
-        <span className="text-[0.95rem] leading-tight font-medium tracking-[-0.01em] text-balance text-bone-100">{client.name}</span>
+        <span className="text-[0.95rem] leading-tight font-medium tracking-[-0.01em] text-balance text-bone-100/85 transition-colors duration-(--dur-fast) group-hover/logo:text-bone-100 group-focus-visible/logo:text-bone-100">
+          {client.name}
+        </span>
         {client.kind ? <span className="slate text-bone-400">{client.kind}</span> : null}
       </span>
     </>
   );
   const cls =
-    "group/logo flex h-full w-full flex-col items-center justify-center gap-3 px-3 py-5 text-center opacity-70 outline-offset-[-6px] motion-safe:transition-opacity motion-safe:duration-(--dur-base) hover:opacity-100 focus-visible:opacity-100 md:flex-row md:justify-start md:gap-3.5 md:px-5 md:text-left";
+    "group/logo flex h-full w-full flex-col items-center justify-center gap-3 px-3 py-5 text-center outline-offset-[-6px] md:flex-row md:justify-start md:gap-3.5 md:px-5 md:text-left";
 
   if (client.project) {
     return (
@@ -156,8 +158,7 @@ function CtaCard({ availability, wide }: { availability: string | undefined; wid
       )}
     >
       <div className={cn("grid gap-8", wide && "md:order-2 md:justify-items-end")}>
-        <p className="slate inline-flex items-center gap-2.5 text-bone-400">
-          <span className="size-1.5 animate-pulse-ring rounded-full bg-tide-400 motion-off:animate-none" aria-hidden="true" />
+        <p className="slate text-bone-400">
           {availability || "Available for work"}
         </p>
         <Sheets className={cn("w-full max-w-60 text-bone-100", wide && "md:max-w-52")} />

@@ -111,8 +111,7 @@ export function About({ profile }: { profile: Profile | null }) {
               </span>
             </div>
             <div className="mt-[clamp(1.75rem,3vw,2.5rem)] flex flex-wrap items-center justify-between gap-x-8 gap-y-6">
-              <p className="slate inline-flex items-center gap-2.5 text-bone-100">
-                <span className="size-1.5 animate-pulse-ring rounded-full bg-tide-400 motion-off:animate-none" aria-hidden="true" />
+              <p className="slate text-bone-100">
                 {profile.availability}
               </p>
               {profile.resumePath ? (

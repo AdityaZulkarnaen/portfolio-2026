@@ -30,7 +30,7 @@ export function SectionHead({ id, title, lede, children, size = "md", variant = 
     >
       {booth && kicker ? (
         <p className="slate flex items-center gap-2.5 text-bone-400 md:col-span-12">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-(--tint,var(--color-ember-500))" />
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-ember-500" />
           {kicker}
         </p>
       ) : null}
