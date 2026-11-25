@@ -13,23 +13,29 @@ import { getPublicClient } from "@/lib/supabase/public";
 
 import {
   fallbackAchievements,
+  fallbackClients,
   fallbackExperiences,
   fallbackProfile,
   fallbackProjects,
   fallbackSkills,
+  fallbackTestimonials,
 } from "./fallback";
 import {
   mapAchievement,
+  mapClient,
   mapExperience,
   mapProfile,
   mapProject,
   mapReel,
   mapSkill,
+  mapTestimonial,
+  type ClientRowWithLogo,
   type ProfileRowWithMedia,
   type ProjectRowWithRelations,
   type ReelRowWithChapters,
+  type TestimonialRowWithRelations,
 } from "./mappers";
-import type { Achievement, Experience, Profile, Project, Reel, Skill } from "./types";
+import type { Achievement, Client, Experience, Profile, Project, Reel, Skill, Testimonial } from "./types";
 
 const PROJECT_SELECT = `
   *,
@@ -202,4 +208,42 @@ export async function getActiveReel(): Promise<Reel | null> {
     .overrideTypes<ReelRowWithChapters | null, { merge: false }>();
   if (error) fail("active reel", error);
   return data ? mapReel(data) : null;
+}
+
+export async function getClients(): Promise<Client[]> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("content", "clients");
+
+  const supabase = getPublicClient();
+  if (!supabase) return fallbackClients();
+
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*, logo:media!clients_logo_media_id_fkey(*)")
+    .eq("published", true)
+    .order("position", { ascending: true })
+    .overrideTypes<ClientRowWithLogo[], { merge: false }>();
+  if (error) fail("clients", error);
+  return (data ?? []).map(mapClient);
+}
+
+export async function getTestimonials(): Promise<Testimonial[]> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("content", "testimonials");
+
+  const supabase = getPublicClient();
+  if (!supabase) return fallbackTestimonials();
+
+  const { data, error } = await supabase
+    .from("testimonials")
+    .select(
+      "*, avatar:media!testimonials_avatar_media_id_fkey(*), project:projects!testimonials_project_id_fkey(slug, name, published)",
+    )
+    .eq("published", true)
+    .order("position", { ascending: true })
+    .overrideTypes<TestimonialRowWithRelations[], { merge: false }>();
+  if (error) fail("testimonials", error);
+  return (data ?? []).map(mapTestimonial);
 }

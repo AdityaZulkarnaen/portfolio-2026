@@ -18,14 +18,25 @@ export function RouteSignal() {
 
     const hash = window.location.hash;
     let frame = 0;
+    const jump = () => {
+      try {
+        getLenis()?.resize();
+        if (document.querySelector(hash)) scrollToTarget(hash, { immediate: true });
+      } catch {
+        /* invalid selector in hash */
+      }
+    };
+    const intents = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+    const stopFollowing = () => {
+      ScrollTrigger.removeEventListener("refresh", jump);
+      for (const type of intents) window.removeEventListener(type, stopFollowing);
+    };
+    let followTimer = 0;
     if (hash.length > 1) {
-      frame = requestAnimationFrame(() => {
-        try {
-          if (document.querySelector(hash)) scrollToTarget(hash, { immediate: true });
-        } catch {
-          /* invalid selector in hash */
-        }
-      });
+      frame = requestAnimationFrame(jump);
+      ScrollTrigger.addEventListener("refresh", jump);
+      for (const type of intents) window.addEventListener(type, stopFollowing, { passive: true });
+      followTimer = window.setTimeout(stopFollowing, 4000);
     }
     const refresh = requestAnimationFrame(() => {
       ScrollTrigger.refresh();
@@ -36,6 +47,8 @@ export function RouteSignal() {
     return () => {
       cancelAnimationFrame(frame);
       cancelAnimationFrame(refresh);
+      window.clearTimeout(followTimer);
+      stopFollowing();
     };
   }, []);
 

@@ -141,5 +141,22 @@
       "period": "2021–2024",
       "summary": ""
     }
+  ],
+  "testimonials": [
+    {
+      "quote": "During his internship at Girl Meets Tech, Aditya delivered four live mainnet blockchain dApps in roughly five weeks, moving seamlessly across Solidity smart contracts, front-end development, and AI features. What stands out most is his range, reliability, and thoughtful, user-focused approach to taking ideas from a brief to a polished product. He works independently, meets deadlines, and communicates clearly.",
+      "author_name": "Venita Adorete",
+      "author_role": "Founder",
+      "author_org": "Girl Meets Tech",
+      "project_slug": null,
+      "photo": {
+        "file": "testimonials/venita-adorete.webp",
+        "width": 854,
+        "height": 854,
+        "alt": "Venita Adorete",
+        "focal_x": 0.47,
+        "focal_y": 0.32
+      }
+    }
   ]
 }

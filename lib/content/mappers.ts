@@ -5,6 +5,7 @@ import { resolveMediaUrl } from "./media-url";
 import type {
   Achievement,
   AchievementKind,
+  Client,
   Experience,
   FrameBehavior,
   FrameChrome,
@@ -21,6 +22,7 @@ import type {
   Skill,
   SkillCategory,
   SocialLink,
+  Testimonial,
 } from "./types";
 
 export type MediaRow = Tables<"media">;
@@ -115,6 +117,7 @@ function mapFacts(value: Json): ProjectFact[] {
 
 /** Shown when profile.metrics is empty. */
 export const DEFAULT_METRICS: Metric[] = [
+  { value: "5+", label: "Awards" },
   { value: "5+", label: "Clients" },
   { value: "1k+", label: "Web users" },
   { value: "iOS + Android", label: "Shipped to App Store & Play Store" },
@@ -260,4 +263,34 @@ export function mapReel(row: ReelRowWithChapters): Reel {
     .sort((a, b) => a.startS - b.startS);
 
   return { id: row.id, key: row.key, title: row.title, chapters };
+}
+
+export type ClientRowWithLogo = Tables<"clients"> & { logo: MediaRow | null };
+
+export function mapClient(row: ClientRowWithLogo): Client {
+  return {
+    id: row.id,
+    name: row.name,
+    logo: row.logo ? mapMedia(row.logo) : null,
+    url: row.url,
+    position: row.position,
+  };
+}
+
+export type TestimonialRowWithRelations = Tables<"testimonials"> & {
+  avatar: MediaRow | null;
+  project: { slug: string; name: string; published: boolean } | null;
+};
+
+export function mapTestimonial(row: TestimonialRowWithRelations): Testimonial {
+  return {
+    id: row.id,
+    quote: row.quote,
+    authorName: row.author_name,
+    authorRole: row.author_role,
+    authorOrg: row.author_org,
+    avatar: row.avatar ? mapMedia(row.avatar) : null,
+    project: row.project?.published ? { slug: row.project.slug, name: row.project.name } : null,
+    position: row.position,
+  };
 }

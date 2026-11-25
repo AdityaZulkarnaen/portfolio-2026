@@ -33,6 +33,26 @@ export type Database = {
                   Relationships: [
                     
                   ]
+                },"clients": {
+                  Row: {
+                    "created_at": string,"id": string,"logo_media_id": string | null,"name": string,"position": number,"published": boolean,"updated_at": string,"url": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name": string,"position"?: number,"published"?: boolean,"updated_at"?: string,"url"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name"?: string,"position"?: number,"published"?: boolean,"updated_at"?: string,"url"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "clients_logo_media_id_fkey"
+      columns: ["logo_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"experiences": {
                   Row: {
                     "created_at": string,"end_date": string | null,"highlights": (string)[],"id": string,"org": string,"position": number,"published": boolean,"role": string,"slug": string,"stack": (string)[],"start_date": string,"summary": string,"updated_at": string
@@ -226,6 +246,32 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"testimonials": {
+                  Row: {
+                    "author_name": string,"author_org": string,"author_role": string,"avatar_media_id": string | null,"created_at": string,"id": string,"position": number,"project_id": string | null,"published": boolean,"quote": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_name": string,"author_org"?: string,"author_role"?: string,"avatar_media_id"?: string | null,"created_at"?: string,"id"?: string,"position"?: number,"project_id"?: string | null,"published"?: boolean,"quote": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "author_name"?: string,"author_org"?: string,"author_role"?: string,"avatar_media_id"?: string | null,"created_at"?: string,"id"?: string,"position"?: number,"project_id"?: string | null,"published"?: boolean,"quote"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "testimonials_avatar_media_id_fkey"
+      columns: ["avatar_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "testimonials_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id"]
+    }
                   ]
                 }
           }

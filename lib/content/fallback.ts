@@ -14,11 +14,12 @@ import {
   mapProfile,
   mapProject,
   mapSkill,
+  mapTestimonial,
   type MediaRow,
   type ProjectRowWithRelations,
 } from "./mappers";
 import { buildSeedBundle, type ExtraContent, type LegacyContent, type LegacyImage, type SeedBundle } from "./seed-data";
-import type { Achievement, Experience, Profile, Project, Skill } from "./types";
+import type { Achievement, Client, Experience, Profile, Project, Skill, Testimonial } from "./types";
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const stamps = { created_at: EPOCH, updated_at: EPOCH };
@@ -205,4 +206,48 @@ export async function fallbackAchievements(): Promise<Achievement[]> {
       ...stamps,
     }),
   );
+}
+
+export async function fallbackClients(): Promise<Client[]> {
+  return [];
+}
+
+export async function fallbackTestimonials(): Promise<Testimonial[]> {
+  const bundle = await loadBundle();
+  const projects = projectRows(bundle);
+  return bundle.testimonials.map((t) => {
+    const id = `seed-testimonial-${t.position}`;
+    const project = t.project_slug ? projects.find((p) => p.slug === t.project_slug) : undefined;
+    const avatar: MediaRow | null = t.photo
+      ? {
+          id: `${id}-photo`,
+          kind: "image",
+          source: "public",
+          path: `seed/${t.photo.file}`,
+          width: t.photo.width,
+          height: t.photo.height,
+          alt: t.photo.alt,
+          lqip: null,
+          focal_x: t.photo.focal_x,
+          focal_y: t.photo.focal_y,
+          duration_s: null,
+          position: t.position,
+          ...stamps,
+        }
+      : null;
+    return mapTestimonial({
+      id,
+      quote: t.quote,
+      author_name: t.author_name,
+      author_role: t.author_role,
+      author_org: t.author_org,
+      avatar_media_id: avatar?.id ?? null,
+      project_id: project?.id ?? null,
+      position: t.position,
+      published: true,
+      ...stamps,
+      avatar,
+      project: project ? { slug: project.slug, name: project.name, published: project.published } : null,
+    });
+  });
 }

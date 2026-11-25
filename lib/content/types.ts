@@ -170,3 +170,22 @@ export type Reel = {
   title: string;
   chapters: ReelChapter[];
 };
+
+export type Client = {
+  id: string;
+  name: string;
+  logo: Media | null;
+  url: string | null;
+  position: number;
+};
+
+export type Testimonial = {
+  id: string;
+  quote: string;
+  authorName: string;
+  authorRole: string;
+  authorOrg: string;
+  avatar: Media | null;
+  project: { slug: string; name: string } | null;
+  position: number;
+};

@@ -85,6 +85,7 @@ vec3 smoke(vec4 f, vec3 tint, float intensity) {
   vec3 c = INK + deep * 0.55 * body;
   c += tint * 0.12 * core;
   c += tint * 0.035 * f.a * body;
+  c += tint * 0.05 * (0.2 + 0.8 * body);
   return mix(INK, c, intensity);
 }
 

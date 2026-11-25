@@ -7,7 +7,8 @@
  * Steps: download images from the Sanity CDN → upload to Storage bucket `media`
  * (`projects/<slug>/cover.webp`, `profile/photo-<n>.webp`) → upsert media, projects,
  * default project_media (from layout presets; only for projects without frames),
- * profile, profile_media, experiences, skills, achievements, and the admins row
+ * profile, profile_media, experiences, skills, achievements, testimonials (photos from
+ * supabase/seed/assets), and the admins row
  * for ADMIN_EMAIL (looked up through the auth admin API).
  *
  * Node 22 native TypeScript: erasable syntax only, explicit `.ts` imports, no `@/` alias.
@@ -25,6 +26,7 @@ import {
   type LegacyContent,
   type LegacyImage,
   type SeedFrame,
+  type SeedTestimonial,
 } from "../../lib/content/seed-data.ts";
 
 const BUCKET = "media";
@@ -86,6 +88,8 @@ async function removeStoragePrefix(prefix: string) {
 async function resetContent() {
   console.log("· --reset: wiping content tables and seeded storage objects");
   const tables = [
+    "testimonials",
+    "clients",
     "reel_chapters",
     "project_media",
     "profile_media",
@@ -102,6 +106,7 @@ async function resetContent() {
   check("reset profile", await db.from("profile").delete().eq("id", 1));
   await removeStoragePrefix("projects");
   await removeStoragePrefix("profile");
+  await removeStoragePrefix("testimonials");
 }
 
 // ---------------------------------------------------------------------------
@@ -144,6 +149,41 @@ async function uploadImage(image: LegacyImage, path: string, position: number): 
           lqip: image.lqip,
           focal_x: image.focal_x,
           focal_y: image.focal_y,
+          position,
+        },
+        { onConflict: "source,path" },
+      )
+      .select("id")
+      .single(),
+  );
+  return row.id;
+}
+
+async function uploadLocalImage(
+  photo: NonNullable<SeedTestimonial["photo"]>,
+  position: number,
+): Promise<string> {
+  const bytes = new Uint8Array(readFileSync(resolve(seedDir, "assets", photo.file)));
+  const uploaded = await db.storage.from(BUCKET).upload(photo.file, bytes, {
+    contentType: "image/webp",
+    cacheControl: "31536000",
+    upsert: true,
+  });
+  if (uploaded.error) throw new Error(`upload ${photo.file}: ${uploaded.error.message}`);
+  const row = must(
+    `media ${photo.file}`,
+    await db
+      .from("media")
+      .upsert(
+        {
+          kind: "image",
+          source: "storage",
+          path: photo.file,
+          width: photo.width,
+          height: photo.height,
+          alt: photo.alt,
+          focal_x: photo.focal_x,
+          focal_y: photo.focal_y,
           position,
         },
         { onConflict: "source,path" },
@@ -296,6 +336,40 @@ async function seedLists() {
   );
 }
 
+async function seedTestimonials() {
+  for (const t of bundle.testimonials) {
+    const avatarId = t.photo ? await uploadLocalImage(t.photo, t.position) : null;
+    let projectId: string | null = null;
+    if (t.project_slug) {
+      projectId = must(
+        `testimonial project ${t.project_slug}`,
+        await db.from("projects").select("id").eq("slug", t.project_slug).single(),
+      ).id;
+    }
+    const values = {
+      quote: t.quote,
+      author_name: t.author_name,
+      author_role: t.author_role,
+      author_org: t.author_org,
+      avatar_media_id: avatarId,
+      project_id: projectId,
+      position: t.position,
+      published: true,
+    };
+    const existing = check(
+      `testimonial ${t.author_name}`,
+      await db.from("testimonials").select("id").eq("author_name", t.author_name).limit(1).maybeSingle(),
+    );
+    check(
+      `testimonial ${t.author_name}`,
+      existing
+        ? await db.from("testimonials").update(values).eq("id", existing.id)
+        : await db.from("testimonials").insert(values),
+    );
+  }
+  console.log(`  ✓ ${bundle.testimonials.length} testimonials`);
+}
+
 async function seedAdmin() {
   if (!adminEmail) {
     console.warn("  ! ADMIN_EMAIL is not set — skipping the admins row.");
@@ -324,6 +398,7 @@ async function main() {
   await seedProjects();
   await seedProfile();
   await seedLists();
+  await seedTestimonials();
   await seedAdmin();
   console.log("Done. Revalidate the site (tag `content`) to see changes.");
 }

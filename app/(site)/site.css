@@ -159,3 +159,18 @@ html[data-gl="on"] [data-gl-hero] [data-gl-media] img {
 html[data-gl="on"] [data-grain] {
   display: none;
 }
+
+html:not([data-gl="on"]) [data-tint] {
+  background-image: radial-gradient(
+    120% 70% at 50% 0%,
+    color-mix(in oklab, var(--tint) 9%, transparent),
+    transparent 70%
+  );
+}
+html:not([data-gl="on"]) [data-tint="contact"] {
+  background-image: radial-gradient(
+    120% 70% at 50% 0%,
+    color-mix(in oklab, var(--tint) 14%, transparent),
+    transparent 72%
+  );
+}

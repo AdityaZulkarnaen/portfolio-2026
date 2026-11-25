@@ -88,6 +88,7 @@ export type ExtraContent = {
     summary: string;
     url?: string | null;
   }[];
+  testimonials?: SeedTestimonial[];
 };
 
 export type SeedProfile = {
@@ -106,6 +107,15 @@ export type SeedProfile = {
   metrics: { value: string; label: string }[];
   resume_path: string | null;
   footer_tagline: string;
+};
+
+export type SeedTestimonial = {
+  quote: string;
+  author_name: string;
+  author_role: string;
+  author_org: string;
+  project_slug: string | null;
+  photo: { file: string; width: number; height: number; alt: string; focal_x: number; focal_y: number } | null;
 };
 
 export type SeedFrame = FrameLayout & {
@@ -144,6 +154,7 @@ export type SeedBundle = {
   experiences: LegacyContent["experiences"];
   skills: { name: string; category: string; marquee_row: number; position: number }[];
   achievements: (ExtraContent["achievements"][number] & { position: number })[];
+  testimonials: (SeedTestimonial & { position: number })[];
 };
 
 /** Single-image default frame from the device/shape preset. */
@@ -231,5 +242,6 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
     experiences: legacy.experiences,
     skills: extra.skills.map((s, i) => ({ ...s, position: i })),
     achievements: extra.achievements.map((a, i) => ({ ...a, position: i })),
+    testimonials: (extra.testimonials ?? []).map((t, i) => ({ ...t, position: i })),
   };
 }
