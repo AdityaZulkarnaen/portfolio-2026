@@ -45,6 +45,9 @@ uniform vec4 uWin;
 uniform float uWinRadius;
 uniform float uWinReveal;
 uniform float uWinOn;
+uniform float uWinOpacity;
+// 0 at the small reel window → 1 at fullscreen: the film effects calm down as it grows.
+uniform float uWinGrow;
 
 uniform float uDisplacement;
 uniform float uAberration;
@@ -151,12 +154,14 @@ vec3 film(float t) {
 vec3 windowContent(vec2 wuv, vec2 warp, vec3 tr, vec2 ripple, float edgeDist, vec2 suv) {
   // edge: 1 at the frame, 0 from ~32 css px inward.
   float edge = 1.0 - smoothstep(0.0, 32.0 * uDpr, edgeDist);
-  vec2 q = wuv + warp * 0.010 + clamp(tr.xy, vec2(-1.5), vec2(1.5)) * 0.012 + ripple * 1.6;
-  q += warp * 0.012 * edge;
+  // Effect strength: full in the small window, a trace at fullscreen (reads as film).
+  float fx = 1.0 - 0.88 * uWinGrow;
+  vec2 q = wuv + (warp * 0.010 + clamp(tr.xy, vec2(-1.5), vec2(1.5)) * 0.012) * fx + ripple * 1.6;
+  q += warp * 0.012 * edge * fx;
   vec2 dir = wuv - 0.5;
   dir = dir / max(length(dir), 1e-3);
   float speed = min(length(uMouseVel), 3.0);
-  float ab = uAberration * (0.0012 + edge * 0.0055 + speed * 0.0012 + length(tr.xy) * 0.003 + uClickPulse * 0.008);
+  float ab = uAberration * ((0.0012 + edge * 0.0055 + speed * 0.0012 + length(tr.xy) * 0.003) * fx + uClickPulse * 0.008);
 
   vec3 c = vec3(0.0);
   if (uHasSource > 0.002) {
@@ -179,11 +184,11 @@ vec3 windowContent(vec2 wuv, vec2 warp, vec3 tr, vec2 ripple, float edgeDist, ve
   float l = luma(c);
   vec3 sheen = film(l * 1.8 + warp.x * 0.7 + warp.y * 0.4 + edge * 0.5 + uTime * 0.035);
   // Mostly at the frame; a light wash across bright covers so white UIs stay readable.
-  c = mix(c, c * (0.5 + sheen), 0.1 + 0.32 * edge);
-  c += sheen * TIDE * 0.035 * edge;
+  c = mix(c, c * (0.5 + sheen), (0.1 + 0.32 * edge) * fx);
+  c += sheen * TIDE * 0.035 * edge * fx;
   c += uHeroTint * tr.z * 0.04;
   // Lens falloff inside the frame.
-  c *= mix(0.72, 1.0, smoothstep(0.0, 70.0 * uDpr, edgeDist));
+  c *= mix(mix(0.72, 0.9, uWinGrow), 1.0, smoothstep(0.0, 70.0 * uDpr, edgeDist));
   return c;
 }
 
@@ -216,20 +221,6 @@ void main() {
     hero = room.rgb;
     heroN = room.w;
     hero += uHeroTint * tr.z * 0.02;
-
-    if (uWinOn > 0.5) {
-      vec2 fc = gl_FragCoord.xy;
-      vec2 hs = uWin.zw * 0.5;
-      vec2 c = uWin.xy + hs;
-      vec2 hsr = vec2(hs.x, hs.y * clamp(uWinReveal, 0.0, 1.0));
-      float d = sdRoundBox(fc - c, hsr, min(uWinRadius, hsr.y));
-      float m = 1.0 - smoothstep(-0.8, 0.8, d);
-      if (m > 0.001) {
-        vec2 wuv = (fc - uWin.xy) / max(uWin.zw, vec2(1.0));
-        vec3 win = windowContent(wuv, warp, tr, ripple, -d, uv);
-        hero = mix(hero, win, m);
-      }
-    }
     hero *= 1.0 - 0.5 * prog;
   }
 
@@ -245,6 +236,22 @@ void main() {
   float h = uHero * keep;
   vec3 col = mix(amb, hero, h);
   col += EMBER * edge * 0.1 * uHero;
+
+  // ---- reel window: over the dissolve, so the frame survives the scroll-out (home
+  // sequence: it zooms to fullscreen, then out into the lead card, then fades) ----
+  if (uHero > 0.002 && uWinOn > 0.5 && uWinOpacity > 0.001) {
+    vec2 fc = gl_FragCoord.xy;
+    vec2 hs = uWin.zw * 0.5;
+    vec2 c = uWin.xy + hs;
+    vec2 hsr = vec2(hs.x, hs.y * clamp(uWinReveal, 0.0, 1.0));
+    float d = sdRoundBox(fc - c, hsr, min(uWinRadius, hsr.y));
+    float m = (1.0 - smoothstep(-0.8, 0.8, d)) * uWinOpacity * uHero;
+    if (m > 0.001) {
+      vec2 wuv = (fc - uWin.xy) / max(uWin.zw, vec2(1.0));
+      vec3 win = windowContent(wuv, warp, tr, ripple, -d, uv);
+      col = mix(col, win, m);
+    }
+  }
 
   // ---- pulse: hue kick + scanline ----
   col = hueRotate(col, uHueShift + uClickPulse * 0.22);

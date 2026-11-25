@@ -11,7 +11,12 @@ import { frameClass, windowClass } from "./media-frame";
 const MAX_PLAYING = 2;
 const playing = new Set<HTMLVideoElement>();
 
-function claim(video: HTMLVideoElement) {
+/** Exported for other inline loops (featured cards) so the cap is document-wide. */
+export function releasePlayback(video: HTMLVideoElement) {
+  playing.delete(video);
+}
+
+export function claim(video: HTMLVideoElement) {
   if (playing.has(video)) return true;
   if (playing.size >= MAX_PLAYING) {
     // Evict the oldest so the one entering view wins.

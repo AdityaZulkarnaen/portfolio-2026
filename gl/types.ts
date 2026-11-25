@@ -9,6 +9,9 @@ export type HeroSource =
   | { kind: "video"; video: HTMLVideoElement; accent?: string }
   | null;
 
+/** A driven hero-window rect in viewport CSS px (home scroll sequence). */
+export type HeroWindowRect = { x: number; y: number; w: number; h: number; radius: number; opacity: number };
+
 export type StageDebug = {
   tier: number;
   running: boolean;
@@ -48,6 +51,11 @@ export interface StageApi {
    * vertically from its centre line. null = no window (smoke only).
    */
   setHeroWindow(el: HTMLElement | null): void;
+  /**
+   * Drive the window rect directly (the home sequence animates it from its own tween
+   * values, so the stage never measures it mid-animation). null = back to measuring.
+   */
+  setHeroWindowRect(rect: HeroWindowRect | null): void;
   /** Whether hero slide `index` is uploaded and can be shown without a blank/stale frame. */
   slideReady(index: number): boolean;
   setTint(hex: string): void;

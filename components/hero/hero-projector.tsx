@@ -10,6 +10,7 @@ import { stageBridge } from "@/gl/bridge";
 import { useHeroSource, useHeroWindow } from "@/gl/hooks";
 import { accentOrDefault } from "@/lib/content/format";
 import { gsap, useGSAP } from "@/lib/motion/gsap";
+import { useSequenceState } from "@/lib/motion/home-sequence";
 import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 import { onSiteReady } from "@/lib/motion/site-ready";
@@ -112,20 +113,25 @@ function Plus({ className }: { className: string }) {
  * pill into Play reel and the left HUD label into PLAY REEL.
  */
 export function HeroProjector({ slides, reel, name, descriptor, discipline, devProbe }: Props) {
-  const [index, setIndex] = useState(0);
+  const [cycled, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const rootRef = useRef<HTMLElement>(null);
   const windowRef = useRef<HTMLDivElement>(null);
   const spinRef = useRef<HTMLDivElement>(null);
-  const timeRef = useRef<HTMLSpanElement>(null);
   const motion = useMotionAllowed();
-  const running = motion && visible && slides.length > 1;
+  const seq = useSequenceState();
+  // Zooming out into the featured works, the reel parks on the lead project (slide 0),
+  // so the frame lands on the card that shows the same cover.
+  const parked = seq.active && seq.phase === "out";
+  const index = parked ? 0 : cycled;
+  const running = motion && visible && slides.length > 1 && !parked;
 
   useHeroSource(rootRef, {
     index,
     count: slides.length,
     accents: slides.map((s) => accentOrDefault(s.accent)),
     key: slides.map((s) => s.slug).join("|"),
+    manualProgress: seq.active,
   });
   useHeroWindow(windowRef);
 
@@ -156,14 +162,16 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
     return () => window.clearTimeout(timer);
   }, [running, slides.length, index]);
 
-  // Reel playhead: slide start + time into the slide, written straight to the node.
+  // Reel playhead: slide start + time into the slide, written straight to the nodes
+  // (HUD label and the fullscreen slate).
   useEffect(() => {
-    const el = timeRef.current;
-    if (!el || !running) return;
+    const nodes = rootRef.current?.querySelectorAll<HTMLElement>("[data-timecode]");
+    if (!nodes?.length || !running) return;
     const base = index * SLIDE_MS;
     const t0 = performance.now();
     const id = window.setInterval(() => {
-      el.textContent = timecode(base + Math.min(SLIDE_MS - 1, performance.now() - t0));
+      const text = timecode(base + Math.min(SLIDE_MS - 1, performance.now() - t0));
+      for (const n of nodes) n.textContent = text;
     }, 250);
     return () => window.clearInterval(id);
   }, [index, running]);
@@ -238,7 +246,7 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
     <section
       ref={rootRef}
       aria-labelledby="hero-title"
-      className="group/hero relative isolate flex min-h-[max(100svh,640px)] flex-col overflow-clip bg-ink-950 px-gutter pt-[calc(var(--spacing-header)+1rem)] pb-[clamp(1.25rem,3svh,2.5rem)] md:block md:p-0"
+      className="group/hero relative isolate z-10 flex min-h-[max(100svh,640px)] flex-col overflow-clip px-gutter pt-[calc(var(--spacing-header)+1rem)] pb-[clamp(1.25rem,3svh,2.5rem)] md:block md:p-0"
       data-gl-hero
       data-hero-mode="stills"
       data-running={running || undefined}
@@ -248,16 +256,19 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
       <div
         aria-hidden="true"
         data-gl-media
-        className="absolute inset-0 -z-10 bg-[radial-gradient(60%_55%_at_26%_36%,rgb(14_44_49/0.85),transparent_72%),radial-gradient(52%_48%_at_78%_64%,rgb(11_34_40/0.8),transparent_74%),radial-gradient(38%_30%_at_62%_16%,rgb(20_56_58/0.45),transparent_70%)]"
+        data-seq-room
+        className="absolute inset-0 -z-10 bg-ink-950 bg-[radial-gradient(60%_55%_at_26%_36%,rgb(14_44_49/0.85),transparent_72%),radial-gradient(52%_48%_at_78%_64%,rgb(11_34_40/0.8),transparent_74%),radial-gradient(38%_30%_at_62%_16%,rgb(20_56_58/0.45),transparent_70%)]"
       >
         <Grain className="opacity-45" />
       </div>
 
-      <Plus className="top-[calc(var(--spacing-header)+0.75rem)] left-gutter max-md:hidden" />
-      <Plus className="right-gutter bottom-[clamp(1.25rem,3.2svh,2.75rem)] max-md:hidden" />
+      <div data-seq-out>
+        <Plus className="top-[calc(var(--spacing-header)+0.75rem)] left-gutter max-md:hidden" />
+        <Plus className="right-gutter bottom-[clamp(1.25rem,3.2svh,2.75rem)] max-md:hidden" />
+      </div>
 
       {/* Top right: who, where, what, and the one call to action. */}
-      <div className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:right-gutter md:w-[min(28vw,24rem)]">
+      <div data-seq-out className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:right-gutter md:w-[min(28vw,24rem)]">
         <p className="slate grid text-bone-400">
           {descriptor.map((line) => (
             <span key={line} className="block overflow-clip">
@@ -293,8 +304,9 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
       </div>
 
       {/* The instrument: ring, HUD line, reel window. */}
-      <div className="relative order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,27vw,620px)]">
+      <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,27vw,620px)]">
         <div className="relative">
+          <div data-seq-ring className="pointer-events-none absolute inset-0">
           <div data-ring aria-hidden="true" className="pointer-events-none absolute top-1/2 left-1/2 size-(--ring) -translate-1/2 text-[rgb(236_233_226/0.09)] md:text-[rgb(236_233_226/0.15)]">
             <svg viewBox="0 0 200 200" className="absolute inset-0 size-full overflow-visible max-md:hidden">
               {[0, 90, 180, 270].map((deg) => {
@@ -322,7 +334,9 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
               </div>
             </div>
           </div>
+          </div>
 
+          <div data-seq-out className="pointer-events-none absolute inset-0">
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2">
             <div data-hud-line className="absolute inset-0 origin-center bg-[rgb(236_233_226/0.2)]" />
             <span data-hud-fade className="absolute top-1/2 left-0 size-[5px] -translate-1/2 rounded-full bg-bone-100" />
@@ -342,16 +356,19 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
             className="slate pointer-events-none absolute right-0 bottom-[calc(50%+var(--win)*0.28125+0.75rem)] flex w-1/2 justify-end gap-3 tracking-[0.12em] text-bone-400 tabular-nums md:bottom-[calc(50%+0.625rem)] md:left-[calc(50%+var(--win)/2+2.75rem)] md:w-auto md:justify-between md:tracking-[0.16em]"
           >
             <span className="text-bone-100">
-              <span ref={timeRef}>{timecode(index * SLIDE_MS)}</span> sec
+              <span data-timecode>{timecode(index * SLIDE_MS)}</span> sec
             </span>
             <span>{LON}</span>
           </div>
+          </div>
 
-          <div className="relative mx-auto w-(--win)">
+          <div data-seq-slot className="relative mx-auto aspect-video w-(--win)">
+            {/* Absolute in a slot of the same size, so the home sequence can drive its box
+                (left/top/width/height, --win-r) without moving anything around it. */}
             <div
               ref={windowRef}
               data-hero-window
-              className="relative aspect-video overflow-hidden rounded-[14px] [clip-path:inset(calc((1-var(--reveal,1))*50%)_0_round_14px)]"
+              className="pointer-events-auto absolute inset-0 overflow-hidden rounded-[var(--win-r,14px)] [clip-path:inset(calc((1-var(--reveal,1))*50%)_0_round_var(--win-r,14px))]"
             >
               <div data-gl-media className="absolute inset-0 bg-ink-900" />
               {slides.map((s, i) =>
@@ -368,8 +385,10 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
                       src={s.image.src}
                       alt=""
                       fill
-                      sizes="(min-width: 768px) 32vw, 90vw"
-                      quality={70}
+                      // The same <img> is the GL texture, and the home sequence zooms the
+                      // window to fullscreen: request a full-width source, never a thumbnail.
+                      sizes="100vw"
+                      quality={72}
                       preload={i === 0}
                       fetchPriority={i === 0 ? "high" : "low"}
                       loading="eager"
@@ -380,9 +399,10 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
                   </div>
                 ) : null,
               )}
-              <div data-gl-media className="pointer-events-none absolute inset-0 rounded-[14px] shadow-[inset_0_0_40px_rgb(0_0_0/0.45)]" />
+              <div data-gl-media className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_40px_rgb(0_0_0/0.45)]" />
             </div>
 
+            <div data-seq-out className="pointer-events-none absolute inset-0">
             {(["-top-2.5 -left-2.5", "-top-2.5 -right-2.5", "-bottom-2.5 -left-2.5", "-bottom-2.5 -right-2.5"] as const).map((pos) => (
               <span key={pos} aria-hidden="true" data-hud-fade className={`absolute size-[3px] rounded-full bg-bone-100/80 ${pos}`} />
             ))}
@@ -412,12 +432,13 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
                 </p>
               </div>
             ) : null}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom left: the name, small, over the verb that turns with the reel. */}
-      <div className="order-3 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter">
+      <div data-seq-out className="order-3 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter">
         <h1 id="hero-title" className="overflow-clip pb-[0.08em] text-[clamp(1.375rem,2.2vw,2.5rem)] leading-none font-light tracking-[-0.03em] text-bone-100 lowercase">
           <span data-rise className="block">
             {name}
@@ -440,6 +461,25 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
           </span>
         </p>
       </div>
+
+      {/* Fullscreen hold (home sequence): the reel's slate, bottom left. Hidden otherwise. */}
+      {slide ? (
+        <div
+          data-seq-slate
+          aria-hidden="true"
+          className="pointer-events-none invisible absolute bottom-[clamp(1.25rem,3.2svh,2.75rem)] left-gutter z-20 grid gap-1.5 opacity-0"
+        >
+          <span className="text-[clamp(1.25rem,1.8vw,1.75rem)] leading-tight font-light tracking-[-0.02em] text-bone-100">{slide.name}</span>
+          <span className="slate flex gap-3 text-bone-400 tabular-nums">
+            <span className="text-bone-100">
+              <span data-timecode>{timecode(index * SLIDE_MS)}</span> sec
+            </span>
+            <span>
+              {pad(index + 1)} / {pad(slides.length)}
+            </span>
+          </span>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -16,6 +16,7 @@ import type {
   ProjectFact,
   ProjectFrame,
   Reel,
+  Metric,
   ReelChapter,
   Skill,
   SkillCategory,
@@ -112,6 +113,25 @@ function mapFacts(value: Json): ProjectFact[] {
   });
 }
 
+/** Shown when profile.metrics is empty. */
+export const DEFAULT_METRICS: Metric[] = [
+  { value: "5+", label: "Clients" },
+  { value: "1k+", label: "Web users" },
+  { value: "iOS + Android", label: "Shipped to App Store & Play Store" },
+];
+
+function mapMetrics(value: Json): Metric[] {
+  if (!Array.isArray(value)) return DEFAULT_METRICS;
+  const list = value.flatMap((item) => {
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      const { value: v, label } = item;
+      if (typeof v === "string" && typeof label === "string" && v && label) return [{ value: v, label }];
+    }
+    return [];
+  });
+  return list.length > 0 ? list : DEFAULT_METRICS;
+}
+
 function mapSocials(value: Json): SocialLink[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item) => {
@@ -174,6 +194,7 @@ export function mapProfile(row: ProfileRowWithMedia): Profile {
     availability: row.availability,
     email: row.email,
     socials: mapSocials(row.socials),
+    metrics: mapMetrics(row.metrics),
     resumePath: row.resume_path,
     footerTagline: row.footer_tagline,
     portrait: pick("portrait"),

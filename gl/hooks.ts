@@ -31,8 +31,9 @@ export function useStageMode(mode: StageMode, enabled = true) {
  */
 export function useHeroSource(
   rootRef: RefObject<HTMLElement | null>,
-  opts: { index: number; count: number; accents: string[]; key: string },
+  opts: { index: number; count: number; accents: string[]; key: string; manualProgress?: boolean },
 ) {
+  const manualProgress = opts.manualProgress ?? false;
   const { index, count, key } = opts;
   const accentsKey = opts.accents.join(",");
   const indexRef = useRef(index);
@@ -57,7 +58,18 @@ export function useHeroSource(
     const onClick = (e: MouseEvent) => stageBridge.pulse(e.clientX, e.clientY);
     section.addEventListener("click", onClick);
 
-    // Scroll-out: 0 at the top, 1 once the hero has fully left the viewport.
+    return () => {
+      section.removeEventListener("click", onClick);
+      release();
+      stageBridge.clearHeroSources(source);
+    };
+  }, [rootRef, count, accentsKey, key]);
+
+  // Scroll-out: 0 at the top, 1 once the hero has fully left the viewport. With
+  // `manualProgress` (the pinned home sequence) the owner drives it instead.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root || manualProgress) return;
     const st = ScrollTrigger.create({
       trigger: root,
       start: "top top",
@@ -66,15 +78,11 @@ export function useHeroSource(
       onRefresh: (self) => stageBridge.setScrollProgress(self.progress),
     });
     stageBridge.setScrollProgress(st.progress);
-
     return () => {
       st.kill();
-      section.removeEventListener("click", onClick);
-      release();
-      stageBridge.clearHeroSources(source);
       stageBridge.setScrollProgress(0);
     };
-  }, [rootRef, count, accentsKey, key]);
+  }, [rootRef, manualProgress]);
 
   useLayoutEffect(() => {
     stageBridge.setSlide(index, 0);

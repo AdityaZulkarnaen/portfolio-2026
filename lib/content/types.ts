@@ -89,6 +89,9 @@ export type Project = {
 
 export type SocialLink = { label: string; href: string };
 
+/** A headline number on the home page, e.g. { value: "5+", label: "Clients" }. */
+export type Metric = { value: string; label: string };
+
 export type Profile = {
   fullName: string;
   shortName: string;
@@ -103,6 +106,8 @@ export type Profile = {
   availability: string;
   email: string;
   socials: SocialLink[];
+  /** Featured-works metrics; defaults apply when the row has none (see mapProfile). */
+  metrics: Metric[];
   resumePath: string | null;
   footerTagline: Markup;
   portrait: Media[];

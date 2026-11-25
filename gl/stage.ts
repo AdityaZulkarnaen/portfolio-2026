@@ -29,7 +29,7 @@ import { fieldFrag } from "./shaders/field.frag";
 import { fullscreenVert } from "./shaders/fullscreen.vert";
 import { type TextureHandle, TextureCache } from "./texture-cache";
 import { Trail } from "./trail";
-import type { HeroSource, PlaneHandle, PlaneProbe, StageApi, StageDebug, StageMode, StageOptions } from "./types";
+import type { HeroSource, HeroWindowRect, PlaneHandle, PlaneProbe, StageApi, StageDebug, StageMode, StageOptions } from "./types";
 
 /**
  * The persistent GL stage. One renderer, one fixed canvas, owned by the (site) layout
@@ -133,6 +133,7 @@ class Stage implements StageApi {
   private winEl: HTMLElement | null = null;
   private winDoc = { x: 0, y: 0, w: 0, h: 0, r: 0 };
   private winDirty = true;
+  private winRect: HeroWindowRect | null = null;
   private winRO: ResizeObserver;
 
   private unsubVelocity: () => void;
@@ -217,6 +218,8 @@ class Stage implements StageApi {
         uWinRadius: { value: 0 },
         uWinReveal: { value: 1 },
         uWinOn: { value: 0 },
+        uWinOpacity: { value: 1 },
+        uWinGrow: { value: 0 },
         uDisplacement: { value: this.tier === 2 ? 0.006 : 0.004 },
         uAberration: { value: this.tier === 2 ? 1 : 0.6 },
         uHueShift: { value: 0 },
@@ -317,6 +320,11 @@ class Stage implements StageApi {
     if (!this.source) return false;
     if (this.source.kind === "video") return this.handles[0]?.ready ?? false;
     return this.handles[index]?.ready ?? false;
+  }
+
+  setHeroWindowRect(rect: HeroWindowRect | null) {
+    this.winRect = rect ? { ...rect } : null;
+    if (!rect) this.winDirty = true;
   }
 
   setTint(hex: string) {
@@ -499,17 +507,27 @@ class Stage implements StageApi {
       u.uWinOn.value = 0;
       return false;
     }
-    if (this.winDirty) this.measureWindow();
-    const { x, y, w, h, r } = this.winDoc;
+    const res = u.uResolution.value as Vector2;
+    const sx = res.x / this.width;
+    const sy = res.y / this.height;
+    let top: number, left: number, w: number, h: number, r: number;
+    if (this.winRect) {
+      ({ x: left, y: top, w, h, radius: r } = this.winRect);
+      u.uWinOpacity.value = this.winRect.opacity;
+    } else {
+      if (this.winDirty) this.measureWindow();
+      ({ w, h, r } = this.winDoc);
+      top = this.winDoc.y - window.scrollY;
+      left = this.winDoc.x - window.scrollX;
+      u.uWinOpacity.value = 1;
+    }
     if (w < 2 || h < 2) {
       u.uWinOn.value = 0;
       return false;
     }
-    const res = u.uResolution.value as Vector2;
-    const sx = res.x / this.width;
-    const sy = res.y / this.height;
-    const top = y - window.scrollY;
-    const left = x - window.scrollX;
+    const frac = (w * h) / Math.max(1, this.width * this.height);
+    const g = Math.max(0, Math.min(1, (frac - 0.12) / 0.7));
+    u.uWinGrow.value = g * g * (3 - 2 * g);
     (u.uWin.value as Vector4).set(left * sx, (this.height - top - h) * sy, w * sx, h * sy);
     u.uWinRadius.value = r * sx;
     const reveal = parseFloat(el.style.getPropertyValue("--reveal"));

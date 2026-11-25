@@ -16,6 +16,11 @@
       { "label": "LinkedIn", "href": "https://www.linkedin.com/in/aditya-zulkarnaen-7596142a8/" },
       { "label": "Spotify", "href": "https://open.spotify.com/user/76p6n2lekwfklqm77tt0b6h85?si=9d3c1630f89045e8" }
     ],
+    "metrics": [
+      { "value": "5+", "label": "Clients" },
+      { "value": "1k+", "label": "Web users" },
+      { "value": "iOS + Android", "label": "Shipped to App Store & Play Store" }
+    ],
     "resume_path": "/Aditya-Zulkarnaen-CV-Software-Engineer.pdf",
     "footer_tagline": "Transforming **real-world** challenges into impactful digital **solutions**. Driven by **engineering excellence** and a **commitment** to meaningful **innovation**."
   },

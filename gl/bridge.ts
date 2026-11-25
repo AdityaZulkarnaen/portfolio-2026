@@ -1,6 +1,6 @@
 "use client";
 
-import type { HeroSource, PlaneHandle, StageApi, StageMode } from "./types";
+import type { HeroSource, HeroWindowRect, PlaneHandle, StageApi, StageMode } from "./types";
 
 /**
  * The always-available front of the stage (no three.js). Pages talk to this; it keeps
@@ -23,6 +23,7 @@ const tints = new Map<number, { hex: string; active: boolean; at: number }>();
 let tintClock = 0;
 let heroSource: HeroSource = null;
 let heroWindow: HTMLElement | null = null;
+let heroWindowRect: HeroWindowRect | null = null;
 let slide = { index: 0, progress: 0 };
 let progress = 0;
 const planes = new Map<HTMLElement, { stage: PlaneHandle | null }>();
@@ -47,6 +48,7 @@ export const stageBridge = {
     next.setHeroSources(heroSource, slide.index);
     if (heroSource) next.setSlide(slide.index, slide.progress);
     next.setHeroWindow(heroWindow);
+    next.setHeroWindowRect(heroWindowRect);
     next.setScrollProgress(progress);
     next.setHandoff(document.documentElement.dataset.glHandoff !== undefined);
     for (const [el, entry] of planes) entry.stage = next.registerPlane(el);
@@ -104,6 +106,10 @@ export const stageBridge = {
   setHeroWindow(el: HTMLElement | null) {
     heroWindow = el;
     stage?.setHeroWindow(el);
+  },
+  setHeroWindowRect(rect: HeroWindowRect | null) {
+    heroWindowRect = rect;
+    stage?.setHeroWindowRect(rect);
   },
   /** Only releases if `el` is still the registered window. */
   clearHeroWindow(el: HTMLElement) {

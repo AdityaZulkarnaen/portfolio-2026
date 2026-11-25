@@ -1,4 +1,5 @@
 import { Hero } from "@/components/hero/hero";
+import { HomeSequence } from "@/components/home/home-sequence";
 import { RouteSignal } from "@/components/runtime/route-signal";
 import { About } from "@/components/sections/about";
 import { Achievements } from "@/components/sections/achievements";
@@ -16,6 +17,7 @@ import {
   getProfile,
   getSkills,
 } from "@/lib/content/queries";
+import { DEFAULT_METRICS } from "@/lib/content/mappers";
 
 export default async function HomePage() {
   const [profile, featured, all, reel, skills, experiences, achievements] = await Promise.all([
@@ -31,8 +33,10 @@ export default async function HomePage() {
   return (
     <PageTransition>
       <RouteSignal />
-      <Hero profile={profile} featured={featured} reel={reel} />
-      <Showcase projects={featured} total={all.length} />
+      <HomeSequence>
+        <Hero profile={profile} featured={featured} reel={reel} />
+        <Showcase projects={featured} metrics={profile?.metrics ?? DEFAULT_METRICS} total={all.length} />
+      </HomeSequence>
       <About profile={profile} />
       <Stack skills={skills} />
       <Experience items={experiences} />

@@ -69,6 +69,7 @@ export type ExtraContent = {
     availability: string;
     email: string;
     socials: { label: string; href: string }[];
+    metrics?: { value: string; label: string }[];
     resume_path: string;
     footer_tagline: string;
   };
@@ -102,6 +103,7 @@ export type SeedProfile = {
   availability: string;
   email: string;
   socials: { label: string; href: string }[];
+  metrics: { value: string; label: string }[];
   resume_path: string | null;
   footer_tagline: string;
 };
@@ -220,6 +222,7 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
       availability: extra.profile.availability,
       email: extra.profile.email,
       socials: extra.profile.socials,
+      metrics: extra.profile.metrics ?? [],
       resume_path: extra.profile.resume_path || null,
       footer_tagline: extra.profile.footer_tagline,
     },

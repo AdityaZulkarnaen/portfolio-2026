@@ -77,14 +77,14 @@ export type Database = {
                   ]
                 },"profile": {
                   Row: {
-                    "availability": string,"bio": (string)[],"created_at": string,"email": string,"footer_tagline": string,"full_name": string,"headline": string,"id": number,"location": string,"resume_path": string | null,"roles": (string)[],"short_name": string,"socials": NonNullable<Json>,"timezone": string,"updated_at": string,"wordmark_bottom": string,"wordmark_top": string
+                    "availability": string,"bio": (string)[],"created_at": string,"email": string,"footer_tagline": string,"full_name": string,"headline": string,"id": number,"location": string,"metrics": NonNullable<Json>,"resume_path": string | null,"roles": (string)[],"short_name": string,"socials": NonNullable<Json>,"timezone": string,"updated_at": string,"wordmark_bottom": string,"wordmark_top": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "availability"?: string,"bio"?: (string)[],"created_at"?: string,"email"?: string,"footer_tagline"?: string,"full_name": string,"headline"?: string,"id"?: number,"location"?: string,"resume_path"?: string | null,"roles"?: (string)[],"short_name"?: string,"socials"?: NonNullable<Json>,"timezone"?: string,"updated_at"?: string,"wordmark_bottom"?: string,"wordmark_top"?: string
+                    "availability"?: string,"bio"?: (string)[],"created_at"?: string,"email"?: string,"footer_tagline"?: string,"full_name": string,"headline"?: string,"id"?: number,"location"?: string,"metrics"?: NonNullable<Json>,"resume_path"?: string | null,"roles"?: (string)[],"short_name"?: string,"socials"?: NonNullable<Json>,"timezone"?: string,"updated_at"?: string,"wordmark_bottom"?: string,"wordmark_top"?: string
                   }
                   Update: {
-                    "availability"?: string,"bio"?: (string)[],"created_at"?: string,"email"?: string,"footer_tagline"?: string,"full_name"?: string,"headline"?: string,"id"?: number,"location"?: string,"resume_path"?: string | null,"roles"?: (string)[],"short_name"?: string,"socials"?: NonNullable<Json>,"timezone"?: string,"updated_at"?: string,"wordmark_bottom"?: string,"wordmark_top"?: string
+                    "availability"?: string,"bio"?: (string)[],"created_at"?: string,"email"?: string,"footer_tagline"?: string,"full_name"?: string,"headline"?: string,"id"?: number,"location"?: string,"metrics"?: NonNullable<Json>,"resume_path"?: string | null,"roles"?: (string)[],"short_name"?: string,"socials"?: NonNullable<Json>,"timezone"?: string,"updated_at"?: string,"wordmark_bottom"?: string,"wordmark_top"?: string
                   }
                   Relationships: [
                     
