@@ -1,26 +1,43 @@
-import Link from "next/link";
-
-import { getFeaturedProjects, getProfile } from "@/lib/content/queries";
+import { Hero } from "@/components/hero/hero";
+import { RouteSignal } from "@/components/runtime/route-signal";
+import { About } from "@/components/sections/about";
+import { Achievements } from "@/components/sections/achievements";
+import { Contact } from "@/components/sections/contact";
+import { Experience } from "@/components/sections/experience";
+import { Stack } from "@/components/sections/stack";
+import { Showcase } from "@/components/showcase/showcase";
+import { PageTransition } from "@/components/site/page-transition";
+import {
+  getAchievements,
+  getActiveReel,
+  getAllProjects,
+  getExperiences,
+  getFeaturedProjects,
+  getProfile,
+  getSkills,
+} from "@/lib/content/queries";
 
 export default async function HomePage() {
-  const [profile, featured] = await Promise.all([getProfile(), getFeaturedProjects()]);
+  const [profile, featured, all, reel, skills, experiences, achievements] = await Promise.all([
+    getProfile(),
+    getFeaturedProjects(),
+    getAllProjects(),
+    getActiveReel(),
+    getSkills(),
+    getExperiences(),
+    getAchievements(),
+  ]);
 
   return (
-    <section className="flex min-h-svh flex-col justify-end gap-6 px-6 pt-32 pb-16 md:px-10">
-      <p className="slate text-bone-400">Reel 00 · Projection room</p>
-      <h1 className="text-6xl font-extrabold tracking-tight md:text-9xl">
-        {profile?.fullName ?? "Aditya Zulkarnaen"}
-      </h1>
-      {profile?.headline ? <p className="max-w-xl text-lg text-bone-400">{profile.headline}</p> : null}
-      <ol className="mt-8 flex flex-col gap-2">
-        {featured.map((project, i) => (
-          <li key={project.id}>
-            <Link href={`/work/${project.slug}`} className="slate text-bone-100 hover:text-ember-300">
-              {String(i + 1).padStart(2, "0")} · {project.name}
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
+    <PageTransition>
+      <RouteSignal />
+      <Hero profile={profile} featured={featured} reel={reel} />
+      <Showcase projects={featured} total={all.length} />
+      <About profile={profile} />
+      <Stack skills={skills} />
+      <Experience items={experiences} />
+      <Achievements items={achievements} />
+      <Contact profile={profile} />
+    </PageTransition>
   );
 }

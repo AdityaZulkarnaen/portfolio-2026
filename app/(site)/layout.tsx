@@ -1,43 +1,42 @@
-import Link from "next/link";
+import "./site.css";
+
+import { Cursor } from "@/components/runtime/cursor";
+import { Preloader } from "@/components/runtime/preloader";
+import { SiteRuntime } from "@/components/runtime/site-runtime";
+import { Footer } from "@/components/site/footer";
+import { Grain } from "@/components/site/grain";
+import { Header } from "@/components/site/header";
+import { ScrollProgress } from "@/components/site/scroll-progress";
+import { getProfile } from "@/lib/content/queries";
+import { MOTION_BOOT_SCRIPT } from "@/lib/motion/boot-script";
 
 /** Guardrail: public pages must be fully static (no cookies/headers/uncached IO). */
 export const ensureStatic = "navigation";
 
-const nav = [
-  { href: "/work", label: "Work" },
-  { href: "/#about", label: "About" },
-  { href: "/#contact", label: "Contact" },
-] as const;
+export default async function SiteLayout({ children }: LayoutProps<"/">) {
+  const profile = await getProfile();
 
-export default function SiteLayout({ children }: LayoutProps<"/">) {
   return (
     <>
+      <script dangerouslySetInnerHTML={{ __html: MOTION_BOOT_SCRIPT }} />
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-5 md:px-10">
-        <Link href="/" className="slate text-bone-100">
-          Aditya Z
-        </Link>
-        <nav aria-label="Primary">
-          <ul className="flex gap-6">
-            {nav.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="slate text-bone-400 transition-colors duration-(--dur-fast) hover:text-bone-100"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </header>
-      <main id="main">{children}</main>
-      <footer className="border-t border-white/10 px-6 py-10 md:px-10">
-        <p className="slate text-bone-400">Aditya Zulkarnaen · Yogyakarta</p>
-      </footer>
+      <Preloader />
+      <SiteRuntime />
+      <ScrollProgress />
+      <Header
+        shortName={profile?.shortName ?? "Aditya Z"}
+        timezone={profile?.timezone ?? "Asia/Jakarta"}
+        location={profile?.location ?? "Yogyakarta, Indonesia"}
+      />
+      <main id="main" tabIndex={-1}>
+        {children}
+      </main>
+      <Footer profile={profile} />
+      {/* Site-wide grain: the page is never a flat, dead surface. */}
+      <Grain fixed className="z-90 opacity-30" />
+      <Cursor />
     </>
   );
 }

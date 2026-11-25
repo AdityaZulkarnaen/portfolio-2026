@@ -1,0 +1,120 @@
+/* Only what Tailwind utilities cannot express: Lenis base, scrollbars, details
+   height animation, and view-transition pseudo-elements. Everything else is in className. */
+
+@import "lenis/dist/lenis.css";
+
+:root {
+  interpolate-size: allow-keywords;
+  scrollbar-color: rgb(236 233 226 / 0.22) var(--color-ink-950);
+  scrollbar-width: thin;
+}
+html {
+  scroll-padding-top: var(--spacing-header);
+}
+body {
+  overflow-x: clip;
+  caret-color: var(--color-ember-500);
+}
+
+/* <details name="exp">: animate to/from height:auto where supported. */
+.exp-row::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 0.7s var(--ease-fluid),
+    content-visibility 0.7s allow-discrete;
+}
+.exp-row[open]::details-content {
+  block-size: auto;
+}
+.exp-row > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ---------- View transitions ---------- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+::view-transition-old(.page-exit) {
+  animation: vt-exit 520ms var(--ease-io) both;
+}
+::view-transition-new(.page-enter) {
+  animation: vt-wipe 900ms var(--ease-fluid) both;
+}
+::view-transition-new(.page-enter-back) {
+  animation: vt-wipe-down 900ms var(--ease-fluid) both;
+}
+
+::view-transition-group(.morph) {
+  z-index: 50;
+  animation-duration: 800ms;
+  animation-timing-function: var(--ease-fluid);
+}
+::view-transition-image-pair(.morph) {
+  animation: via-blur 800ms var(--ease-fluid);
+}
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  animation-duration: 800ms;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+@keyframes vt-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-2vh);
+    filter: blur(8px);
+  }
+}
+@keyframes vt-wipe {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+}
+@keyframes vt-wipe-down {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes via-blur {
+  40% {
+    filter: blur(6px);
+  }
+}
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: crossfade only, no positional movement. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+  }
+  ::view-transition-old(*) {
+    animation: vt-fade 200ms linear reverse both !important;
+  }
+  ::view-transition-new(*) {
+    animation: vt-fade 200ms linear both !important;
+  }
+}
