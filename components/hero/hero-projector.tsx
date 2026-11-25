@@ -3,11 +3,19 @@
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import { Magnetic } from "@/components/motion/magnetic";
 import { Grain } from "@/components/site/grain";
-import { useHeroSource } from "@/gl/hooks";
+import { TransitionLink } from "@/components/site/transition-link";
+import { stageBridge } from "@/gl/bridge";
+import { useHeroSource, useHeroWindow } from "@/gl/hooks";
 import { accentOrDefault } from "@/lib/content/format";
+import { gsap, useGSAP } from "@/lib/motion/gsap";
 import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
+import { onSiteReady } from "@/lib/motion/site-ready";
+
+import { DevReelProbe } from "./dev-reel-probe";
+import { HERO_PILL, PlayReelButton } from "./play-reel-button";
 
 export type HeroSlide = {
   slug: string;
@@ -18,20 +26,98 @@ export type HeroSlide = {
   image: { src: string; width: number; height: number; alt: string; lqip: string | null } | null;
 };
 
+export type HeroReel = {
+  src: string;
+  poster: string | null;
+  title: string;
+  chapters: { label: string; startS: number }[];
+};
+
+type Props = {
+  slides: HeroSlide[];
+  reel: HeroReel | null;
+  /** h1 text, e.g. "Aditya Zulkarnaen" (set lowercase by CSS). */
+  name: string;
+  descriptor: [string, string];
+  discipline: string;
+  devProbe: boolean;
+};
+
 const SLIDE_MS = 6000;
+/** When no other cover is ready yet, look again this often. */
+const RETRY_MS = 400;
+/**
+ * One verb per slide; the big word turns over with the reel. "scales" is from his own
+ * headline (scalable architectures). Max 6 letters: the verb's size is tuned to that.
+ */
+const VERBS = ["builds", "ships", "scales", "debugs"];
+/** Yogyakarta. */
+const LAT = "-7.7956°";
+const LON = "110.3695°";
+
+const pad = (n: number) => String(n).padStart(2, "0");
+const timecode = (ms: number) => {
+  const s = Math.floor(ms / 1000);
+  return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+};
+
+/** Ring dots, in degrees from 12 o'clock. One ember marker; the rest bone. */
+const ORBIT_DOTS = [
+  { deg: 32, accent: true },
+  { deg: 148, accent: false },
+  { deg: 205, accent: false },
+  { deg: 291, accent: false },
+];
+
+function polar(deg: number, r = 99.5) {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return { cx: 100 + r * Math.cos(a), cy: 100 + r * Math.sin(a) };
+}
 
 /**
- * Hero "stills mode": featured covers projected behind a grade, crossfading every 6s with
- * a slow push-in, synced to the "Now playing" chip.
- *
- * With the GL stage on (T1/T2), the same <img> elements are handed to the stage, which
- * redraws them through the background shader; once it has drawn them, CSS fades the DOM
- * layers (`[data-gl-media]`) out. Without GL this DOM version is the experience.
+ * The next slide after `from` that can be shown right now: its cover has loaded in the
+ * DOM (a failed or still-loading cover is skipped this round) and, with GL drawing, its
+ * texture is uploaded. Caption, index, verb and timecode only ever change together with
+ * a picture that is actually there.
  */
-export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
+function nextReadySlide(root: HTMLElement | null, from: number, count: number): number | null {
+  if (!root) return null;
+  for (let k = 1; k < count; k++) {
+    const i = (from + k) % count;
+    const img = root.querySelector<HTMLImageElement>(`[data-slide="${i}"] img`);
+    if (!img || !img.complete || !img.naturalWidth) continue;
+    if (!stageBridge.slideReady(i)) continue;
+    return i;
+  }
+  return null;
+}
+
+function Plus({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 11 11" aria-hidden="true" data-hud-fade className={`pointer-events-none absolute size-[11px] text-bone-400/70 ${className}`}>
+      <path d="M5.5 0v11M0 5.5h11" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/**
+ * The hero, "projection booth".
+ *
+ * Featured covers cycle inside a small reel window at the centre of the room (stills
+ * mode, 6s per slide). With the GL stage on, the stage draws the room (generative smoke)
+ * and the window content itself (`useHeroSource` + the window rect); the DOM <img>s and
+ * the CSS room stay underneath as the T0 / no-GL experience and fade out once GL draws.
+ *
+ * Reel video (P7) drops in through the same path: a reel with an encoded source turns the
+ * pill into Play reel and the left HUD label into PLAY REEL.
+ */
+export function HeroProjector({ slides, reel, name, descriptor, discipline, devProbe }: Props) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
+  const spinRef = useRef<HTMLDivElement>(null);
+  const timeRef = useRef<HTMLSpanElement>(null);
   const motion = useMotionAllowed();
   const running = motion && visible && slides.length > 1;
 
@@ -41,6 +127,7 @@ export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
     accents: slides.map((s) => accentOrDefault(s.accent)),
     key: slides.map((s) => s.slug).join("|"),
   });
+  useHeroWindow(windowRef);
 
   useEffect(() => {
     const el = rootRef.current;
@@ -50,97 +137,309 @@ export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
     return () => io.disconnect();
   }, []);
 
-  // Interval lives in a layout effect so Activity-hiding the page clears it synchronously.
+  // Advance only to a slide whose cover is ready (see nextReadySlide). The timer lives in
+  // a layout effect so Activity-hiding the page clears it synchronously.
   useLayoutEffect(() => {
     if (!running) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") setIndex((i) => (i + 1) % slides.length);
-    }, SLIDE_MS);
-    return () => window.clearInterval(id);
+    let timer = 0;
+    const advance = () => {
+      if (document.visibilityState === "visible") {
+        const next = nextReadySlide(rootRef.current, index, slides.length);
+        if (next !== null) {
+          setIndex(next);
+          return;
+        }
+      }
+      timer = window.setTimeout(advance, RETRY_MS);
+    };
+    timer = window.setTimeout(advance, SLIDE_MS);
+    return () => window.clearTimeout(timer);
   }, [running, slides.length, index]);
 
+  // Reel playhead: slide start + time into the slide, written straight to the node.
+  useEffect(() => {
+    const el = timeRef.current;
+    if (!el || !running) return;
+    const base = index * SLIDE_MS;
+    const t0 = performance.now();
+    const id = window.setInterval(() => {
+      el.textContent = timecode(base + Math.min(SLIDE_MS - 1, performance.now() - t0));
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [index, running]);
+
+  // Entrance, once the curtain lifts: line draws out from the centre, the window opens
+  // from it, the ring settles, words rise through their masks.
+  useGSAP(
+    () => {
+      const root = rootRef.current;
+      if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (document.documentElement.dataset.motion === "off") return;
+      const q = gsap.utils.selector(root);
+      const line = q("[data-hud-line]");
+      const ring = q("[data-ring]");
+      const rise = q("[data-rise]");
+      const fade = q("[data-hud-fade]");
+      const win = windowRef.current;
+      gsap.set(line, { scaleX: 0 });
+      gsap.set(ring, { autoAlpha: 0, scale: 0.94 });
+      gsap.set(rise, { yPercent: 112 });
+      gsap.set(fade, { autoAlpha: 0 });
+      if (win) gsap.set(win, { "--reveal": 0 });
+      return onSiteReady(() => {
+        const tl = gsap.timeline({ delay: 0.1 });
+        tl.to(line, { scaleX: 1, duration: 1.5, ease: "expo" }, 0);
+        if (win) tl.to(win, { "--reveal": 1, duration: 1.25, ease: "expo" }, 0.4);
+        tl.to(ring, { autoAlpha: 1, scale: 1, duration: 2, ease: "fluid" }, 0.3);
+        tl.to(rise, { yPercent: 0, duration: 1.3, ease: "expo", stagger: 0.07 }, 0.5);
+        tl.to(fade, { autoAlpha: 1, duration: 0.9, ease: "fluid", stagger: 0.035 }, 0.8);
+      });
+    },
+    { scope: rootRef },
+  );
+
+  // Ring turns with the scroll-out; static when motion is off.
+  useGSAP(
+    () => {
+      const el = spinRef.current;
+      if (!motion || !el) return;
+      gsap.fromTo(
+        el,
+        { rotate: 0 },
+        { rotate: 40, ease: "none", scrollTrigger: { trigger: rootRef.current, start: "top top", end: "bottom top", scrub: 0.8 } },
+      );
+    },
+    { dependencies: [motion], revertOnUpdate: true },
+  );
+
   const slide = slides[index];
-  if (!slide) return null;
-  const n = String(index + 1).padStart(2, "0");
+  const accent = slide?.accent ?? "var(--color-ember-500)";
+  const verb = VERBS[index % VERBS.length];
+  const prevVerb = slides.length > 1 ? VERBS[(index - 1 + VERBS.length) % VERBS.length] : null;
+  const hudLabel = reel ? "Play reel" : "Now showing";
+
+  const caseLink = slide ? (
+    <TransitionLink
+      href={`/work/${slide.slug}`}
+      transition="to-case"
+      className={HERO_PILL}
+      data-cursor="view"
+      data-cursor-label="Case"
+      aria-label={`View case: ${slide.name}`}
+    >
+      View case
+      <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3">
+        <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    </TransitionLink>
+  ) : null;
 
   return (
-    <>
+    <section
+      ref={rootRef}
+      aria-labelledby="hero-title"
+      className="group/hero relative isolate flex min-h-[max(100svh,640px)] flex-col overflow-clip bg-ink-950 px-gutter pt-[calc(var(--spacing-header)+1rem)] pb-[clamp(1.25rem,3svh,2.5rem)] md:block md:p-0"
+      data-gl-hero
+      data-hero-mode="stills"
+      data-running={running || undefined}
+      style={{ "--accent": accent } as React.CSSProperties}
+    >
+      {/* The room without GL (T0): deep teal pools + film grain. GL draws its own. */}
       <div
-        ref={rootRef}
-        className="group/proj absolute inset-0 -z-10 bg-ink-950"
-        data-gl-hero
-        data-hero-mode="stills"
-        data-running={running || undefined}
-        style={{ "--accent": slide.accent ?? "var(--color-ember-500)" } as React.CSSProperties}
         aria-hidden="true"
+        data-gl-media
+        className="absolute inset-0 -z-10 bg-[radial-gradient(60%_55%_at_26%_36%,rgb(14_44_49/0.85),transparent_72%),radial-gradient(52%_48%_at_78%_64%,rgb(11_34_40/0.8),transparent_74%),radial-gradient(38%_30%_at_62%_16%,rgb(20_56_58/0.45),transparent_70%)]"
       >
-        {slides.map((s, i) =>
-          s.image ? (
-            <div
-              key={s.slug}
-              className="group/slide absolute inset-0 opacity-0 transition-opacity duration-[1.8s] ease-io data-[active]:opacity-100"
-              data-active={i === index || undefined}
-              data-hero-still={i === 0 ? "" : undefined}
-              data-slide={i}
-              data-gl-media
-            >
-              <Image
-                src={s.image.src}
-                alt=""
-                fill
-                sizes="100vw"
-                quality={60}
-                preload={i === 0}
-                fetchPriority={i === 0 ? "high" : "low"}
-                loading={i === 0 ? "eager" : "lazy"}
-                placeholder={s.image.lqip ? "blur" : "empty"}
-                blurDataURL={s.image.lqip ?? undefined}
-                className="origin-[60%_40%] scale-[1.08] object-cover object-top brightness-50 contrast-[1.12] saturate-[0.55] motion-on:group-data-[running]/proj:group-data-[active]/slide:animate-ken-burns"
-              />
-            </div>
-          ) : null,
-        )}
-        {/* Grade: top/bottom falloff + teal→accent split tone. The shader carries its own
-            copy of this grade, so these layers are `data-gl-media` too. */}
-        <div data-gl-media className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_8_11/0.72)_0%,rgb(7_8_11/0.05)_26%,rgb(7_8_11/0.1)_52%,rgb(7_8_11/0.94)_88%,var(--color-ink-950)_100%)]" />
-        <div data-gl-media className="absolute inset-0 bg-[linear-gradient(100deg,color-mix(in_oklab,var(--color-tide-400)_22%,transparent),transparent_46%,color-mix(in_oklab,var(--accent)_24%,transparent))] transition-[background] duration-[1.8s]" />
-        <div data-gl-media className="absolute inset-0">
-          <Grain className="opacity-55" />
-        </div>
-        <div data-gl-media className="absolute inset-0 bg-[radial-gradient(ellipse_120%_90%_at_50%_40%,transparent_50%,rgb(0_0_0/0.7)_100%)]" />
+        <Grain className="opacity-45" />
       </div>
 
-      <button
-        type="button"
-        className="glass group/np absolute right-gutter bottom-[calc(clamp(1.25rem,2.6vw,2.5rem)+clamp(2.5rem,11.8vw,16rem)*1.68+clamp(1rem,2vw,2rem)+5rem)] z-10 grid w-[min(360px,calc(100%-2*var(--spacing-gutter)))] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1.5 rounded-[14px] px-4 pt-3.5 pb-3 text-left text-bone-100 transition-[transform,background-color] duration-(--dur-base) ease-fluid hover:-translate-y-0.5 hover:bg-ink-800/75"
-        data-cursor="view"
-        data-cursor-label="Jump"
-        onClick={() => scrollToTarget(`#case-${slide.slug}`, { offset: -24 })}
-        aria-label={`Now playing: ${slide.name}. Jump to case.`}
-      >
-        <span className="slate row-span-2 inline-flex items-center gap-2 self-start pt-0.5 text-bone-400">
-          <span className="size-[7px] animate-blink rounded-full bg-ember-500 motion-off:animate-none" aria-hidden="true" />
-          Now playing
-        </span>
-        <span className="block min-h-[3.6em] overflow-hidden">
-          <span key={slide.slug} className="grid animate-roll-in gap-0.5">
-            <span className="slate text-bone-400 tabular-nums">
-              {n} / {String(slides.length).padStart(2, "0")}
+      <Plus className="top-[calc(var(--spacing-header)+0.75rem)] left-gutter max-md:hidden" />
+      <Plus className="right-gutter bottom-[clamp(1.25rem,3.2svh,2.75rem)] max-md:hidden" />
+
+      {/* Top right: who, where, what, and the one call to action. */}
+      <div className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:right-gutter md:w-[min(28vw,24rem)]">
+        <p className="slate grid text-bone-400">
+          {descriptor.map((line) => (
+            <span key={line} className="block overflow-clip">
+              <span data-rise className="block">
+                {line}
+              </span>
             </span>
-            <span className="text-lg leading-tight font-bold tracking-[-0.01em] [font-stretch:112%]">{slide.name}</span>
-            <span className="slate text-bone-400">
-              {slide.kind} · {slide.year}
-            </span>
+          ))}
+        </p>
+        <p className="mt-2 overflow-clip pb-[0.1em] text-[clamp(2.75rem,4.4vw,5rem)] leading-[0.92] font-light tracking-[-0.04em] text-bone-100">
+          <span data-rise className="block">
+            {discipline}
           </span>
-        </span>
-        <span className="col-span-full mt-1.5 h-px overflow-hidden bg-line" aria-hidden="true">
-          <span
-            key={`${slide.slug}-${running}`}
-            className="block h-full origin-left scale-x-0 bg-ember-500 data-[running]:animate-fill"
-            data-running={running || undefined}
-          />
-        </span>
-      </button>
-    </>
+        </p>
+        <div data-hud-fade className="mt-5">
+          <Magnetic strength={0.25}>
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                history.replaceState(null, "", "#contact");
+                scrollToTarget("#contact");
+              }}
+              className="slate group/cta inline-flex h-11 items-center gap-3 rounded-full pr-4 pl-5 text-bone-100 shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-[background-color,color,box-shadow] duration-(--dur-fast) ease-fluid hover:bg-bone-100 hover:text-ink-950 hover:shadow-[inset_0_0_0_1px_var(--color-bone-100)]"
+            >
+              Start a project
+              <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3 transition-transform duration-(--dur-base) ease-fluid group-hover/cta:translate-x-0.5">
+                <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </a>
+          </Magnetic>
+        </div>
+      </div>
+
+      {/* The instrument: ring, HUD line, reel window. */}
+      <div className="relative order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,27vw,620px)]">
+        <div className="relative">
+          <div data-ring aria-hidden="true" className="pointer-events-none absolute top-1/2 left-1/2 size-(--ring) -translate-1/2 text-[rgb(236_233_226/0.09)] md:text-[rgb(236_233_226/0.15)]">
+            <svg viewBox="0 0 200 200" className="absolute inset-0 size-full overflow-visible max-md:hidden">
+              {[0, 90, 180, 270].map((deg) => {
+                const a = polar(deg, 101.5);
+                const b = polar(deg, 104);
+                return <line key={deg} x1={a.cx} y1={a.cy} x2={b.cx} y2={b.cy} stroke="currentColor" vectorEffect="non-scaling-stroke" />;
+              })}
+            </svg>
+            <div ref={spinRef} className="size-full">
+              <div className="size-full animate-orbit [animation-play-state:paused] group-data-running/hero:[animation-play-state:running] motion-off:animate-none">
+                <svg viewBox="0 0 200 200" className="size-full overflow-visible max-md:opacity-60">
+                  <circle cx="100" cy="100" r="99.5" fill="none" stroke="currentColor" vectorEffect="non-scaling-stroke" />
+                  {ORBIT_DOTS.map(({ deg, accent: a }) => {
+                    const p = polar(deg);
+                    return (
+                      <circle
+                        key={deg}
+                        {...p}
+                        r={a ? 1.15 : 0.85}
+                        className={a ? "fill-ember-500" : "fill-bone-400"}
+                      />
+                    );
+                  })}
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2">
+            <div data-hud-line className="absolute inset-0 origin-center bg-[rgb(236_233_226/0.2)]" />
+            <span data-hud-fade className="absolute top-1/2 left-0 size-[5px] -translate-1/2 rounded-full bg-bone-100" />
+            <span data-hud-fade className="absolute top-1/2 right-0 size-[5px] translate-x-1/2 -translate-y-1/2 rounded-full bg-bone-100" />
+          </div>
+
+          {/* HUD labels: along the line on desktop, above the window on phones. */}
+          <div
+            data-hud-fade
+            className="slate pointer-events-none absolute bottom-[calc(50%+var(--win)*0.28125+0.75rem)] left-0 flex w-1/2 gap-3 tracking-[0.12em] text-bone-400 tabular-nums md:right-[calc(50%+var(--win)/2+2.75rem)] md:bottom-[calc(50%+0.625rem)] md:w-auto md:justify-between md:tracking-[0.16em]"
+          >
+            <span>{LAT}</span>
+            <span className="text-bone-100">{hudLabel}</span>
+          </div>
+          <div
+            data-hud-fade
+            className="slate pointer-events-none absolute right-0 bottom-[calc(50%+var(--win)*0.28125+0.75rem)] flex w-1/2 justify-end gap-3 tracking-[0.12em] text-bone-400 tabular-nums md:bottom-[calc(50%+0.625rem)] md:left-[calc(50%+var(--win)/2+2.75rem)] md:w-auto md:justify-between md:tracking-[0.16em]"
+          >
+            <span className="text-bone-100">
+              <span ref={timeRef}>{timecode(index * SLIDE_MS)}</span> sec
+            </span>
+            <span>{LON}</span>
+          </div>
+
+          <div className="relative mx-auto w-(--win)">
+            <div
+              ref={windowRef}
+              data-hero-window
+              className="relative aspect-video overflow-hidden rounded-[14px] [clip-path:inset(calc((1-var(--reveal,1))*50%)_0_round_14px)]"
+            >
+              <div data-gl-media className="absolute inset-0 bg-ink-900" />
+              {slides.map((s, i) =>
+                s.image ? (
+                  <div
+                    key={s.slug}
+                    className="group/slide absolute inset-0 opacity-0 transition-opacity duration-[1.8s] ease-io data-active:opacity-100"
+                    data-active={i === index || undefined}
+                    data-hero-still={i === 0 ? "" : undefined}
+                    data-slide={i}
+                    data-gl-media
+                  >
+                    <Image
+                      src={s.image.src}
+                      alt=""
+                      fill
+                      sizes="(min-width: 768px) 32vw, 90vw"
+                      quality={70}
+                      preload={i === 0}
+                      fetchPriority={i === 0 ? "high" : "low"}
+                      loading="eager"
+                      placeholder={s.image.lqip ? "blur" : "empty"}
+                      blurDataURL={s.image.lqip ?? undefined}
+                      className="origin-[55%_30%] scale-[1.04] object-cover object-top brightness-[0.82] saturate-[0.8] motion-on:group-data-running/hero:group-data-active/slide:animate-ken-burns"
+                    />
+                  </div>
+                ) : null,
+              )}
+              <div data-gl-media className="pointer-events-none absolute inset-0 rounded-[14px] shadow-[inset_0_0_40px_rgb(0_0_0/0.45)]" />
+            </div>
+
+            {(["-top-2.5 -left-2.5", "-top-2.5 -right-2.5", "-bottom-2.5 -left-2.5", "-bottom-2.5 -right-2.5"] as const).map((pos) => (
+              <span key={pos} aria-hidden="true" data-hud-fade className={`absolute size-[3px] rounded-full bg-bone-100/80 ${pos}`} />
+            ))}
+
+            <div data-hud-fade className="pointer-events-none absolute inset-0 grid place-items-center">
+              {reel ? (
+                <PlayReelButton src={reel.src} poster={reel.poster} title={reel.title} chapters={reel.chapters} />
+              ) : devProbe ? (
+                <DevReelProbe fallback={caseLink} />
+              ) : (
+                caseLink
+              )}
+            </div>
+
+            {slide ? (
+              <div className="absolute inset-x-0 top-full mt-3.5 flex items-start justify-between gap-4" aria-live="off">
+                <p className="min-w-0">
+                  <span key={slide.slug} data-hud-fade className="grid animate-fade-up gap-1">
+                    <span className="truncate text-sm leading-tight font-medium text-bone-100">{slide.name}</span>
+                    <span className="slate truncate text-bone-400">
+                      {slide.kind} · {slide.year}
+                    </span>
+                  </span>
+                </p>
+                <p data-hud-fade className="slate shrink-0 text-bone-400 tabular-nums">
+                  <span className="text-bone-100">{pad(index + 1)}</span> / {pad(slides.length)}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom left: the name, small, over the verb that turns with the reel. */}
+      <div className="order-3 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter">
+        <h1 id="hero-title" className="overflow-clip pb-[0.08em] text-[clamp(1.375rem,2.2vw,2.5rem)] leading-none font-light tracking-[-0.03em] text-bone-100 lowercase">
+          <span data-rise className="block">
+            {name}
+          </span>
+        </h1>
+        <p aria-hidden="true" className="overflow-clip pb-[0.2em] text-[24vw] leading-[0.9] font-light tracking-[-0.04em] text-bone-100 md:-ml-[0.05em] md:text-[min(10vw,21svh)]">
+          <span data-rise className="grid">
+            {VERBS.map((w) => {
+              const state = w === verb ? "active" : w === prevVerb ? "past" : "next";
+              return (
+                <span
+                  key={w}
+                  data-state={state}
+                  className="col-start-1 row-start-1 translate-y-[35%] opacity-0 transition-[translate,opacity] duration-500 ease-io data-[state=active]:translate-y-0 data-[state=active]:opacity-100 data-[state=active]:delay-[450ms] data-[state=active]:duration-[900ms] data-[state=active]:ease-fluid data-[state=next]:transition-none data-[state=past]:-translate-y-[25%]"
+                >
+                  {w}
+                </span>
+              );
+            })}
+          </span>
+        </p>
+      </div>
+    </section>
   );
 }

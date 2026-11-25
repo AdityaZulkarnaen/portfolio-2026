@@ -10,6 +10,8 @@ const TILTS = [-4, 3, -2, 5, -3];
 /**
  * A loose stack of contact prints. Click / Enter / Space sends the top print to the back.
  * The button exposes position ("Photo 2 of 4") so it is useful without sight.
+ * On phones it sits 2.5rem narrower than its column: the fanned back prints reach past
+ * the button box, and must not widen the layout viewport.
  */
 export function PhotoStack({ photos, name }: { photos: Media[]; name: string }) {
   const [top, setTop] = useState(0);
@@ -19,7 +21,7 @@ export function PhotoStack({ photos, name }: { photos: Media[]; name: string }) 
   return (
     <button
       type="button"
-      className="group/stack relative mx-auto block aspect-[4/5] w-full max-w-110 cursor-pointer rounded-md"
+      className="group/stack relative mx-auto block aspect-[4/5] w-[calc(100%-2.5rem)] max-w-110 md:w-full cursor-pointer rounded-md"
       data-cursor="next"
       onClick={() => setTop((t) => (t + 1) % n)}
       aria-label={`Photo ${top + 1} of ${n} of ${name}. Show next photo.`}

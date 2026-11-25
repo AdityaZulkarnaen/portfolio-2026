@@ -42,6 +42,14 @@ export interface StageApi {
   setHeroSources(source: HeroSource, index?: number): void;
   /** Sync with the DOM slideshow; `progress` is how far into the slide (0..1) it already is. */
   setSlide(index: number, progress?: number): void;
+  /**
+   * The hero "reel window": the stage draws the hero media inside this element's rect
+   * (rounded by its border-radius). An inline `--reveal` (0..1) on it opens the window
+   * vertically from its centre line. null = no window (smoke only).
+   */
+  setHeroWindow(el: HTMLElement | null): void;
+  /** Whether hero slide `index` is uploaded and can be shown without a blank/stale frame. */
+  slideReady(index: number): boolean;
   setTint(hex: string): void;
   /** Click pulse at client px (defaults to the last pointer position). */
   pulse(x?: number, y?: number): void;

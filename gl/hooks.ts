@@ -81,6 +81,16 @@ export function useHeroSource(
   }, [index, key]);
 }
 
+/** The hero reel window: the stage projects the hero media into this element's rect. */
+export function useHeroWindow(ref: RefObject<HTMLElement | null>) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    stageBridge.setHeroWindow(el);
+    return () => stageBridge.clearHeroWindow(el);
+  }, [ref]);
+}
+
 /**
  * Ambient tint. With an element: active while it crosses the middle of the viewport
  * (one ScrollTrigger). With null: active until released. Returns the release function.

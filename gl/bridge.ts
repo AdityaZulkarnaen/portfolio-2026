@@ -22,6 +22,7 @@ let tintSeq = 0;
 const tints = new Map<number, { hex: string; active: boolean; at: number }>();
 let tintClock = 0;
 let heroSource: HeroSource = null;
+let heroWindow: HTMLElement | null = null;
 let slide = { index: 0, progress: 0 };
 let progress = 0;
 const planes = new Map<HTMLElement, { stage: PlaneHandle | null }>();
@@ -45,6 +46,7 @@ export const stageBridge = {
     next.setTint(resolvedTint());
     next.setHeroSources(heroSource, slide.index);
     if (heroSource) next.setSlide(slide.index, slide.progress);
+    next.setHeroWindow(heroWindow);
     next.setScrollProgress(progress);
     next.setHandoff(document.documentElement.dataset.glHandoff !== undefined);
     for (const [el, entry] of planes) entry.stage = next.registerPlane(el);
@@ -98,6 +100,24 @@ export const stageBridge = {
     if (heroSource !== source) return;
     heroSource = null;
     stage?.setHeroSources(null);
+  },
+  setHeroWindow(el: HTMLElement | null) {
+    heroWindow = el;
+    stage?.setHeroWindow(el);
+  },
+  /** Only releases if `el` is still the registered window. */
+  clearHeroWindow(el: HTMLElement) {
+    if (heroWindow !== el) return;
+    heroWindow = null;
+    stage?.setHeroWindow(null);
+  },
+  /**
+   * Can the hero advance to slide `index` without the GL window showing a stale image?
+   * True when GL is not drawing (the DOM <img> is the picture then).
+   */
+  slideReady(index: number): boolean {
+    if (!stage || document.documentElement.dataset.gl !== "on") return true;
+    return stage.slideReady(index);
   },
   setSlide(index: number, p = 0) {
     slide = { index, progress: p };

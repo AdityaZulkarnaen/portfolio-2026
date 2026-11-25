@@ -14,11 +14,12 @@ import {
   UnsignedByteType,
   Vector2,
   Vector3,
+  Vector4,
   WebGLRenderer,
   WebGLRenderTarget,
 } from "three";
 
-import { gsap } from "@/lib/motion/gsap";
+import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { subscribeVelocity } from "@/lib/motion/lenis-store";
 
 import { targetDpr } from "./capabilities";
@@ -36,7 +37,12 @@ import type { HeroSource, PlaneHandle, PlaneProbe, StageApi, StageDebug, StageMo
  * what they registered in layout-effect cleanups (Activity-safe).
  *
  * Per frame (gsap.ticker, after Lenis): trail FBO (T2) → ¼-res generative field →
- * fullscreen background → media planes (T2, fine pointer; gl/plane.ts).
+ * fullscreen background (smoke + the hero reel window) → media planes (T2, fine pointer;
+ * gl/plane.ts).
+ *
+ * The hero window is measured in batches (ResizeObserver, resize, ScrollTrigger refresh)
+ * as a document-space rect; per frame only `scrollY` and its inline `--reveal` are read,
+ * so the tick never forces layout.
  *
  * No React in here. This module (and three.js) is only reachable through a dynamic
  * import, so it never lands in the initial route chunk.
@@ -124,6 +130,11 @@ class Stage implements StageApi {
   private heroTint = new Color(DEFAULT_TINT);
   private heroTintTarget = new Color(DEFAULT_TINT);
 
+  private winEl: HTMLElement | null = null;
+  private winDoc = { x: 0, y: 0, w: 0, h: 0, r: 0 };
+  private winDirty = true;
+  private winRO: ResizeObserver;
+
   private unsubVelocity: () => void;
   private resizeRaf = 0;
 
@@ -201,14 +212,19 @@ class Stage implements StageApi {
         uKbB: { value: 0 },
         uHasSource: { value: 0 },
         uHero: { value: 0 },
+        uDpr: { value: 1 },
+        uWin: { value: new Vector4() },
+        uWinRadius: { value: 0 },
+        uWinReveal: { value: 1 },
+        uWinOn: { value: 0 },
         uDisplacement: { value: this.tier === 2 ? 0.006 : 0.004 },
         uAberration: { value: this.tier === 2 ? 1 : 0.6 },
         uHueShift: { value: 0 },
         uClickPulse: { value: 0 },
         uClickPos: { value: new Vector2(0.5, 0.5) },
         uScanline: { value: 1 },
-        uVignette: { value: 0.6 },
-        uGrain: { value: 0.036 },
+        uVignette: { value: 0.55 },
+        uGrain: { value: 0.03 },
         uProgress: { value: 0 },
         uTint: { value: new Vector3() },
         uHeroTint: { value: new Vector3() },
@@ -229,6 +245,9 @@ class Stage implements StageApi {
     canvas.addEventListener("webglcontextrestored", this.onContextRestored, false);
     window.addEventListener("pointermove", this.onPointerMove, { passive: true });
     window.addEventListener("resize", this.onResize, { passive: true });
+    this.winRO = new ResizeObserver(this.invalidateWindow);
+    this.winRO.observe(document.body);
+    ScrollTrigger.addEventListener("refresh", this.invalidateWindow);
     this.unsubVelocity = subscribeVelocity((v) => {
       this.scrollVelTarget = v;
     });
@@ -286,6 +305,20 @@ class Stage implements StageApi {
     this.pendingMix = true;
   }
 
+  setHeroWindow(el: HTMLElement | null) {
+    if (el === this.winEl) return;
+    if (this.winEl) this.winRO.unobserve(this.winEl);
+    this.winEl = el;
+    if (el) this.winRO.observe(el);
+    this.winDirty = true;
+  }
+
+  slideReady(index: number): boolean {
+    if (!this.source) return false;
+    if (this.source.kind === "video") return this.handles[0]?.ready ?? false;
+    return this.handles[index]?.ready ?? false;
+  }
+
   setTint(hex: string) {
     try {
       this.tintTarget.set(hex);
@@ -311,6 +344,7 @@ class Stage implements StageApi {
 
   remeasure() {
     this.measure();
+    this.winDirty = true;
     this.planes.invalidate();
   }
 
@@ -348,6 +382,9 @@ class Stage implements StageApi {
     window.removeEventListener("resize", this.onResize);
     cancelAnimationFrame(this.resizeRaf);
     this.unsubVelocity();
+    this.winRO.disconnect();
+    ScrollTrigger.removeEventListener("refresh", this.invalidateWindow);
+    this.winEl = null;
     this.mixTween?.kill();
     this.pulseTl?.kill();
     for (const h of this.handles) h?.release();
@@ -438,7 +475,48 @@ class Stage implements StageApi {
   private onResize = () => {
     cancelAnimationFrame(this.resizeRaf);
     this.resizeRaf = requestAnimationFrame(() => this.measure());
+    this.winDirty = true;
   };
+
+  private invalidateWindow = () => {
+    this.winDirty = true;
+  };
+
+  private measureWindow() {
+    this.winDirty = false;
+    const el = this.winEl;
+    if (!el || !el.isConnected) return;
+    const r = el.getBoundingClientRect();
+    const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    this.winDoc = { x: r.left + window.scrollX, y: r.top + window.scrollY, w: r.width, h: r.height, r: radius };
+  }
+
+  /** Window rect in drawing-buffer px (y up) for this frame; returns whether it is drawable. */
+  private updateWindowUniforms(): boolean {
+    const u = this.bgMat.uniforms;
+    const el = this.winEl;
+    if (!el || !el.isConnected) {
+      u.uWinOn.value = 0;
+      return false;
+    }
+    if (this.winDirty) this.measureWindow();
+    const { x, y, w, h, r } = this.winDoc;
+    if (w < 2 || h < 2) {
+      u.uWinOn.value = 0;
+      return false;
+    }
+    const res = u.uResolution.value as Vector2;
+    const sx = res.x / this.width;
+    const sy = res.y / this.height;
+    const top = y - window.scrollY;
+    const left = x - window.scrollX;
+    (u.uWin.value as Vector4).set(left * sx, (this.height - top - h) * sy, w * sx, h * sy);
+    u.uWinRadius.value = r * sx;
+    const reveal = parseFloat(el.style.getPropertyValue("--reveal"));
+    u.uWinReveal.value = Number.isFinite(reveal) ? reveal : 1;
+    u.uWinOn.value = top + h > -8 && top < this.height + 8 ? 1 : 0;
+    return true;
+  }
 
   private measure() {
     const w = Math.max(1, this.canvas.clientWidth || window.innerWidth);
@@ -450,6 +528,7 @@ class Stage implements StageApi {
     this.renderer.setSize(w, h, false);
     this.fieldRT.setSize(Math.ceil(w / FIELD_DIVISOR), Math.ceil(h / FIELD_DIVISOR));
     (this.bgMat.uniforms.uResolution.value as Vector2).set(Math.round(w * this.dpr), Math.round(h * this.dpr));
+    this.bgMat.uniforms.uDpr.value = this.dpr;
     this.planes.setViewport(w, h);
   }
 
@@ -510,6 +589,8 @@ class Stage implements StageApi {
     (u.uMouse.value as Vector2).copy(this.pointerUv);
     (u.uMouseVel.value as Vector2).copy(this.pointerVel);
     u.uScrollVel.value = this.scrollVel;
+    if (this.mode === "hero" || u.uHero.value > 0.002) this.updateWindowUniforms();
+    else u.uWinOn.value = 0;
 
     // Draw.
     const r = this.renderer;
