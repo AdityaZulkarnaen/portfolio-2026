@@ -13,11 +13,12 @@
  *
  * Node 22 native TypeScript: erasable syntax only, explicit `.ts` imports, no `@/` alias.
  */
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 
 import type { Database, Json } from "../../lib/supabase/database.types.ts";
 import {
@@ -28,9 +29,11 @@ import {
   type SeedFrame,
   type SeedTestimonial,
 } from "../../lib/content/seed-data.ts";
+import { findPhoto } from "../../lib/content/section-media.ts";
 
 const BUCKET = "media";
 const MAX_WIDTH = 2560;
+const SECTION_MAX = 2000;
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
 const secret = process.env.SUPABASE_SECRET_KEY?.trim();
@@ -109,6 +112,8 @@ async function resetContent() {
   await removeStoragePrefix("profile");
   await removeStoragePrefix("testimonials");
   await removeStoragePrefix("clients");
+  await removeStoragePrefix("experience");
+  await removeStoragePrefix("achievements");
 }
 
 // ---------------------------------------------------------------------------
@@ -342,7 +347,7 @@ async function seedLists() {
         summary: a.summary,
         url: a.url ?? null,
         position: a.position,
-        published: true,
+        published: !retired.achievements.includes(a.slug),
       })),
       { onConflict: "slug" },
     ),
@@ -419,6 +424,60 @@ async function seedClients() {
   console.log(`  ✓ ${bundle.clients.length} clients`);
 }
 
+/**
+ * Section images (experience reels, trophy cards), linked by path: `experience/<key>.webp`,
+ * `achievements/<key>.webp`. Sources in supabase/seed/assets may be any size or format:
+ * each is downscaled to ≤2000px WebP with a tiny LQIP, uploaded, and written to public/seed
+ * for the offline fallback. Optional owner photos are skipped while absent.
+ */
+async function seedSectionMedia() {
+  const assets = resolve(seedDir, "assets");
+  let count = 0;
+  for (const [i, m] of bundle.sectionMedia.entries()) {
+    const source = findPhoto(assets, m.dir, m.key);
+    if (!source) {
+      if (!m.optional) console.warn(`  ! section image ${m.dir}/${m.key} is missing from supabase/seed/assets.`);
+      continue;
+    }
+    const image = sharp(readFileSync(resolve(assets, source))).rotate();
+    const { data, info } = await image
+      .clone()
+      .resize({ width: SECTION_MAX, height: SECTION_MAX, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer({ resolveWithObject: true });
+    const lqip = await image.clone().resize({ width: 16 }).webp({ quality: 40 }).toBuffer();
+    const file = `${m.dir}/${m.key}.webp`;
+    const uploaded = await db.storage.from(BUCKET).upload(file, data, {
+      contentType: "image/webp",
+      cacheControl: "31536000",
+      upsert: true,
+    });
+    if (uploaded.error) throw new Error(`upload ${file}: ${uploaded.error.message}`);
+    check(
+      `media ${file}`,
+      await db.from("media").upsert(
+        {
+          kind: "image",
+          source: "storage",
+          path: file,
+          width: info.width,
+          height: info.height,
+          alt: m.alt,
+          lqip: `data:image/webp;base64,${lqip.toString("base64")}`,
+          focal_x: m.focal_x ?? null,
+          focal_y: m.focal_y ?? null,
+          position: i,
+        },
+        { onConflict: "source,path" },
+      ),
+    );
+    mkdirSync(resolve(publicDir, "seed", m.dir), { recursive: true });
+    writeFileSync(resolve(publicDir, "seed", file), data);
+    count++;
+  }
+  console.log(`  ✓ ${count} section images`);
+}
+
 async function seedAdmin() {
   if (!adminEmail) {
     console.warn("  ! ADMIN_EMAIL is not set — skipping the admins row.");
@@ -449,6 +508,7 @@ async function main() {
   await seedLists();
   await seedTestimonials();
   await seedClients();
+  await seedSectionMedia();
   await seedAdmin();
   console.log("Done. Revalidate the site (tag `content`) to see changes.");
 }

@@ -95,6 +95,21 @@ export type ExtraContent = {
   }[];
   testimonials?: SeedTestimonial[];
   clients?: SeedClient[];
+  section_media?: SeedSectionMedia[];
+};
+
+/**
+ * Section images found by file name under `<dir>/<key>.(webp|jpg|jpeg|png)`: in
+ * supabase/seed/assets for the seed, in public/seed for the offline fallback (see
+ * section-media.ts). `optional` ones (owner photos) are skipped while absent.
+ */
+export type SeedSectionMedia = {
+  dir: "experience" | "achievements";
+  key: string;
+  alt: string;
+  focal_x?: number;
+  focal_y?: number;
+  optional?: boolean;
 };
 
 /** Logo files live in public/ (served as-is offline, uploaded to storage by the seed). */
@@ -179,6 +194,7 @@ export type SeedBundle = {
   achievements: (ExtraContent["achievements"][number] & { position: number })[];
   testimonials: (SeedTestimonial & { position: number })[];
   clients: (SeedClient & { position: number })[];
+  sectionMedia: SeedSectionMedia[];
 };
 
 /** Single-image default frame from the device/shape preset. */
@@ -279,5 +295,6 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
     achievements: extra.achievements.map((a, i) => ({ ...a, position: i })),
     testimonials: (extra.testimonials ?? []).map((t, i) => ({ ...t, position: i })),
     clients: (extra.clients ?? []).map((c, i) => ({ ...c, position: i })),
+    sectionMedia: extra.section_media ?? [],
   };
 }

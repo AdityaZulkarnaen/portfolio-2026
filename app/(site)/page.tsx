@@ -18,13 +18,14 @@ import {
   getExperiences,
   getFeaturedProjects,
   getProfile,
+  getSectionMedia,
   getSkills,
   getTestimonials,
 } from "@/lib/content/queries";
 import { DEFAULT_METRICS } from "@/lib/content/mappers";
 
 export default async function HomePage() {
-  const [profile, featured, all, reel, skills, experiences, achievements, clients, testimonials] = await Promise.all([
+  const [profile, featured, all, reel, skills, experiences, achievements, clients, testimonials, sectionMedia] = await Promise.all([
     getProfile(),
     getFeaturedProjects(),
     getAllProjects(),
@@ -34,6 +35,7 @@ export default async function HomePage() {
     getAchievements(),
     getClients(),
     getTestimonials(),
+    getSectionMedia(),
   ]);
 
   return (
@@ -50,10 +52,10 @@ export default async function HomePage() {
         <About profile={profile} />
       </TintZone>
       <TintZone tone="experience">
-        <Experience items={experiences} />
+        <Experience items={experiences} projects={all} media={sectionMedia} />
       </TintZone>
       <TintZone tone="achievements">
-        <Achievements items={achievements} />
+        <Achievements items={achievements} projects={all} media={sectionMedia} />
       </TintZone>
       <TintZone tone="stack">
         <Stack skills={skills} />

@@ -17,6 +17,7 @@ import {
   fallbackExperiences,
   fallbackProfile,
   fallbackProjects,
+  fallbackSectionMedia,
   fallbackSkills,
   fallbackTestimonials,
 } from "./fallback";
@@ -24,6 +25,7 @@ import {
   mapAchievement,
   mapClient,
   mapExperience,
+  mapMedia,
   mapProfile,
   mapProject,
   mapReel,
@@ -35,7 +37,8 @@ import {
   type ReelRowWithChapters,
   type TestimonialRowWithRelations,
 } from "./mappers";
-import type { Achievement, Client, Experience, Profile, Project, Reel, Skill, Testimonial } from "./types";
+import { SECTION_MEDIA_DIRS, sectionKey } from "./section-media";
+import type { Achievement, Client, Experience, Media, Profile, Project, Reel, Skill, Testimonial } from "./types";
 
 const PROJECT_SELECT = `
   *,
@@ -190,6 +193,24 @@ export async function getAchievements(): Promise<Achievement[]> {
     .order("position", { ascending: true });
   if (error) fail("achievements", error);
   return (data ?? []).map(mapAchievement);
+}
+
+/** Experience and trophy images, linked by storage path (`experience/<key>.*`), keyed by `<key>`. */
+export async function getSectionMedia(): Promise<Record<string, Media>> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("content", "media");
+
+  const supabase = getPublicClient();
+  if (!supabase) return fallbackSectionMedia();
+
+  const { data, error } = await supabase
+    .from("media")
+    .select("*")
+    .eq("source", "storage")
+    .or(SECTION_MEDIA_DIRS.map((d) => `path.like.${d}/%`).join(","));
+  if (error) fail("section media", error);
+  return Object.fromEntries((data ?? []).map((row) => [sectionKey(row.path), mapMedia(row)]));
 }
 
 export async function getActiveReel(): Promise<Reel | null> {

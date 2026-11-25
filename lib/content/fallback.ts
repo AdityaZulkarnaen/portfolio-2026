@@ -6,12 +6,15 @@ import "server-only";
  * so the site renders identical domain objects with or without Supabase.
  * Images point at the Sanity CDN (absolute URLs pass through media-url).
  */
+import { join } from "node:path";
+
 import type { Tables } from "@/lib/supabase/database.types";
 
 import {
   mapAchievement,
   mapClient,
   mapExperience,
+  mapMedia,
   mapProfile,
   mapProject,
   mapSkill,
@@ -20,7 +23,8 @@ import {
   type ProjectRowWithRelations,
 } from "./mappers";
 import { buildSeedBundle, type ExtraContent, type LegacyContent, type LegacyImage, type SeedBundle } from "./seed-data";
-import type { Achievement, Client, Experience, Profile, Project, Skill, Testimonial } from "./types";
+import { findPhoto, readImageSize } from "./section-media";
+import type { Achievement, Client, Experience, Media, Profile, Project, Skill, Testimonial } from "./types";
 
 const EPOCH = "1970-01-01T00:00:00.000Z";
 const stamps = { created_at: EPOCH, updated_at: EPOCH };
@@ -192,7 +196,8 @@ export async function fallbackSkills(): Promise<Skill[]> {
 
 export async function fallbackAchievements(): Promise<Achievement[]> {
   const bundle = await loadBundle();
-  return bundle.achievements.map((a) =>
+  const retired = new Set(bundle.retired.achievements);
+  return bundle.achievements.filter((a) => !retired.has(a.slug)).map((a) =>
     mapAchievement({
       id: `seed-achievement-${a.slug}`,
       slug: a.slug,
@@ -286,4 +291,32 @@ export async function fallbackTestimonials(): Promise<Testimonial[]> {
       project: project ? { slug: project.slug, name: project.name, published: project.published } : null,
     });
   });
+}
+
+/** Section images served from public/seed (copied there by the seed), keyed by file name. */
+export async function fallbackSectionMedia(): Promise<Record<string, Media>> {
+  const bundle = await loadBundle();
+  const root = join(process.cwd(), "public", "seed");
+  const out: Record<string, Media> = {};
+  bundle.sectionMedia.forEach((m, i) => {
+    const file = findPhoto(root, m.dir, m.key);
+    const size = file ? readImageSize(join(root, file)) : null;
+    if (!file || !size) return;
+    out[m.key] = mapMedia({
+      id: `seed-section-${m.key}`,
+      kind: "image",
+      source: "public",
+      path: `seed/${file}`,
+      width: size.width,
+      height: size.height,
+      alt: m.alt,
+      lqip: null,
+      focal_x: m.focal_x ?? null,
+      focal_y: m.focal_y ?? null,
+      duration_s: null,
+      position: i,
+      ...stamps,
+    });
+  });
+  return out;
 }

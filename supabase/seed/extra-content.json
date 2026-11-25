@@ -330,6 +330,14 @@
       "summary": "*VISTA Protocol*, a dApp that pays users for their attention on social ads. Contracts and reward flow in Solidity on Monad testnet."
     },
     {
+      "slug": "krti-2025",
+      "kind": "competition",
+      "title": "Finalist, KRTI 2025",
+      "org": "Technology Development · GAMAFORCE UGM",
+      "period": "2025",
+      "summary": "Kontes Robot Terbang Indonesia, the national flying robot contest. A *flying-wing UAV* that takes off and lands vertically, cruises as a fixed wing, and stitches its aerial photos into orthomosaics to track deforestation."
+    },
+    {
       "slug": "gdgoc-ugm-hackathon-2026",
       "kind": "competition",
       "title": "Top 5 Finalist, GDGoC UGM Hackathon",
@@ -518,10 +526,10 @@
       "org": "GAMAFORCE UGM",
       "start_date": "2024-12-01",
       "end_date": "2026-10-01",
-      "summary": "The ground control station for UGM's UAV research team.",
+      "summary": "Software for the ground control station of UGM's UAV research team.",
       "highlights": [
-        "Flask services for orthomosaic stitching, heatmaps and segmentation, wired in through an Express backend.",
-        "Moved mission logs to Supabase (PostgreSQL), so past flight telemetry can be queried."
+        "Backend services in Flask and Express for the ground control station.",
+        "Moved flight logs to Supabase (PostgreSQL) so past flights can be queried."
       ],
       "stack": [
         "Flask",
@@ -549,6 +557,75 @@
       ]
     }
   ],
+  "section_media": [
+    {
+      "dir": "experience",
+      "key": "gmt-botlaunchpad",
+      "alt": "BOT Launchpad home page: launch a BOT Chain contract from a template"
+    },
+    {
+      "dir": "experience",
+      "key": "gmt-instantblog",
+      "alt": "InstantBlog home page: write a sourced article in minutes"
+    },
+    {
+      "dir": "experience",
+      "key": "gmt-gitaura",
+      "alt": "GitAura home page: sign in with GitHub to read a developer's aura"
+    },
+    {
+      "dir": "experience",
+      "key": "gmt-abi-studio",
+      "alt": "ABI Studio home page: an instant interface for any BOT Chain contract"
+    },
+    {
+      "dir": "experience",
+      "key": "satel",
+      "alt": "The KATY team working on Satu Teladan at their laptops",
+      "focal_x": 0.5,
+      "focal_y": 0.45
+    },
+    {
+      "dir": "achievements",
+      "key": "krti-2025",
+      "alt": "GAMAFORCE UGM's flying-wing VTOL UAV at KRTI 2025",
+      "focal_x": 0.5,
+      "focal_y": 0.3,
+      "optional": true
+    },
+    {
+      "dir": "achievements",
+      "key": "pkm-2026",
+      "alt": "The PKM-KC 2026 hemoglobin screening device",
+      "focal_x": 0.5,
+      "focal_y": 0.3,
+      "optional": true
+    },
+    {
+      "dir": "achievements",
+      "key": "monad-blitz-v2",
+      "alt": "Monad Blitz V2, where Depths took 2nd place",
+      "focal_x": 0.5,
+      "focal_y": 0.3,
+      "optional": true
+    },
+    {
+      "dir": "achievements",
+      "key": "monad-blitz-2026",
+      "alt": "Monad Blitz 2026, where VISTA Protocol took 2nd place",
+      "focal_x": 0.5,
+      "focal_y": 0.3,
+      "optional": true
+    },
+    {
+      "dir": "achievements",
+      "key": "gdgoc-2026",
+      "alt": "GDGoC UGM Hackathon 2026 finals",
+      "focal_x": 0.5,
+      "focal_y": 0.3,
+      "optional": true
+    }
+  ],
   "retired": {
     "$comment": "Rows the seed unpublishes because the CV no longer lists them (experience/achievement slugs, skill names).",
     "experiences": [
@@ -565,6 +642,6 @@
       "PyTorch",
       "TensorFlow"
     ],
-    "achievements": []
+    "achievements": ["universitas-gadjah-mada"]
   }
 }
