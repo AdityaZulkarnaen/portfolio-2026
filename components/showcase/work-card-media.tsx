@@ -23,6 +23,13 @@ type Props = {
 /** DOM image under a GL plane: faded out once the plane draws, instantly back for snapshots. */
 const PLANE_MEDIA = "transition-opacity duration-500 ease-io gl-plane:opacity-0 gl-handoff:transition-none";
 
+/**
+ * Without GL the same `--dev` (0..1, set by the home sequence on the frame) develops the
+ * media with a soft top-down mask. Unset (reduced motion, other pages) = fully shown.
+ */
+const DEV_MASK =
+  "[mask-image:linear-gradient(to_bottom,#000_calc(var(--dev,1)*130%-30%),transparent_calc(var(--dev,1)*130%))]";
+
 /** Muted loop: plays while ≥50% visible and motion is allowed; shares the document-wide cap of two. */
 function CardLoop({ src, poster, label }: { src: string; poster: string | null; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -56,7 +63,7 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   return (
     <video
       ref={ref}
-      className="absolute inset-0 size-full object-cover object-top"
+      className={`absolute inset-0 size-full object-cover object-top ${DEV_MASK}`}
       src={src}
       poster={poster ?? undefined}
       muted
@@ -70,7 +77,7 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
 
 /**
  * Card media: the loop video when the project has one, otherwise the cover still drawn
- * through a GL plane (gated: only while the card is settled, see PlaneWindow).
+ * through a GL plane (which follows the card's pose transform).
  */
 export function WorkCardMedia({ cover, loop, sizes, preload = false, label, className = "" }: Props) {
   if (loop && loop.kind === "video") {
@@ -82,7 +89,7 @@ export function WorkCardMedia({ cover, loop, sizes, preload = false, label, clas
   }
   if (!cover) return <div className="absolute inset-0 bg-ink-900" />;
   return (
-    <PlaneWindow className={`absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent ${className}`} behavior="static" gated>
+    <PlaneWindow className={`absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent ${className}`} behavior="static">
       <Image
         src={cover.src}
         alt={cover.alt || label}
@@ -92,7 +99,7 @@ export function WorkCardMedia({ cover, loop, sizes, preload = false, label, clas
         preload={preload}
         placeholder={cover.lqip ? "blur" : "empty"}
         blurDataURL={cover.lqip ?? undefined}
-        className={`object-cover ${PLANE_MEDIA}`}
+        className={`object-cover ${PLANE_MEDIA} ${DEV_MASK}`}
         style={{
           objectPosition: cover.focalX != null && cover.focalY != null ? `${cover.focalX * 100}% ${cover.focalY * 100}%` : "50% 0%",
         }}

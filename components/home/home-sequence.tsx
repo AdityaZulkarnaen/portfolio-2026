@@ -28,6 +28,10 @@ import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 type Rect = { x: number; y: number; w: number; h: number };
 
 const RADIUS = 14;
+/** The held reel: just under the header pills, 56px clear above the viewport bottom. */
+const HOLD_TOP = 63;
+const HOLD_BOTTOM = 56;
+const HOLD_RADIUS = 10;
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const range = (v: number, a: number, b: number) => clamp01((v - a) / (b - a));
@@ -36,6 +40,22 @@ const lerpRect = (a: Rect, b: Rect, t: number): Rect => ({ x: lerp(a.x, b.x, t),
 const inOut = gsap.parseEase("power3.inOut");
 const out = gsap.parseEase("power2.out");
 const landEase = gsap.parseEase("power3.out");
+
+/**
+ * The held reel frame: under the header pills, HOLD_BOTTOM clear of the bottom, ~82vw
+ * wide and centred. Portrait screens: full content width, a band no taller than ~1.25x
+ * its width, centred in the same space, so a landscape cover isn't cropped to a sliver.
+ */
+function holdRect(vw: number, vh: number): Rect {
+  const space = vh - HOLD_TOP - HOLD_BOTTOM;
+  if (vh / vw > 1.2) {
+    const w = vw - 32;
+    const h = Math.min(space, w * 1.25);
+    return { x: 16, y: HOLD_TOP + (space - h) / 2, w, h };
+  }
+  const w = Math.min(vw * 0.82, space * 2.4);
+  return { x: (vw - w) / 2, y: HOLD_TOP, w, h: space };
+}
 
 /** Deterministic 0..1 noise per (card, channel). */
 function seeded(i: number, k: number) {
@@ -110,10 +130,7 @@ export function HomeSequence({ children }: { children: ReactNode }) {
         // Hero box in the viewport: pinned at 0, then pushed down by the spacer.
         const heroTop = scroll <= self.end ? 0 : self.end - scroll;
         const slotV: Rect = { ...slotRel, y: slotRel.y + heroTop };
-        // Fullscreen; on a portrait screen a centred band instead, so a landscape cover
-        // is not cropped to a sliver and magnified.
-        const fullH = vh / vw > 1.2 ? Math.min(vh, vw * 1.1) : vh;
-        const full: Rect = { x: 0, y: (vh - fullH) / 2, w: vw, h: fullH };
+        const full = holdRect(vw, vh);
 
         let rect: Rect;
         let radius: number;
@@ -123,11 +140,11 @@ export function HomeSequence({ children }: { children: ReactNode }) {
           // can arrive above it rather than under it.
           const k = landEase(c);
           rect = lerpRect(full, target, k);
-          radius = RADIUS * k;
+          radius = lerp(HOLD_RADIUS, RADIUS, k);
         } else {
           const k = inOut(a);
           rect = lerpRect(slotV, full, k);
-          radius = RADIUS * (1 - k);
+          radius = lerp(RADIUS, HOLD_RADIUS, k);
         }
         const frameOpacity = 1 - range(c, 0.9, 1);
 
@@ -163,6 +180,9 @@ export function HomeSequence({ children }: { children: ReactNode }) {
           const s = range(a, 0.8, 1) * (1 - range(c, 0, 0.15));
           slate.style.opacity = String(s);
           slate.style.visibility = s > 0.01 ? "visible" : "hidden";
+          // In the band under the held frame, aligned to its left edge.
+          slate.style.left = `${full.x}px`;
+          slate.style.bottom = `${Math.max(8, (HOLD_BOTTOM - 22) / 2)}px`;
         }
 
         // T0 room (no GL): fade so the cards show. Under GL the CSS rule hides it; never
@@ -210,60 +230,81 @@ export function HomeSequence({ children }: { children: ReactNode }) {
       // viewport during C (behind the lead, captions hidden); later cards scatter locally
       // as they enter. Every card is at identity by the time its top is ~65% down.
       const maxRot = touch ? 4 : 8;
-      const leadPose = lead.closest<HTMLElement>("[data-pose]");
-      const syncLead = () => {
-        // The lead's GL plane would draw under the DOM prints; keep its DOM image (above
-        // them, z-10) until every tossed print has settled.
-        if (!leadPose) return;
-        const all = pulledEls.every((el) => el.dataset.settled !== undefined);
-        if (all && leadPose.dataset.settled === undefined) leadPose.dataset.settled = "";
-        else if (!all && leadPose.dataset.settled !== undefined) leadPose.removeAttribute("data-settled");
-      };
-      // Where the tossed prints sit at the landing moment (fractions of the viewport): the
-      // bottom corners, beside and below the lead, never above its caption, so on their
-      // way into the grid they only travel down and inward, behind the lead.
+      // Where the tossed (still undeveloped) prints sit at the landing moment, as fractions
+      // of the viewport: desktop, mostly off the side edges beside the lead image, so they
+      // peek in and stay clear of the lead caption; phones, just below the fold.
       const SPOTS = touch
         ? [
             [0.12, 1.1],
             [0.88, 1.16],
           ]
         : [
-            [0.04, 0.98],
-            [0.96, 0.96],
-            [0.1, 1.16],
-            [0.9, 1.14],
+            [-0.08, 0.6],
+            [1.08, 0.52],
+            [-0.06, 0.88],
+            [1.06, 0.82],
           ];
       const appliers: (() => void)[] = [];
+      const devTriggers: ScrollTrigger[] = [];
       const tweens = poses.map((el, j) => {
         const i = j + 1;
         const r = (k: number) => seeded(i, k);
         const rotation = (r(3) * 2 - 1) * maxRot;
-        const scale = touch ? 0.62 + r(4) * 0.18 : 0.6 + r(4) * 0.3;
+        const scale = touch ? 0.62 + r(4) * 0.18 : 0.55 + r(4) * 0.2;
         const pulled = i <= near;
         const spot = SPOTS[(i - 1) % SPOTS.length];
-        const spotX = () => vw * (spot[0] + (r(1) - 0.5) * 0.06);
+        // Desktop prints peek in from the side edges by at most 6vw, whatever their size,
+        // so they never reach the 85vw column (and the lead caption in it).
+        const spotX = () => {
+          if (touch) return vw * (spot[0] + (r(1) - 0.5) * 0.06);
+          const half = (el.offsetWidth * scale) / 2;
+          const peek = vw * (0.035 + r(1) * 0.025);
+          return spot[0] < 0.5 ? peek - half : vw - peek + half;
+        };
         const spotY = () => vh * (spot[1] + (r(2) - 0.5) * 0.08);
         // Pulled prints ride up with the section through C and are on their spot when the
         // pin ends; they settle from there.
         const landAt = () => pin.end;
         const caption = el.querySelector<HTMLElement>("[data-pose-caption]");
+        const frame = el.querySelector<HTMLElement>("[data-frame]");
+        // Develop (0 = dark ink, 1 = picture): the GL wave reads it from the frame
+        // (gl/plane.ts), the DOM mask reads the same CSS variable. The caption follows.
+        const develop = (d: number) => {
+          frame?.style.setProperty("--dev", d.toFixed(4));
+          if (caption) caption.style.opacity = String(range(d, 0.7, 1));
+        };
+        develop(0);
 
         el.removeAttribute("data-settled");
+        if (frame) frame.style.boxShadow = "none";
         // Earlier prints above later ones, all below the lead (z-10): a print still on its
         // way never lands on a caption that has already settled above it.
         el.style.zIndex = String(Math.max(1, 9 - i));
-        if (caption) caption.style.opacity = "0";
-        // Caption + settled state from the animation's progress. Also run after every
-        // refresh: a refresh can re-seat the scrubbed tween without an onUpdate.
+        // Settled state (and, for tossed prints, the develop) from the settle animation's
+        // progress, so settling and developing are one gesture that ends together. Also
+        // run after every refresh: a refresh can re-seat a scrubbed tween without onUpdate.
         const apply = (t: number) => {
-          if (caption) caption.style.opacity = String(range(t, 0.82, 1));
+          if (pulled) develop(range(t, 0.35, 1));
           const settled = t > 0.999;
           if (settled !== (el.dataset.settled !== undefined)) {
             if (settled) el.dataset.settled = "";
             else el.removeAttribute("data-settled");
-            if (pulled) syncLead();
+            // Frame chrome (edge line, phone shell) is DOM and would sit above every GL
+            // plane; while prints overlap in flight, only their pictures show.
+            if (frame) frame.style.boxShadow = settled ? "" : "none";
           }
         };
+        // Grid cards develop with the scroll as they come up (and go dark again going back).
+        const devTrigger = pulled
+          ? null
+          : ScrollTrigger.create({
+              trigger: el.parentElement ?? el,
+              start: "top 85%",
+              end: "top 40%",
+              onUpdate: (self) => develop(self.progress),
+              onRefresh: (self) => develop(self.progress),
+            });
+        if (devTrigger) devTriggers.push(devTrigger);
         const tween = gsap.fromTo(
           el,
           {
@@ -307,7 +348,6 @@ export function HomeSequence({ children }: { children: ReactNode }) {
         appliers.push(() => apply(tween.progress()));
         return tween;
       });
-      syncLead();
       const syncAll = () => {
         for (const fn of appliers) fn();
       };
@@ -319,6 +359,7 @@ export function HomeSequence({ children }: { children: ReactNode }) {
         ScrollTrigger.removeEventListener("refreshInit", setOverlap);
         ScrollTrigger.removeEventListener("refresh", syncAll);
         for (const t of tweens) t.scrollTrigger?.kill();
+        for (const t of devTriggers) t.kill();
         pin.kill(true);
         work.style.marginTop = "";
         for (const prop of ["inset", "left", "top", "width", "height", "opacity", "pointerEvents"] as const) win.style[prop] = "";
@@ -335,6 +376,8 @@ export function HomeSequence({ children }: { children: ReactNode }) {
         if (slate) {
           slate.style.opacity = "";
           slate.style.visibility = "";
+          slate.style.left = "";
+          slate.style.bottom = "";
         }
         if (room) room.style.opacity = "";
         if (row) row.style.zIndex = "";
@@ -350,8 +393,10 @@ export function HomeSequence({ children }: { children: ReactNode }) {
           el.style.opacity = "";
           const caption = el.querySelector<HTMLElement>("[data-pose-caption]");
           if (caption) caption.style.opacity = "";
+          const fr = el.querySelector<HTMLElement>("[data-frame]");
+          fr?.style.removeProperty("--dev");
+          if (fr) fr.style.boxShadow = "";
         }
-        if (leadPose) leadPose.dataset.settled = "";
         stageBridge.setHeroWindowRect(null);
         resetSequenceState();
         requestAnimationFrame(() => {

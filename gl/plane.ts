@@ -59,6 +59,8 @@ type Layout = {
   /** Image layout box relative to the window (untransformed). */
   img: Rect4;
   pos: [number, number];
+  /** Pose origin (its centre) in document px, when the plane belongs to a pose. */
+  origin: [number, number] | null;
 };
 
 type Plane = {
@@ -66,6 +68,11 @@ type Plane = {
   img: HTMLImageElement;
   frame: HTMLElement | null;
   mover: HTMLElement | null;
+  /**
+   * A transformed card (`[data-pose]`, e.g. a scattered featured print): the plane is
+   * measured untransformed and follows its GSAP x/y/rotation/scale in the vertex shader.
+   */
+  pose: HTMLElement | null;
   marker: HTMLElement;
   tex: TextureHandle | null;
   mesh: Mesh;
@@ -162,6 +169,8 @@ export class PlaneSystem {
         uOpacity: { value: 1 },
         uSeed: { value: (this.seed++ % 17) * 3.7 },
         uTime: { value: 0 },
+        uPose: { value: new Vector4(0, 0, 0, 1) },
+        uPoseOrigin: { value: new Vector2() },
       },
       transparent: true,
       blending: NormalBlending,
@@ -181,6 +190,7 @@ export class PlaneSystem {
       img,
       frame,
       mover: depth !== 0 ? el.closest<HTMLElement>("[data-depth]") : null,
+      pose: el.closest<HTMLElement>("[data-pose]"),
       marker: figure ?? frame ?? el,
       tex: null,
       mesh,
@@ -268,10 +278,29 @@ export class PlaneSystem {
       const x = L.x - sx;
       const y = L.y - sy + my;
       p.rect = [x, y, L.w, L.h];
-      if (y > vh + CULL_MARGIN || y + L.h < -CULL_MARGIN || x > vw || x + L.w < 0) continue;
+      // Pose transform (GSAP cache, no layout): translate, rotate and scale about its centre.
+      let ptx = 0;
+      let pty = 0;
+      let rot = 0;
+      let sc = 1;
+      if (p.pose && L.origin) {
+        ptx = Number(gsap.getProperty(p.pose, "x")) || 0;
+        pty = Number(gsap.getProperty(p.pose, "y")) || 0;
+        rot = ((Number(gsap.getProperty(p.pose, "rotation")) || 0) * Math.PI) / 180;
+        sc = Number(gsap.getProperty(p.pose, "scaleX")) || 1;
+      }
+      const margin = CULL_MARGIN + Math.abs(ptx) + Math.abs(pty);
+      if (y > vh + margin || y + L.h < -margin || x > vw + margin || x + L.w < -margin) continue;
 
-      // The wave follows the scroll (and runs back when scrolling up), lightly smoothed.
-      const target = p.instant ? 1 : Math.max(0, Math.min(1, (vh * REVEAL_FROM - y) / (vh * (REVEAL_FROM - REVEAL_TO))));
+      // The wave: driven by the page when the frame carries `--dev` (featured cards: the
+      // home sequence develops them), else by the scroll position. Both run back on
+      // scroll-up. Lightly smoothed.
+      const dev = p.frame ? parseFloat(p.frame.style.getPropertyValue("--dev")) : NaN;
+      const target = p.instant
+        ? 1
+        : Number.isFinite(dev)
+          ? Math.max(0, Math.min(1, dev))
+          : Math.max(0, Math.min(1, (vh * REVEAL_FROM - y) / (vh * (REVEAL_FROM - REVEAL_TO))));
       p.reveal += (target - p.reveal) * (1 - Math.exp(-dt * 9));
       if (Math.abs(target - p.reveal) < 0.001) p.reveal = target;
       p.hover += (p.hoverTarget - p.hover) * hoverEase;
@@ -313,6 +342,8 @@ export class PlaneSystem {
       u.uBend.value = bend;
       u.uRgb.value = (p.hover * RGB_SPLIT_PX) / L.w;
       u.uReveal.value = p.reveal;
+      (u.uPose.value as Vector4).set(ptx, pty, rot, sc);
+      if (L.origin) (u.uPoseOrigin.value as Vector2).set(L.origin[0] - sx, L.origin[1] - sy);
       u.uTime.value = this.time;
       u.uOpacity.value = opacity;
       p.mesh.visible = true;
@@ -388,6 +419,10 @@ export class PlaneSystem {
     const sy = window.scrollY;
     const near = (a: number, b: number) => Math.abs(a - b) < 1.5;
     for (const p of this.planes) {
+      if (p.pose) {
+        this.measurePose(p, sx, sy);
+        continue;
+      }
       const r = p.el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) {
         p.layout = null;
@@ -413,8 +448,51 @@ export class PlaneSystem {
         radii,
         img: [p.img.offsetLeft, p.img.offsetTop, p.img.offsetWidth, p.img.offsetHeight],
         pos: positionOf(getComputedStyle(p.img).objectPosition),
+        origin: null,
       };
     }
+  }
+
+  /**
+   * A pose plane, measured without its transform: the pose's untransformed box is its
+   * (untransformed) parent's, and the window's offset inside it comes from offsetLeft/Top.
+   */
+  private measurePose(p: Plane, sx: number, sy: number) {
+    const pose = p.pose!;
+    const host = pose.parentElement?.getBoundingClientRect();
+    const w = p.el.offsetWidth;
+    const h = p.el.offsetHeight;
+    if (!host || w === 0 || h === 0) {
+      p.layout = null;
+      return;
+    }
+    let ox = 0;
+    let oy = 0;
+    for (let n: HTMLElement | null = p.el; n && n !== pose; n = n.offsetParent as HTMLElement | null) {
+      ox += n.offsetLeft;
+      oy += n.offsetTop;
+    }
+    const wr = radiiOf(getComputedStyle(p.el));
+    const fr = p.frame ? radiiOf(getComputedStyle(p.frame)) : wr;
+    const fx = p.frame && p.frame !== p.el ? p.frame.offsetLeft : ox;
+    const fy = p.frame && p.frame !== p.el ? p.frame.offsetTop : oy;
+    const coincide = Math.abs(fx - ox) < 1.5 && Math.abs(fy - oy) < 1.5;
+    const radii: Rect4 = coincide ? [0, 1, 2, 3].map((k) => Math.max(wr[k], fr[k])) as Rect4 : wr;
+    const left = host.left + sx;
+    const top = host.top + sy;
+    const z = Number(getComputedStyle(pose).zIndex);
+    p.mesh.renderOrder = Number.isFinite(z) ? z : 0;
+    p.layout = {
+      x: left + ox,
+      y: top + oy,
+      w,
+      h,
+      frame: [fx - ox, fy - oy, p.frame?.offsetWidth ?? w, p.frame?.offsetHeight ?? h],
+      radii,
+      img: [p.img.offsetLeft, p.img.offsetTop, p.img.offsetWidth, p.img.offsetHeight],
+      pos: positionOf(getComputedStyle(p.img).objectPosition),
+      origin: [left + pose.offsetWidth / 2, top + pose.offsetHeight / 2],
+    };
   }
 }
 

@@ -9,6 +9,9 @@ uniform vec2 uViewport;
 uniform vec4 uRect;
 uniform float uOverscan;
 uniform float uBend;
+// Pose (featured cards): x, y = translate px, z = rotation rad, w = scale, about uPoseOrigin.
+uniform vec4 uPose;
+uniform vec2 uPoseOrigin;
 out vec2 vPx;
 out vec2 vLocal;
 void main() {
@@ -17,7 +20,12 @@ void main() {
   vLocal = vec2(position.x, (y - uRect.y) / uRect.w);
   float c = position.x * 2.0 - 1.0;
   y += uBend * (1.0 - c * c);
+  // vPx stays untransformed: the fragment mask and clip live in the window's own box.
   vPx = vec2(x, y);
-  gl_Position = vec4(x / uViewport.x * 2.0 - 1.0, 1.0 - y / uViewport.y * 2.0, 0.0, 1.0);
+  vec2 d = (vec2(x, y) - uPoseOrigin) * uPose.w;
+  float cs = cos(uPose.z);
+  float sn = sin(uPose.z);
+  vec2 sp = uPoseOrigin + vec2(d.x * cs - d.y * sn, d.x * sn + d.y * cs) + uPose.xy;
+  gl_Position = vec4(sp.x / uViewport.x * 2.0 - 1.0, 1.0 - sp.y / uViewport.y * 2.0, 0.0, 1.0);
 }
 `;

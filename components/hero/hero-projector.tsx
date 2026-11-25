@@ -467,10 +467,10 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
         <div
           data-seq-slate
           aria-hidden="true"
-          className="pointer-events-none invisible absolute bottom-[clamp(1.25rem,3.2svh,2.75rem)] left-gutter z-20 grid gap-1.5 opacity-0"
+          className="pointer-events-none invisible absolute bottom-[clamp(1.25rem,3.2svh,2.75rem)] left-gutter z-20 flex max-w-[calc(100vw-2rem)] items-baseline gap-x-4 opacity-0"
         >
-          <span className="text-[clamp(1.25rem,1.8vw,1.75rem)] leading-tight font-light tracking-[-0.02em] text-bone-100">{slide.name}</span>
-          <span className="slate flex gap-3 text-bone-400 tabular-nums">
+          <span className="truncate text-base leading-tight font-light tracking-[-0.01em] text-bone-100">{slide.name}</span>
+          <span className="slate flex shrink-0 gap-3 text-bone-400 tabular-nums">
             <span className="text-bone-100">
               <span data-timecode>{timecode(index * SLIDE_MS)}</span> sec
             </span>

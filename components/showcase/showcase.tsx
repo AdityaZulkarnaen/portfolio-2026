@@ -74,7 +74,7 @@ function WorkCard({ project, index, variant }: Item) {
             <div
               data-frame
               data-work-lead={lead ? "" : undefined}
-              className={`relative overflow-hidden rounded-[14px] bg-ink-800 gl-plane:bg-transparent ${
+              className={`relative overflow-hidden rounded-[14px] bg-ink-900 shadow-[inset_0_0_0_1px_var(--color-line)] gl-plane:bg-transparent ${
                 variant === "big" ? "aspect-video md:aspect-[12/5]" : "aspect-[16/10]"
               }`}
             >
@@ -126,7 +126,7 @@ export function Showcase({ projects, metrics, total }: Props) {
 
   return (
     <section id="work" data-work aria-labelledby="work-title" className="relative overflow-x-clip px-gutter pt-[calc(var(--spacing-header)+clamp(1rem,3svh,2rem))] pb-[clamp(5rem,10vw,9rem)]">
-      <div className="mx-auto w-full max-w-[min(100%,140svh,1440px)]">
+      <div className="mx-auto w-full md:max-w-[min(85vw,1440px)]">
         <header data-work-head className="mb-[clamp(1.75rem,4svh,3rem)] grid gap-x-[4vw] gap-y-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-6">
             <p className="slate text-bone-400">Featured works</p>
