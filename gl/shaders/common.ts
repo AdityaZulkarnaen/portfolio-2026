@@ -122,3 +122,43 @@ vec2 coverUv(vec2 uv, vec2 view, vec2 tex, float scale, vec2 origin, vec2 drift)
   return (t - org) / scale + org + drift * s;
 }
 `;
+
+/**
+ * The "wave": a dark, noise-edged liquid front washing across an image. One look shared
+ * by the card reveals (plane.frag) and the hero/reel slide change (background.frag).
+ * Needs noiseChunk (snoise).
+ *
+ *   waveEdge(local, aspect, seed, time): x = where the front passes each point, 0 (first)
+ *     → ~1 (last), sweeping top → bottom (local.y down) with a slowly churning noise
+ *     edge; y = that noise (0..1), reused to bend the refraction.
+ *   waveProgress(t): maps 0..1 progress to the front position so 0 is fully ahead and 1
+ *     fully passed.
+ *   waveTerms(d, time): d = front − edge (> 0: already washed). Returns
+ *     x crest (bell at the front), y trailing ripple (decays behind it), z coverage (0 → 1).
+ *   waveOffset(terms, n): uv push for refraction: mostly along the sweep, bent by the noise.
+ */
+export const waveChunk = /* glsl */ `
+const float WAVE_W = 0.075;
+
+vec2 waveEdge(vec2 local, float aspect, float seed, float time) {
+  float n = snoise(vec3(local.x * 2.6 * aspect, local.y * 2.2 - time * 0.12, seed + time * 0.08)) * 0.5 + 0.5;
+  return vec2(local.y * 0.62 + n * 0.38, n);
+}
+
+float waveProgress(float t) {
+  return t * (1.0 + 4.0 * WAVE_W) - 2.0 * WAVE_W;
+}
+
+vec3 waveTerms(float d, float time) {
+  float crest = exp(-(d * d) / (WAVE_W * WAVE_W));
+  float behind = max(d, 0.0);
+  float ripple = sin(behind * 46.0 - time * 4.0) * exp(-behind * 11.0) * step(0.0, d);
+  float cover = smoothstep(-WAVE_W * 0.6, WAVE_W * 0.6, d);
+  return vec3(crest, ripple, cover);
+}
+
+vec2 waveOffset(vec3 w, float n) {
+  float push = w.x * 0.05 + w.y * 0.012;
+  return vec2((n - 0.5) * 0.6, -1.0) * push;
+}
+`;

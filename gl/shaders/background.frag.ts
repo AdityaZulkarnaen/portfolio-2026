@@ -1,4 +1,4 @@
-import { utilChunk } from "./common";
+import { noiseChunk, utilChunk, waveChunk } from "./common";
 
 /**
  * Background pass: one fullscreen triangle, every frame.
@@ -9,7 +9,7 @@ import { utilChunk } from "./common";
  *     light), ink → deep teal, a very faint ember lift from the current slide's accent,
  *     printed through a fine 45° halftone screen. The pointer trail pushes the domain.
  *   - reel window: a rounded rect (uWin, device px, y up) that is the only place project
- *     media appears. Covers A/B crossfade inside it with a slow push-in, fluid + trail
+ *     media appears. Covers change with the shared wave (waveChunk) under a slow push-in; fluid + trail
  *     distortion, a thin-film iridescent sheen, RGB split that grows toward the edge, and
  *     the click ripple. uWinReveal opens it vertically from the HUD line.
  *   - with no source ready, the window shows a brighter, iridescent cut of the smoke.
@@ -73,6 +73,8 @@ const vec3 TEAL_MID = vec3(0.052, 0.138, 0.150);
 const vec3 TEAL_LIT = vec3(0.110, 0.250, 0.255);
 
 ${utilChunk}
+${noiseChunk}
+${waveChunk}
 
 // Ambient smoke from the field: broad deep-tide clouds, soft tinted light where they thicken.
 vec3 smoke(vec4 f, vec3 tint, float intensity) {
@@ -165,8 +167,21 @@ vec3 windowContent(vec2 wuv, vec2 warp, vec3 tr, vec2 ripple, float edgeDist, ve
 
   vec3 c = vec3(0.0);
   if (uHasSource > 0.002) {
-    if (uSourceMix < 0.999) c = sampleWin(uSourceA, uResA, uKbA, q, dir, ab) * (1.0 - uSourceMix);
-    if (uSourceMix > 0.001) c += sampleWin(uSourceB, uResB, uKbB, q, dir, ab) * uSourceMix;
+    if (uSourceMix >= 0.999) c = sampleWin(uSourceB, uResB, uKbB, q, dir, ab);
+    else if (uSourceMix <= 0.001) c = sampleWin(uSourceA, uResA, uKbA, q, dir, ab);
+    else {
+      // Slide change: the shared wave sweeps down the frame, the old cover out ahead of
+      // it, the new one behind, refracting and darkening at the front (cards use it too).
+      vec2 local = vec2(wuv.x, 1.0 - wuv.y);
+      vec2 e = waveEdge(local, uWin.z / max(uWin.w, 1.0), 7.3, uTime);
+      vec3 w = waveTerms(waveProgress(uSourceMix) - e.x, uTime);
+      vec2 off = waveOffset(w, e.y);
+      vec2 qw = q + vec2(off.x, -off.y);
+      float abw = ab + w.x * 0.009 + abs(w.y) * 0.002;
+      vec3 ca = sampleWin(uSourceA, uResA, uKbA, qw, dir, abw);
+      vec3 cb = sampleWin(uSourceB, uResB, uKbB, qw, dir, abw);
+      c = mix(ca, cb, w.z) * (1.0 - w.x * 0.65);
+    }
     float l = luma(c);
     c = mix(vec3(l), c, 0.8);
     // White UI screenshots settle into a projected grey, not a light box.

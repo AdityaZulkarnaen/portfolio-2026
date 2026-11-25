@@ -8,6 +8,100 @@ import { WorkCardMedia } from "./work-card-media";
 
 type Props = { projects: Project[]; metrics: Metric[]; total: number };
 
+type Variant = "big" | "small" | "phone";
+type Item = { project: Project; index: number; variant: Variant };
+type Row = { kind: "big" | "small" | "phones"; items: Item[] };
+
+/**
+ * Rows from the ordered list: web projects cycle big, small, small (so the order reads
+ * big / 2 small / big / …), consecutive mobile projects group into 3-up phone rows.
+ */
+function buildRows(projects: Project[]): Row[] {
+  const rows: Row[] = [];
+  let web = 0;
+  projects.forEach((project, index) => {
+    if (project.device === "mobile") {
+      const last = rows.at(-1);
+      const item: Item = { project, index, variant: "phone" };
+      if (last?.kind === "phones" && last.items.length < 3 && last.items.at(-1)!.index === index - 1) last.items.push(item);
+      else rows.push({ kind: "phones", items: [item] });
+      return;
+    }
+    const variant: Variant = web % 3 === 0 ? "big" : "small";
+    web++;
+    rows.push({ kind: variant === "big" ? "big" : "small", items: [{ project, index, variant }] });
+  });
+  return rows;
+}
+
+const SIZES: Record<Variant, string> = {
+  big: "(min-width: 768px) min(1440px, 140vh, 94vw), 94vw",
+  small: "(min-width: 768px) 46vw, 94vw",
+  phone: "(min-width: 768px) 16rem, 30vw",
+};
+
+/** One card: the media (desktop frame or phone shell), title and a one-line slate. */
+function WorkCard({ project, index, variant }: Item) {
+  const lead = index === 0;
+  const phone = variant === "phone";
+  return (
+    <TransitionLink
+      href={`/work/${project.slug}`}
+      transition="to-case"
+      className="group/card block rounded-[14px] focus-visible:outline-offset-8"
+      data-cursor="view"
+      data-cursor-label="Case"
+      style={{ "--accent": accentOrDefault(project.accent) } as CSSProperties}
+    >
+      <div data-pose={index} data-settled="" className={`relative origin-center ${lead ? "z-10" : ""}`}>
+        <ViewTransition name={`cover-${project.slug}`} share="morph" default="none">
+          {phone ? (
+            <div
+              data-frame
+              className="relative rounded-[clamp(18px,2.6vw,34px)] bg-[#101217] p-[clamp(4px,0.5vw,7px)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] gl-plane:bg-transparent gl-plane:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),inset_0_0_0_clamp(4px,0.5vw,7px)_#101217]"
+            >
+              <div className="relative aspect-[9/19.5] overflow-hidden rounded-[clamp(14px,2.1vw,27px)]">
+                <WorkCardMedia
+                  cover={project.cover}
+                  loop={project.loop}
+                  sizes={SIZES.phone}
+                  label={project.name}
+                  className="rounded-[clamp(14px,2.1vw,27px)]"
+                />
+              </div>
+            </div>
+          ) : (
+            <div
+              data-frame
+              data-work-lead={lead ? "" : undefined}
+              className={`relative overflow-hidden rounded-[14px] bg-ink-800 gl-plane:bg-transparent ${
+                variant === "big" ? "aspect-video md:aspect-[12/5]" : "aspect-[16/10]"
+              }`}
+            >
+              <WorkCardMedia cover={project.cover} loop={project.loop} sizes={SIZES[variant]} label={project.name} />
+            </div>
+          )}
+        </ViewTransition>
+        <div data-pose-caption className={`flex items-start justify-between ${phone ? "mt-3 gap-2" : "mt-4 gap-6"}`}>
+          <div className="min-w-0">
+            <h3
+              className={`leading-tight text-bone-100 transition-colors duration-(--dur-fast) group-hover/card:text-ember-300 ${
+                phone ? "text-[clamp(0.95rem,1.4vw,1.25rem)] tracking-[-0.01em]" : "text-[clamp(1.25rem,1.6vw,1.5rem)] tracking-[-0.02em]"
+              }`}
+            >
+              {project.name}
+            </h3>
+            <p className={`slate mt-1.5 truncate text-bone-400 ${phone ? "max-md:text-[9px] max-md:tracking-[0.1em]" : ""}`}>
+              {phone ? project.kind : `${project.kind} · ${project.role}`}
+            </p>
+          </div>
+          {phone ? null : <Dots />}
+        </div>
+      </div>
+    </TransitionLink>
+  );
+}
+
 function Dots() {
   return (
     <svg viewBox="0 0 18 4" aria-hidden="true" className="mt-2.5 h-1 w-[18px] flex-none text-bone-400 transition-colors duration-(--dur-fast) group-hover/card:text-ember-500">
@@ -51,48 +145,23 @@ export function Showcase({ projects, metrics, total }: Props) {
         </header>
 
         <ol className="grid gap-x-[clamp(1rem,2.4vw,2rem)] gap-y-[clamp(2.75rem,5vw,4.5rem)] md:grid-cols-2">
-          {projects.map((project, i) => {
-            const lead = i === 0;
-            return (
-              <li key={project.id} className={lead ? "md:col-span-2" : undefined} style={{ "--accent": accentOrDefault(project.accent) } as CSSProperties}>
-                <TransitionLink
-                  href={`/work/${project.slug}`}
-                  transition="to-case"
-                  className="group/card block rounded-[14px] focus-visible:outline-offset-8"
-                  data-cursor="view"
-                  data-cursor-label="Case"
-                >
-                  <div data-pose={i} data-settled="" className={`relative origin-center ${lead ? "z-10" : ""}`}>
-                    <ViewTransition name={`cover-${project.slug}`} share="morph" default="none">
-                      <div
-                        data-frame
-                        data-work-lead={lead ? "" : undefined}
-                        className={`relative overflow-hidden rounded-[14px] bg-ink-800 gl-plane:bg-transparent ${lead ? "aspect-video md:aspect-[12/5]" : "aspect-[16/10]"}`}
-                      >
-                        <WorkCardMedia
-                          cover={project.cover}
-                          loop={project.loop}
-                          sizes={lead ? "(min-width: 768px) min(1440px, 140vh, 94vw), 94vw" : "(min-width: 768px) 46vw, 94vw"}
-                          label={project.name}
-                        />
-                      </div>
-                    </ViewTransition>
-                    <div data-pose-caption className="mt-4 flex items-start justify-between gap-6">
-                      <div className="min-w-0">
-                        <h3 className="text-[clamp(1.25rem,1.6vw,1.5rem)] leading-tight tracking-[-0.02em] text-bone-100 transition-colors duration-(--dur-fast) group-hover/card:text-ember-300">
-                          {project.name}
-                        </h3>
-                        <p className="slate mt-1.5 truncate text-bone-400">
-                          {project.kind} · {project.role}
-                        </p>
-                      </div>
-                      <Dots />
-                    </div>
-                  </div>
-                </TransitionLink>
+          {buildRows(projects).map((row) =>
+            row.kind === "phones" ? (
+              <li key={row.items[0].project.id} className="md:col-span-2">
+                <ul className="mx-auto grid max-w-[52rem] grid-cols-3 gap-x-[clamp(0.75rem,4vw,4rem)]">
+                  {row.items.map((item) => (
+                    <li key={item.project.id}>
+                      <WorkCard {...item} />
+                    </li>
+                  ))}
+                </ul>
               </li>
-            );
-          })}
+            ) : (
+              <li key={row.items[0].project.id} className={row.kind === "big" ? "md:col-span-2" : undefined}>
+                <WorkCard {...row.items[0]} />
+              </li>
+            ),
+          )}
         </ol>
 
         <p className="mt-[clamp(3rem,6vw,5rem)] flex justify-end">

@@ -16,6 +16,8 @@ type Props = {
   sizes: string;
   preload?: boolean;
   label: string;
+  /** Extra classes on the media window (e.g. a phone screen radius). */
+  className?: string;
 };
 
 /** DOM image under a GL plane: faded out once the plane draws, instantly back for snapshots. */
@@ -70,7 +72,7 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
  * Card media: the loop video when the project has one, otherwise the cover still drawn
  * through a GL plane (gated: only while the card is settled, see PlaneWindow).
  */
-export function WorkCardMedia({ cover, loop, sizes, preload = false, label }: Props) {
+export function WorkCardMedia({ cover, loop, sizes, preload = false, label, className = "" }: Props) {
   if (loop && loop.kind === "video") {
     return (
       <div className="absolute inset-0 bg-ink-900">
@@ -80,7 +82,7 @@ export function WorkCardMedia({ cover, loop, sizes, preload = false, label }: Pr
   }
   if (!cover) return <div className="absolute inset-0 bg-ink-900" />;
   return (
-    <PlaneWindow className="absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent" behavior="static" gated>
+    <PlaneWindow className={`absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent ${className}`} behavior="static" gated>
       <Image
         src={cover.src}
         alt={cover.alt || label}

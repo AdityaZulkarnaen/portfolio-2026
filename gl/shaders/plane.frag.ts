@@ -1,9 +1,14 @@
-import { noiseChunk } from "./common";
+import { noiseChunk, waveChunk } from "./common";
 
 /**
  * Media plane: object-fit cover via an affine uv map computed on the CPU (uUvA + local·uUvB,
  * matching the DOM image box and its transform), clipped to the window's rounded rect and
- * the frame's clip-path inset. Hover RGB split and a noise wipe on first reveal.
+ * the frame's clip-path inset. Hover RGB split.
+ *
+ * Reveal (scroll-driven, reverses when scrolling back): the shared wave washes down the
+ * picture. Ahead of it the plane is transparent (the dark stage shows: the black wave);
+ * at its front the image refracts, darkens and splits RGB on the crest, a ripple trails
+ * behind, and once the front has passed the image is clean.
  */
 export const planeFrag = /* glsl */ `
 precision highp float;
@@ -19,9 +24,11 @@ uniform float uRgb; // horizontal split in window-local units
 uniform float uReveal;
 uniform float uOpacity;
 uniform float uSeed;
+uniform float uTime;
 out vec4 outColor;
 
 ${noiseChunk}
+${waveChunk}
 
 float roundedMask(vec2 p, vec4 rect, vec4 r) {
   vec2 c = rect.xy + rect.zw * 0.5;
@@ -43,20 +50,26 @@ void main() {
   mask *= inClip.x * inClip.y;
   if (mask <= 0.0) discard;
 
-  vec2 shift = vec2(uRgb, 0.0);
-  vec3 col = uRgb > 1e-5
-    ? vec3(sampleMap(vLocal + shift).r, sampleMap(vLocal).g, sampleMap(vLocal - shift).b)
-    : sampleMap(vLocal);
-
+  vec2 local = vLocal;
+  float split = uRgb;
   float alpha = 1.0;
-  if (uReveal < 1.0) {
+  vec3 w = vec3(0.0, 0.0, 1.0);
+  if (uReveal < 0.999) {
     float aspect = uRect.z / max(1.0, uRect.w);
-    float n = snoise(vec3(vLocal.x * 3.0 * aspect, vLocal.y * 3.0, uSeed)) * 0.5 + 0.5;
-    float edge = vLocal.y * 0.65 + n * 0.35;
-    float t = uReveal * 1.25 - 0.12;
-    alpha = smoothstep(edge, edge + 0.1, t);
-    col += vec3(0.9, 0.95, 1.0) * (alpha * (1.0 - alpha)) * 0.8;
+    vec2 e = waveEdge(vLocal, aspect, uSeed, uTime);
+    w = waveTerms(waveProgress(uReveal) - e.x, uTime);
+    local += waveOffset(w, e.y);
+    split += w.x * 0.009 + abs(w.y) * 0.002;
+    alpha = w.z;
   }
+
+  vec2 shift = vec2(split, 0.0);
+  vec3 col = split > 1e-5
+    ? vec3(sampleMap(local + shift).r, sampleMap(local).g, sampleMap(local - shift).b)
+    : sampleMap(local);
+  // Dark crest, a thin cold glint riding its leading edge.
+  col *= 1.0 - w.x * 0.6;
+  col += vec3(0.85, 0.95, 1.0) * w.x * (1.0 - w.z) * 0.35;
 
   outColor = vec4(col, mask * alpha * uOpacity);
 }

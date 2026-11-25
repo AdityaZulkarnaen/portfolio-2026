@@ -39,8 +39,9 @@ const MAX_BEND = 36;
 const BEND_PX = 24;
 const RGB_SPLIT_PX = 3;
 const CULL_MARGIN = 160;
-const REVEAL_S = 1.4;
-const REVEAL_AT = 0.92;
+/** Scroll-driven reveal wave: starts when the window's top is at 80% of the viewport, done at 30%. */
+const REVEAL_FROM = 0.8;
+const REVEAL_TO = 0.3;
 const FINE_POINTER = "(hover: hover) and (pointer: fine)";
 const NO_CLIP: [number, number, number, number] = [0, 0, 0, 0];
 const INSET = /inset\(\s*([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\s*\)/;
@@ -73,7 +74,8 @@ type Plane = {
   hover: number;
   hoverTarget: number;
   reveal: number;
-  revealing: boolean;
+  /** Registered under a handoff: always fully revealed. */
+  instant: boolean;
   marked: boolean;
   clipSrc: string;
   clip: Rect4;
@@ -97,9 +99,6 @@ function positionOf(value: string): [number, number] {
   return [read(parts[0]), read(parts[1])];
 }
 
-function expoOut(t: number) {
-  return t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
-}
 
 export class PlaneSystem {
   readonly scene = new Scene();
@@ -117,6 +116,7 @@ export class PlaneSystem {
   private dirty = true;
   private visible = 0;
   private seed = 0;
+  private time = 0;
 
   constructor(cache: TextureCache, tier: 1 | 2) {
     this.cache = cache;
@@ -161,6 +161,7 @@ export class PlaneSystem {
         uReveal: { value: 0 },
         uOpacity: { value: 1 },
         uSeed: { value: (this.seed++ % 17) * 3.7 },
+        uTime: { value: 0 },
       },
       transparent: true,
       blending: NormalBlending,
@@ -187,9 +188,9 @@ export class PlaneSystem {
       layout: null,
       hover: 0,
       hoverTarget: 0,
-      // Registered under a view-transition handoff (arriving on a page): no wipe.
+      // Registered under a view-transition handoff (arriving on a page): no wave.
       reveal: this.handoff ? 1 : 0,
-      revealing: this.handoff,
+      instant: this.handoff,
       marked: false,
       clipSrc: "",
       clip: NO_CLIP,
@@ -236,6 +237,7 @@ export class PlaneSystem {
   /** Updates every plane for this frame; returns true when at least one should be drawn. */
   update(dt: number, scrollVel: number): boolean {
     this.visible = 0;
+    this.time += dt;
     if (!this.enabled) {
       for (const p of this.planes) p.mesh.visible = false;
       return false;
@@ -268,12 +270,10 @@ export class PlaneSystem {
       p.rect = [x, y, L.w, L.h];
       if (y > vh + CULL_MARGIN || y + L.h < -CULL_MARGIN || x > vw || x + L.w < 0) continue;
 
-      if (!p.revealing) {
-        if (y < vh * REVEAL_AT) p.revealing = true;
-        if (y + L.h < 0) p.reveal = 1;
-      } else if (p.reveal < 1) {
-        p.reveal = Math.min(1, p.reveal + dt / REVEAL_S);
-      }
+      // The wave follows the scroll (and runs back when scrolling up), lightly smoothed.
+      const target = p.instant ? 1 : Math.max(0, Math.min(1, (vh * REVEAL_FROM - y) / (vh * (REVEAL_FROM - REVEAL_TO))));
+      p.reveal += (target - p.reveal) * (1 - Math.exp(-dt * 9));
+      if (Math.abs(target - p.reveal) < 0.001) p.reveal = target;
       p.hover += (p.hoverTarget - p.hover) * hoverEase;
 
       const clipStyle = p.frame?.style.clipPath ?? "";
@@ -312,7 +312,8 @@ export class PlaneSystem {
       (u.uUvB.value as Vector2).set(L.w / dw, L.h / dh);
       u.uBend.value = bend;
       u.uRgb.value = (p.hover * RGB_SPLIT_PX) / L.w;
-      u.uReveal.value = expoOut(p.reveal);
+      u.uReveal.value = p.reveal;
+      u.uTime.value = this.time;
       u.uOpacity.value = opacity;
       p.mesh.visible = true;
       this.visible++;

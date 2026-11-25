@@ -49,7 +49,8 @@ import type { HeroSource, HeroWindowRect, PlaneHandle, PlaneProbe, StageApi, Sta
  */
 
 const KEN_BURNS_MS = 8000;
-const CROSSFADE_S = 1.8;
+/** Slide change: the wave's sweep across the reel window (background.frag). */
+const CROSSFADE_S = 1.5;
 const FIELD_DIVISOR = 4;
 const READY_TIMEOUT_MS = 3000;
 const DEFAULT_TINT = "#ff5b2e";
@@ -577,7 +578,7 @@ class Stage implements StageApi {
     const hB = this.slotB.index >= 0 ? this.handles[this.slotB.index] : null;
     if (this.pendingMix && hB?.ready) {
       this.pendingMix = false;
-      this.mixTween = gsap.to(this.mix, { v: 1, duration: CROSSFADE_S, ease: "io" });
+      this.mixTween = gsap.to(this.mix, { v: 1, duration: CROSSFADE_S, ease: "power1.inOut" });
     }
     const visibleReady = !!(hB?.ready || (this.pendingMix && hA?.ready));
     const u = this.bgMat.uniforms;
