@@ -3,9 +3,12 @@ import Image from "next/image";
 import type { FrameBehavior, FrameChrome, Media } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
 
+import { PlaneWindow } from "./plane-window";
+
 const FRAME = {
-  base: "relative overflow-hidden rounded-xl bg-ink-800 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_50px_90px_-40px_rgb(0_0_0/0.85),0_20px_40px_-20px_color-mix(in_oklab,var(--accent)_18%,transparent)]",
-  phone: "relative overflow-hidden rounded-[clamp(26px,3.2vw,44px)] bg-[#101217] p-[7px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),0_50px_90px_-40px_rgb(0_0_0/0.85)]",
+  base: "relative overflow-hidden rounded-xl bg-ink-800 gl-plane:bg-transparent shadow-[inset_0_1px_0_0_rgb(255_255_255/0.06),0_50px_90px_-40px_rgb(0_0_0/0.85),0_20px_40px_-20px_color-mix(in_oklab,var(--accent)_18%,transparent)]",
+  phone:
+    "relative overflow-hidden rounded-[clamp(26px,3.2vw,44px)] bg-[#101217] p-[7px] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),0_50px_90px_-40px_rgb(0_0_0/0.85)] gl-plane:bg-transparent gl-plane:shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),inset_0_0_0_7px_#101217,0_50px_90px_-40px_rgb(0_0_0/0.85)]",
   none: "relative overflow-hidden",
 } as const;
 
@@ -16,9 +19,11 @@ export function frameClass(chrome: FrameChrome) {
 
 /** Inner window classes (phone screens get their own radius). */
 export function windowClass(chrome: FrameChrome) {
-  return cn("relative overflow-hidden bg-ink-900", chrome === "phone" && "rounded-[clamp(20px,2.7vw,37px)]");
+  return cn("relative overflow-hidden bg-ink-900 gl-plane:bg-transparent", chrome === "phone" && "rounded-[clamp(20px,2.7vw,37px)]");
 }
 
+/** DOM image under a GL plane: faded out once the plane draws, instantly back for snapshots. */
+const PLANE_MEDIA = "transition-opacity duration-500 ease-io gl-plane:opacity-0 gl-handoff:transition-none";
 
 type Props = {
   media: Media;
@@ -50,7 +55,7 @@ function BrowserBar({ address }: { address?: string | null }) {
 /**
  * One image inside its device chrome. `behavior="scroll"` keeps the tall screenshot at its
  * natural height so the grid's motion layer can pan it inside the window on scroll.
- * The window carries `data-gl-media` so the P4 plane can take its place.
+ * The window registers as a GL plane (desktop T2); the DOM image stays until its texture is drawn.
  */
 export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, preload = false, quality = 75 }: Props) {
   const scroll = behavior === "scroll" && media.width && media.height;
@@ -59,12 +64,7 @@ export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, pre
   return (
     <div data-frame className={frameClass(chrome)}>
       {chrome === "browser" ? <BrowserBar address={address} /> : null}
-      <div
-        className={windowClass(chrome)}
-        data-behavior={scroll ? "scroll" : "static"}
-        data-gl-media
-        style={{ aspectRatio: String(windowRatio) }}
-      >
+      <PlaneWindow className={windowClass(chrome)} behavior={scroll ? "scroll" : "static"} style={{ aspectRatio: String(windowRatio) }}>
         {scroll ? (
           <Image
             src={media.src}
@@ -77,7 +77,7 @@ export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, pre
             placeholder={media.lqip ? "blur" : "empty"}
             blurDataURL={media.lqip ?? undefined}
             data-tall
-            className="block h-auto w-full will-change-transform"
+            className={cn("block h-auto w-full will-change-transform", PLANE_MEDIA)}
           />
         ) : (
           <Image
@@ -89,14 +89,14 @@ export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, pre
             preload={preload}
             placeholder={media.lqip ? "blur" : "empty"}
             blurDataURL={media.lqip ?? undefined}
-            className="object-cover"
+            className={cn("object-cover", PLANE_MEDIA)}
             style={{
               objectPosition:
                 media.focalX != null && media.focalY != null ? `${media.focalX * 100}% ${media.focalY * 100}%` : "50% 0%",
             }}
           />
         )}
-      </div>
+      </PlaneWindow>
       {chrome === "phone" ? <span className="absolute top-3.5 left-1/2 h-4 w-[28%] -translate-x-1/2 rounded-full bg-[#050608]" aria-hidden="true" /> : null}
     </div>
   );

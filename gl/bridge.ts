@@ -1,6 +1,6 @@
 "use client";
 
-import type { HeroSource, StageApi, StageMode } from "./types";
+import type { HeroSource, PlaneHandle, StageApi, StageMode } from "./types";
 
 /**
  * The always-available front of the stage (no three.js). Pages talk to this; it keeps
@@ -24,6 +24,8 @@ let tintClock = 0;
 let heroSource: HeroSource = null;
 let slide = { index: 0, progress: 0 };
 let progress = 0;
+const planes = new Map<HTMLElement, { stage: PlaneHandle | null }>();
+let handoffTimer = 0;
 
 function resolvedMode(): StageMode {
   for (const m of modes.values()) if (m === "hero") return "hero";
@@ -44,9 +46,12 @@ export const stageBridge = {
     next.setHeroSources(heroSource, slide.index);
     if (heroSource) next.setSlide(slide.index, slide.progress);
     next.setScrollProgress(progress);
+    next.setHandoff(document.documentElement.dataset.glHandoff !== undefined);
+    for (const [el, entry] of planes) entry.stage = next.registerPlane(el);
   },
   detach() {
     stage = null;
+    for (const entry of planes.values()) entry.stage = null;
   },
   get(): StageApi | null {
     return stage;
@@ -107,6 +112,34 @@ export const stageBridge = {
   },
   remeasure() {
     stage?.remeasure();
+  },
+
+  /** Register a media window as a GL plane; the plane follows the stage across attach/detach. */
+  registerPlane(el: HTMLElement): PlaneHandle {
+    const entry = { stage: stage?.registerPlane(el) ?? null };
+    planes.set(el, entry);
+    return {
+      release() {
+        if (planes.get(el) !== entry) return;
+        planes.delete(el);
+        entry.stage?.release();
+        entry.stage = null;
+      },
+    };
+  },
+
+  /**
+   * Navigation is about to snapshot the page: show the DOM media (CSS reads
+   * `html[data-gl-handoff]`) and stop drawing planes until the transition has played.
+   */
+  beginHandoff(ms = 1200) {
+    document.documentElement.dataset.glHandoff = "true";
+    stage?.setHandoff(true);
+    window.clearTimeout(handoffTimer);
+    handoffTimer = window.setTimeout(() => {
+      delete document.documentElement.dataset.glHandoff;
+      stage?.setHandoff(false);
+    }, ms);
   },
 };
 

@@ -69,6 +69,13 @@ export function StageProvider() {
     activeRef.current = active;
   }, [active]);
 
+  // Back/forward navigations also snapshot the page for a view transition.
+  useEffect(() => {
+    const onPop = () => stageBridge.beginHandoff();
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   useEffect(() => {
     const root = document.documentElement;
     if (base) root.dataset.glTier = String(base.tier);

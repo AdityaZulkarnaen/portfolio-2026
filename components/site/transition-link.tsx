@@ -14,7 +14,7 @@ type Props = Omit<ComponentProps<typeof Link>, "transitionTypes"> & {
 /**
  * Link that tags its navigation with a view-transition type. Case links prefetch the full
  * route so the cover morph pairs in the same commit. `onNavigate` fires the stage's click
- * pulse and sets `data-gl-handoff` (P4: DOM media visible before the snapshot).
+ * pulse and begins the GL handoff: DOM media visible (and planes off) before the snapshot.
  */
 export function TransitionLink({ transition = "nav-forward", prefetch, onNavigate, ...props }: Props) {
   return (
@@ -23,9 +23,8 @@ export function TransitionLink({ transition = "nav-forward", prefetch, onNavigat
       prefetch={prefetch ?? (transition === "to-case" ? true : undefined)}
       transitionTypes={[transition]}
       onNavigate={(e) => {
-        document.documentElement.dataset.glHandoff = "true";
+        stageBridge.beginHandoff();
         stageBridge.pulse();
-        window.setTimeout(() => delete document.documentElement.dataset.glHandoff, 1200);
         onNavigate?.(e);
       }}
     />

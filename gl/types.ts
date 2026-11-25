@@ -24,7 +24,17 @@ export type StageDebug = {
   drawCalls: number;
   cache: { images: { total: number; live: number }; videos: { total: number; live: number } };
   avgFrameMs: number;
+  /** Average CPU time spent inside the stage tick (ms). */
+  tickMs: number;
+  planes: PlaneStats;
 };
+
+export type PlaneStats = { registered: number; ready: number; visible: number; enabled: boolean };
+
+/** Plane vs DOM rect of one registered window, in client px: [x, y, w, h]. Debug only. */
+export type PlaneProbe = { plane: [number, number, number, number] | null; dom: [number, number, number, number] };
+
+export type PlaneHandle = { release(): void };
 
 export interface StageApi {
   setMode(mode: StageMode): void;
@@ -36,7 +46,16 @@ export interface StageApi {
   /** Click pulse at client px (defaults to the last pointer position). */
   pulse(x?: number, y?: number): void;
   setScrollProgress(p: number): void;
+  /** Re-measure the canvas and every plane (route show, layout changes). */
   remeasure(): void;
+  /**
+   * Draw `el` (a `[data-gl-media]` window holding one <img>) as a GL plane. T2 + fine
+   * pointer only; elsewhere the handle is inert and the DOM stays as it is.
+   */
+  registerPlane(el: HTMLElement): PlaneHandle;
+  /** While on, planes are not drawn and CSS keeps the DOM media visible (view-transition snapshots). */
+  setHandoff(on: boolean): void;
+  debugPlanes(): PlaneProbe[];
   pause(): void;
   resume(): void;
   dispose(): void;

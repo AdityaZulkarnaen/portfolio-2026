@@ -84,6 +84,9 @@
 @custom-variant motion-off (html[data-motion="off"] &);
 @custom-variant motion-on (html[data-motion="on"] &);
 @custom-variant preload-skip (html[data-preload="skip"] &);
+/* GL media plane drawn under this element (gl/plane.ts): hide the DOM media / backgrounds. */
+@custom-variant gl-plane (&:is(html[data-gl="on"]:not([data-gl-handoff]) :is([data-gl-ready], [data-gl-ready] *)));
+@custom-variant gl-handoff (html[data-gl-handoff] &);
 
 :root {
   --dur-fast: 180ms;

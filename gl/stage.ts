@@ -22,12 +22,13 @@ import { gsap } from "@/lib/motion/gsap";
 import { subscribeVelocity } from "@/lib/motion/lenis-store";
 
 import { targetDpr } from "./capabilities";
+import { PlaneSystem } from "./plane";
 import { backgroundFrag } from "./shaders/background.frag";
 import { fieldFrag } from "./shaders/field.frag";
 import { fullscreenVert } from "./shaders/fullscreen.vert";
 import { type TextureHandle, TextureCache } from "./texture-cache";
 import { Trail } from "./trail";
-import type { HeroSource, StageApi, StageDebug, StageMode, StageOptions } from "./types";
+import type { HeroSource, PlaneHandle, PlaneProbe, StageApi, StageDebug, StageMode, StageOptions } from "./types";
 
 /**
  * The persistent GL stage. One renderer, one fixed canvas, owned by the (site) layout
@@ -35,7 +36,7 @@ import type { HeroSource, StageApi, StageDebug, StageMode, StageOptions } from "
  * what they registered in layout-effect cleanups (Activity-safe).
  *
  * Per frame (gsap.ticker, after Lenis): trail FBO (T2) → ¼-res generative field →
- * fullscreen background. Three draw calls, three programs.
+ * fullscreen background → media planes (T2, fine pointer; gl/plane.ts).
  *
  * No React in here. This module (and three.js) is only reachable through a dynamic
  * import, so it never lands in the initial route chunk.
@@ -65,6 +66,7 @@ class Stage implements StageApi {
   private trail: Trail | null = null;
   private cache: TextureCache;
   private black: DataTexture;
+  private planes: PlaneSystem;
 
   private tier: 1 | 2;
   private opts: StageOptions;
@@ -90,6 +92,8 @@ class Stage implements StageApi {
   private windowStart = 0;
   private avgFrameMs = 0;
   private lastCalls = 0;
+  private tickSum = 0;
+  private tickMs = 0;
 
   private mode: StageMode = "ambient";
   private source: HeroSource = null;
@@ -148,6 +152,7 @@ class Stage implements StageApi {
     this.cache = new TextureCache(this.renderer);
     this.black = new DataTexture(new Uint8Array([7, 8, 11, 255]), 1, 1, RGBAFormat);
     this.black.needsUpdate = true;
+    this.planes = new PlaneSystem(this.cache, this.tier);
 
     this.geometry = new BufferGeometry();
     this.geometry.setAttribute("position", new BufferAttribute(new Float32Array([-1, -1, 0, 3, -1, 0, -1, 3, 0]), 3));
@@ -306,15 +311,30 @@ class Stage implements StageApi {
 
   remeasure() {
     this.measure();
+    this.planes.invalidate();
+  }
+
+  registerPlane(el: HTMLElement): PlaneHandle {
+    return this.planes.register(el);
+  }
+
+  setHandoff(on: boolean) {
+    this.planes.setHandoff(on);
+  }
+
+  debugPlanes(): PlaneProbe[] {
+    return this.planes.probe();
   }
 
   pause() {
     this.wantRunning = false;
     this.stop();
+    this.planes.setPaused(true);
   }
 
   resume() {
     this.wantRunning = true;
+    this.planes.setPaused(false);
     if (!this.lost) this.start();
   }
 
@@ -332,6 +352,7 @@ class Stage implements StageApi {
     this.pulseTl?.kill();
     for (const h of this.handles) h?.release();
     this.handles = [];
+    this.planes.dispose();
     this.cache.dispose();
     this.trail?.dispose();
     this.fieldRT.dispose();
@@ -360,6 +381,8 @@ class Stage implements StageApi {
       drawCalls: this.lastCalls,
       cache: this.cache.stats(),
       avgFrameMs: Number(this.avgFrameMs.toFixed(2)),
+      tickMs: Number(this.tickMs.toFixed(3)),
+      planes: this.planes.stats(),
     };
   }
 
@@ -373,6 +396,7 @@ class Stage implements StageApi {
     this.windowStart = this.runStart;
     this.frameSum = 0;
     this.frameCount = 0;
+    this.tickSum = 0;
     this.trail?.clear(this.renderer);
     // Added after Lenis (Lenis registers with priority), so scroll state is current.
     gsap.ticker.add(this.tick);
@@ -388,6 +412,7 @@ class Stage implements StageApi {
     e.preventDefault();
     this.lost = true;
     this.stop();
+    this.planes.setLost(true);
     this.opts.onLost();
   };
 
@@ -395,6 +420,7 @@ class Stage implements StageApi {
     // three re-initialises its GL state on restore; our resources upload again lazily.
     this.lost = false;
     this.cache.invalidate();
+    this.planes.setLost(false);
     this.black.needsUpdate = true;
     this.measure();
     if (this.wantRunning) this.start();
@@ -424,6 +450,7 @@ class Stage implements StageApi {
     this.renderer.setSize(w, h, false);
     this.fieldRT.setSize(Math.ceil(w / FIELD_DIVISOR), Math.ceil(h / FIELD_DIVISOR));
     (this.bgMat.uniforms.uResolution.value as Vector2).set(Math.round(w * this.dpr), Math.round(h * this.dpr));
+    this.planes.setViewport(w, h);
   }
 
   // ------------------------------------------------------------------ frame
@@ -506,6 +533,7 @@ class Stage implements StageApi {
     this.quad.material = this.bgMat;
     r.setRenderTarget(null);
     r.render(this.scene, this.camera);
+    if (this.planes.update(dt, this.scrollVel)) r.render(this.planes.scene, this.camera);
     this.lastCalls = r.info.render.calls;
 
     if (first) {
@@ -515,6 +543,7 @@ class Stage implements StageApi {
         this.opts.onVisible();
       }
     }
+    this.tickSum += performance.now() - now;
   };
 
   /** T2 adaptive quality: avg frame > 20ms for 2s (×2 windows) → DPR ×0.85, then aberration off, then more DPR. */
@@ -525,6 +554,8 @@ class Stage implements StageApi {
     }
     if (now - this.windowStart < 2000) return;
     this.avgFrameMs = this.frameCount ? this.frameSum / this.frameCount : 0;
+    this.tickMs = this.frameCount ? this.tickSum / this.frameCount : 0;
+    this.tickSum = 0;
     const warm = now - this.runStart > 2000;
     this.windowStart = now;
     this.frameSum = 0;
