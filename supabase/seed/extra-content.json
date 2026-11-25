@@ -1,0 +1,139 @@
+{
+  "$comment": "Hand-curated seed content that the legacy Sanity cache does not hold. Merged over legacy-content.json by scripts/seed/seed.ts and the offline fallback in lib/content/queries.ts. No phone numbers or street addresses.",
+  "profile": {
+    "full_name": "Aditya Lucky Zulkarnaen",
+    "short_name": "Aditya Z",
+    "wordmark_top": "ADITYA",
+    "wordmark_bottom": "ZULKARNAEN",
+    "headline": "Passionate developer who excels in crafting scalable architectures and thrives under pressure, converting complex technical bottlenecks into seamless, scalable, production-ready systems.",
+    "location": "Yogyakarta, Indonesia",
+    "timezone": "Asia/Jakarta",
+    "availability": "Open for work — 2026",
+    "email": "adityazulkarnaen083@gmail.com",
+    "socials": [
+      { "label": "GitHub", "href": "https://github.com/AdityaZulkarnaen" },
+      { "label": "Instagram", "href": "https://www.instagram.com/adlkyzkrnn/" },
+      { "label": "LinkedIn", "href": "https://www.linkedin.com/in/aditya-zulkarnaen-7596142a8/" },
+      { "label": "Spotify", "href": "https://open.spotify.com/user/76p6n2lekwfklqm77tt0b6h85?si=9d3c1630f89045e8" }
+    ],
+    "resume_path": "/Aditya-Zulkarnaen-CV-Software-Engineer.pdf",
+    "footer_tagline": "Transforming **real-world** challenges into impactful digital **solutions**. Driven by **engineering excellence** and a **commitment** to meaningful **innovation**."
+  },
+  "projects": {
+    "$comment": "Per-slug overrides. Featured projects come first, in this order; position is applied by the seed and the fallback.",
+    "order": [
+      "depths",
+      "ugm-cup-2026",
+      "society-of-petroleum-engineer-ugm",
+      "vista",
+      "tbxpert",
+      "bpal-gis",
+      "civil-in-action-14th",
+      "resku",
+      "antistun",
+      "satu-teladan-apk",
+      "farmasi-cup-2026",
+      "kahasolusi-company-profile",
+      "cv-screener",
+      "space-war-games"
+    ],
+    "featured": [
+      "depths",
+      "ugm-cup-2026",
+      "society-of-petroleum-engineer-ugm",
+      "vista",
+      "tbxpert",
+      "bpal-gis",
+      "civil-in-action-14th",
+      "resku"
+    ],
+    "accents": {
+      "depths": "#8B7CFF",
+      "ugm-cup-2026": "#4FB3FF",
+      "society-of-petroleum-engineer-ugm": "#F4A259",
+      "vista": "#FF5B2E",
+      "tbxpert": "#5FD38D",
+      "bpal-gis": "#3FC9BE",
+      "civil-in-action-14th": "#E9C46A",
+      "resku": "#FF6B6B",
+      "antistun": "#C792EA",
+      "satu-teladan-apk": "#FFB4A2",
+      "farmasi-cup-2026": "#F06292",
+      "kahasolusi-company-profile": "#A3BE8C",
+      "cv-screener": "#8FB8DE",
+      "space-war-games": "#B48EAD"
+    }
+  },
+  "skills": [
+    { "name": "JavaScript", "category": "language", "marquee_row": 1 },
+    { "name": "TypeScript", "category": "language", "marquee_row": 1 },
+    { "name": "Python", "category": "language", "marquee_row": 1 },
+    { "name": "PHP", "category": "language", "marquee_row": 1 },
+    { "name": "Solidity", "category": "language", "marquee_row": 1 },
+    { "name": "React", "category": "frontend", "marquee_row": 1 },
+    { "name": "Next.js", "category": "frontend", "marquee_row": 1 },
+    { "name": "SvelteKit", "category": "frontend", "marquee_row": 1 },
+    { "name": "TailwindCSS", "category": "frontend", "marquee_row": 1 },
+    { "name": "HTML/CSS", "category": "frontend", "marquee_row": 1 },
+    { "name": "React Native (Expo)", "category": "mobile", "marquee_row": 2 },
+    { "name": "Flutter", "category": "mobile", "marquee_row": 2 },
+    { "name": "NativeWind", "category": "mobile", "marquee_row": 2 },
+    { "name": "Express.js", "category": "backend", "marquee_row": 2 },
+    { "name": "FastAPI", "category": "backend", "marquee_row": 2 },
+    { "name": "Laravel", "category": "backend", "marquee_row": 2 },
+    { "name": "Flask", "category": "backend", "marquee_row": 2 },
+    { "name": "Monad", "category": "web3", "marquee_row": 2 },
+    { "name": "PostgreSQL", "category": "data", "marquee_row": 3 },
+    { "name": "Supabase", "category": "data", "marquee_row": 3 },
+    { "name": "Firebase", "category": "data", "marquee_row": 3 },
+    { "name": "PyTorch", "category": "data", "marquee_row": 3 },
+    { "name": "TensorFlow", "category": "data", "marquee_row": 3 },
+    { "name": "AWS", "category": "tools", "marquee_row": 3 },
+    { "name": "Git", "category": "tools", "marquee_row": 3 },
+    { "name": "Docker", "category": "tools", "marquee_row": 3 },
+    { "name": "Figma", "category": "tools", "marquee_row": 3 },
+    { "name": "Linux", "category": "tools", "marquee_row": 3 }
+  ],
+  "achievements": [
+    {
+      "slug": "monad-blitz-hackathon-2026",
+      "kind": "competition",
+      "title": "2nd Place — Monad Blitz Hackathon 2026",
+      "org": "Monad",
+      "period": "2026",
+      "summary": "Built *VISTA Protocol*, a dApp that rewards users for their attention on social ads. Wrote and deployed the **smart contracts** and the reward flow in Solidity on the Monad testnet."
+    },
+    {
+      "slug": "pkm-kc-2026",
+      "kind": "award",
+      "title": "National Funding Recipient — PKM-KC 2026",
+      "org": "Ministry of Education",
+      "period": "2026",
+      "summary": "Funded to build a *non-invasive hemoglobin screening device* for anemia detection in pregnant women, pairing a **PPG sensor** with an **ExtraTrees** model."
+    },
+    {
+      "slug": "gdgoc-ugm-hackathon-2026",
+      "kind": "competition",
+      "title": "Top 5 Finalist — GDGoC UGM Hackathon",
+      "org": "GDGoC UGM",
+      "period": "2026",
+      "summary": "Reached the final five with a *tuberculosis screening* app."
+    },
+    {
+      "slug": "universitas-gadjah-mada",
+      "kind": "education",
+      "title": "Universitas Gadjah Mada",
+      "org": "Applied Bachelor (D4) Software Engineering",
+      "period": "2024–2028",
+      "summary": "GPA **3.85/4.00**."
+    },
+    {
+      "slug": "sma-negeri-1-yogyakarta",
+      "kind": "education",
+      "title": "SMA Negeri 1 Yogyakarta",
+      "org": "Natural Science",
+      "period": "2021–2024",
+      "summary": ""
+    }
+  ]
+}
