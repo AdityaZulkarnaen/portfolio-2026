@@ -2,13 +2,14 @@
 
 import { useLayoutEffect } from "react";
 
+import { stageBridge } from "@/gl/bridge";
 import { ScrollTrigger } from "@/lib/motion/gsap";
 import { getLenis, scrollToTarget } from "@/lib/motion/lenis-store";
 
 /**
  * Rendered by every page. Layout effects re-run each time <Activity> shows the page
  * again, so this is the "page is visible" signal: re-measure Lenis, honour the hash,
- * refresh ScrollTrigger (and, from P3, `stage.remeasureAll()`).
+ * refresh ScrollTrigger and re-measure the GL stage.
  */
 export function RouteSignal() {
   useLayoutEffect(() => {
@@ -26,7 +27,10 @@ export function RouteSignal() {
         }
       });
     }
-    const refresh = requestAnimationFrame(() => ScrollTrigger.refresh());
+    const refresh = requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      stageBridge.remeasure();
+    });
     document.fonts?.ready.then(() => ScrollTrigger.refresh()).catch(() => {});
 
     return () => {

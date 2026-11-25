@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { SplitReveal } from "@/components/motion/split-reveal";
+import { StageTint } from "@/components/runtime/stage-tint";
 import { TransitionLink } from "@/components/site/transition-link";
 import { accentOrDefault, framesFor, hostOf, reelNumber } from "@/lib/content/format";
 import type { Project } from "@/lib/content/types";
@@ -21,6 +22,7 @@ export function CaseArticle({ project, index }: { project: Project; index: numbe
       aria-labelledby={headingId}
       style={{ "--accent": accent } as CSSProperties}
     >
+      <StageTint accent={accent} />
       <header className="mb-[clamp(3rem,7vw,7rem)] grid gap-6 md:grid-cols-12 md:items-end md:gap-x-[4vw]">
         <p className="slate col-span-full flex flex-wrap gap-2.5 text-bone-400">
           <span className="text-(--accent)">Reel {reelNumber(index)}</span>

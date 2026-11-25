@@ -5,6 +5,7 @@ import { ViewTransition, type CSSProperties } from "react";
 
 import { SplitReveal } from "@/components/motion/split-reveal";
 import { RouteSignal } from "@/components/runtime/route-signal";
+import { StageTint } from "@/components/runtime/stage-tint";
 import { EditorialGrid } from "@/components/showcase/editorial-grid";
 import { GridMotion } from "@/components/showcase/grid-motion";
 import { MediaFrame } from "@/components/showcase/media-frame";
@@ -50,6 +51,7 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
   return (
     <PageTransition>
       <RouteSignal />
+      <StageTint accent={accent} scope="page" />
       <article className="px-gutter pt-[calc(var(--spacing-header)+3rem)]" style={{ "--accent": accent } as CSSProperties} aria-labelledby="case-title">
         <header className="mb-[clamp(2.5rem,5vw,5rem)] grid gap-6">
           <div className="flex flex-wrap items-center justify-between gap-4">

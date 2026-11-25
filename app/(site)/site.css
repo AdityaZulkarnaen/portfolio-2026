@@ -118,3 +118,44 @@ body {
     animation: vt-fade 200ms linear both !important;
   }
 }
+
+/* ---------- GL stage (gl/stage-provider.tsx) ----------
+   The canvas is created by the stage provider. No view-transition-name: it stays in the
+   live root snapshot, so it keeps rendering through page transitions. It is visible only
+   once the stage has drawn a frame with the hero source (data-gl="on"); then the DOM
+   stills fade out above it, so there is never a blank frame. Turning GL off keeps the
+   canvas up for the DOM fade-in before hiding it. */
+.gl-stage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100lvh;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s linear 0.8s;
+}
+html[data-gl="on"] .gl-stage {
+  visibility: visible;
+  transition: none;
+}
+/* html keeps the ink background; body must not paint over the z-index:-1 canvas. */
+body:has(> canvas.gl-stage) {
+  background-color: transparent;
+}
+html[data-gl="on"] [data-gl-hero] {
+  background-color: transparent;
+}
+html[data-gl="on"] [data-gl-hero] [data-gl-media] {
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-io);
+}
+html[data-gl="on"] [data-gl-hero] [data-gl-media] img {
+  animation-play-state: paused;
+}
+/* The shader grains the whole frame; DOM blend-mode grain over a live canvas would force
+   a full-viewport re-blend every frame. */
+html[data-gl="on"] [data-grain] {
+  display: none;
+}

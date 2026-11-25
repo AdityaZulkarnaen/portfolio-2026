@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { Grain } from "@/components/site/grain";
+import { useHeroSource } from "@/gl/hooks";
+import { accentOrDefault } from "@/lib/content/format";
+import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 
 export type HeroSlide = {
@@ -20,9 +22,11 @@ const SLIDE_MS = 6000;
 
 /**
  * Hero "stills mode": featured covers projected behind a grade, crossfading every 6s with
- * a slow push-in, synced to the "Now playing" chip. The P3 stage will take over this slot
- * (`data-gl-hero`) and redraw the same sources through the shader; until then the DOM
- * version is the experience and stays the fallback.
+ * a slow push-in, synced to the "Now playing" chip.
+ *
+ * With the GL stage on (T1/T2), the same <img> elements are handed to the stage, which
+ * redraws them through the background shader; once it has drawn them, CSS fades the DOM
+ * layers (`[data-gl-media]`) out. Without GL this DOM version is the experience.
  */
 export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
   const [index, setIndex] = useState(0);
@@ -30,6 +34,13 @@ export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const motion = useMotionAllowed();
   const running = motion && visible && slides.length > 1;
+
+  useHeroSource(rootRef, {
+    index,
+    count: slides.length,
+    accents: slides.map((s) => accentOrDefault(s.accent)),
+    key: slides.map((s) => s.slug).join("|"),
+  });
 
   useEffect(() => {
     const el = rootRef.current;
@@ -70,6 +81,7 @@ export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
               className="group/slide absolute inset-0 opacity-0 transition-opacity duration-[1.8s] ease-io data-[active]:opacity-100"
               data-active={i === index || undefined}
               data-hero-still={i === 0 ? "" : undefined}
+              data-slide={i}
               data-gl-media
             >
               <Image
@@ -88,11 +100,14 @@ export function HeroProjector({ slides }: { slides: HeroSlide[] }) {
             </div>
           ) : null,
         )}
-        {/* Grade: top/bottom falloff + teal→accent split tone. */}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_8_11/0.72)_0%,rgb(7_8_11/0.05)_26%,rgb(7_8_11/0.1)_52%,rgb(7_8_11/0.94)_88%,var(--color-ink-950)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(100deg,color-mix(in_oklab,var(--color-tide-400)_22%,transparent),transparent_46%,color-mix(in_oklab,var(--accent)_24%,transparent))] transition-[background] duration-[1.8s]" />
-        <Grain className="opacity-55" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_90%_at_50%_40%,transparent_50%,rgb(0_0_0/0.7)_100%)]" />
+        {/* Grade: top/bottom falloff + teal→accent split tone. The shader carries its own
+            copy of this grade, so these layers are `data-gl-media` too. */}
+        <div data-gl-media className="absolute inset-0 bg-[linear-gradient(180deg,rgb(7_8_11/0.72)_0%,rgb(7_8_11/0.05)_26%,rgb(7_8_11/0.1)_52%,rgb(7_8_11/0.94)_88%,var(--color-ink-950)_100%)]" />
+        <div data-gl-media className="absolute inset-0 bg-[linear-gradient(100deg,color-mix(in_oklab,var(--color-tide-400)_22%,transparent),transparent_46%,color-mix(in_oklab,var(--accent)_24%,transparent))] transition-[background] duration-[1.8s]" />
+        <div data-gl-media className="absolute inset-0">
+          <Grain className="opacity-55" />
+        </div>
+        <div data-gl-media className="absolute inset-0 bg-[radial-gradient(ellipse_120%_90%_at_50%_40%,transparent_50%,rgb(0_0_0/0.7)_100%)]" />
       </div>
 
       <button

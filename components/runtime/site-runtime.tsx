@@ -3,6 +3,7 @@
 import Lenis from "lenis";
 import { useEffect } from "react";
 
+import { StageProvider } from "@/gl/stage-provider";
 import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { emitVelocity, setLenis } from "@/lib/motion/lenis-store";
 import { useMotionPrefs } from "@/lib/motion/motion-prefs";
@@ -12,8 +13,9 @@ import { useMotionPrefs } from "@/lib/motion/motion-prefs";
  *
  * - Owns the single Lenis instance, driven by gsap.ticker (one clock for the page).
  * - Lenis is off under reduced motion and while "Pause motion" is on.
- * - Declares the GL tier. P2 ships no canvas, so the document is always `data-gl="off"`;
- *   the P3 stage will flip this once a WebGL2 context is live.
+ * - Mounts <StageProvider>, which owns the GL tier, the fixed canvas and `html[data-gl]`.
+ *   Lenis is registered on gsap.ticker with priority, so the stage tick (added later,
+ *   without priority) always runs after the scroll position has been updated.
  */
 export function SiteRuntime() {
   const { reduced, paused } = useMotionPrefs();
@@ -21,7 +23,6 @@ export function SiteRuntime() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.dataset.gl = "off";
     root.dataset.pointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches ? "fine" : "coarse";
     ScrollTrigger.config({ ignoreMobileResize: true });
   }, []);
@@ -40,7 +41,7 @@ export function SiteRuntime() {
     lenis.on("scroll", onScroll);
 
     const raf = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(raf);
+    gsap.ticker.add(raf, false, true);
     gsap.ticker.lagSmoothing(0);
     ScrollTrigger.refresh();
 
@@ -55,5 +56,5 @@ export function SiteRuntime() {
     };
   }, [smooth]);
 
-  return null;
+  return <StageProvider />;
 }
