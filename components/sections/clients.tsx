@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import { TransitionLink } from "@/components/site/transition-link";
 import type { Client, Media, Profile, Testimonial } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +82,7 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
           <li
             key={cell.kind === "client" ? cell.client.id : cell.id}
             className={cn(
-              "flex h-24 items-center justify-center px-4 md:h-32",
+              "flex min-h-24 items-stretch md:min-h-32",
               i % 3 !== 0 && "border-l border-line",
               i >= 3 && "border-t border-line md:border-t-0",
               i % 3 === 0 && i > 0 && "md:border-l md:border-line",
@@ -90,7 +91,7 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
             {cell.kind === "client" ? (
               <ClientLogo client={cell.client} />
             ) : (
-              <span className="slate text-bone-400/60">Client logo</span>
+              <span className="slate m-auto text-bone-400/60">Client logo</span>
             )}
           </li>
         ))}
@@ -99,36 +100,50 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
   );
 }
 
+/** Full-colour logo tile + name, held in grayscale until hover or focus. Case-study clients link inward. */
 function ClientLogo({ client }: { client: Client }) {
-  const mark = client.logo ? (
-    <Image
-      src={client.logo.src}
-      alt={client.logo.alt || client.name}
-      width={client.logo.width ?? 160}
-      height={client.logo.height ?? 32}
-      sizes="160px"
-      unoptimized={/\.svg(\?|$)/i.test(client.logo.src)}
-      className="h-auto max-h-8 w-auto max-w-[min(70%,10rem)] object-contain opacity-70 filter-[brightness(0)_invert(0.92)_sepia(0.1)] transition-opacity duration-(--dur-fast) group-hover/logo:opacity-100"
-    />
-  ) : (
-    <span className="text-[0.95rem] font-semibold tracking-[-0.01em] text-bone-100/70 transition-colors duration-(--dur-fast) group-hover/logo:text-bone-100">
-      {client.name}
-    </span>
+  const body = (
+    <>
+      <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ink-800 grayscale motion-safe:transition-[filter] motion-safe:duration-(--dur-base) group-hover/logo:grayscale-0 group-focus-visible/logo:grayscale-0">
+        {client.logo ? (
+          <Image
+            src={client.logo.src}
+            alt=""
+            fill
+            sizes="48px"
+            unoptimized={/\.svg(\?|$)/i.test(client.logo.src)}
+            className="object-contain"
+          />
+        ) : (
+          <span aria-hidden="true" className="grid size-full place-items-center text-sm font-semibold text-bone-400">
+            {client.name.charAt(0)}
+          </span>
+        )}
+      </span>
+      <span className="grid min-w-0 gap-1">
+        <span className="text-[0.95rem] leading-tight font-medium tracking-[-0.01em] text-balance text-bone-100">{client.name}</span>
+        {client.kind ? <span className="slate text-bone-400">{client.kind}</span> : null}
+      </span>
+    </>
   );
+  const cls =
+    "group/logo flex h-full w-full flex-col items-center justify-center gap-3 px-3 py-5 text-center opacity-70 outline-offset-[-6px] motion-safe:transition-opacity motion-safe:duration-(--dur-base) hover:opacity-100 focus-visible:opacity-100 md:flex-row md:justify-start md:gap-3.5 md:px-5 md:text-left";
 
-  if (!client.url) return <span className="group/logo flex h-full w-full items-center justify-center">{mark}</span>;
-  return (
-    <a
-      href={client.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={client.logo ? undefined : `${client.name} (opens in a new tab)`}
-      className="group/logo flex h-full w-full items-center justify-center"
-      data-cursor="open"
-    >
-      {mark}
-    </a>
-  );
+  if (client.project) {
+    return (
+      <TransitionLink href={`/work/${client.project.slug}`} className={cls} aria-label={`${client.name}: ${client.project.name} case study`}>
+        {body}
+      </TransitionLink>
+    );
+  }
+  if (client.url) {
+    return (
+      <a href={client.url} target="_blank" rel="noopener noreferrer" className={cls} data-cursor="open">
+        {body}
+      </a>
+    );
+  }
+  return <div className={cls}>{body}</div>;
 }
 
 function CtaCard({ availability, wide }: { availability: string | undefined; wide: boolean }) {

@@ -265,7 +265,12 @@ export function mapReel(row: ReelRowWithChapters): Reel {
   return { id: row.id, key: row.key, title: row.title, chapters };
 }
 
-export type ClientRowWithLogo = Tables<"clients"> & { logo: MediaRow | null };
+/** `kind` / `project_id` are optional at runtime until migration 20261128000100 is applied. */
+export type ClientRowWithLogo = Omit<Tables<"clients">, "kind" | "project_id"> &
+  Partial<Pick<Tables<"clients">, "kind" | "project_id">> & {
+    logo: MediaRow | null;
+    project?: { slug: string; name: string; published: boolean } | null;
+  };
 
 export function mapClient(row: ClientRowWithLogo): Client {
   return {
@@ -273,6 +278,8 @@ export function mapClient(row: ClientRowWithLogo): Client {
     name: row.name,
     logo: row.logo ? mapMedia(row.logo) : null,
     url: row.url,
+    kind: row.kind ?? "",
+    project: row.project?.published ? { slug: row.project.slug, name: row.project.name } : null,
     position: row.position,
   };
 }

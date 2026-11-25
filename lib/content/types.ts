@@ -176,6 +176,10 @@ export type Client = {
   name: string;
   logo: Media | null;
   url: string | null;
+  /** Short slate line under the name, e.g. "Internship", "Government". */
+  kind: string;
+  /** The case study this client links to, when there is one (internal link wins over `url`). */
+  project: { slug: string; name: string } | null;
   position: number;
 };
 

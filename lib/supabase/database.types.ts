@@ -35,14 +35,14 @@ export type Database = {
                   ]
                 },"clients": {
                   Row: {
-                    "created_at": string,"id": string,"logo_media_id": string | null,"name": string,"position": number,"published": boolean,"updated_at": string,"url": string | null
+                    "created_at": string,"id": string,"kind": string,"logo_media_id": string | null,"name": string,"position": number,"project_id": string | null,"published": boolean,"updated_at": string,"url": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name": string,"position"?: number,"published"?: boolean,"updated_at"?: string,"url"?: string | null
+                    "created_at"?: string,"id"?: string,"kind"?: string,"logo_media_id"?: string | null,"name": string,"position"?: number,"project_id"?: string | null,"published"?: boolean,"updated_at"?: string,"url"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"name"?: string,"position"?: number,"published"?: boolean,"updated_at"?: string,"url"?: string | null
+                    "created_at"?: string,"id"?: string,"kind"?: string,"logo_media_id"?: string | null,"name"?: string,"position"?: number,"project_id"?: string | null,"published"?: boolean,"updated_at"?: string,"url"?: string | null
                   }
                   Relationships: [
                     {
@@ -50,6 +50,12 @@ export type Database = {
       columns: ["logo_media_id"]
 isOneToOne: false
       referencedRelation: "media"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "clients_project_id_fkey"
+      columns: ["project_id"]
+isOneToOne: false
+      referencedRelation: "projects"
       referencedColumns: ["id"]
     }
                   ]

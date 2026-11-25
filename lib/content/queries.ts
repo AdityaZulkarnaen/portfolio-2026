@@ -225,7 +225,14 @@ export async function getClients(): Promise<Client[]> {
     .order("position", { ascending: true })
     .overrideTypes<ClientRowWithLogo[], { merge: false }>();
   if (error) fail("clients", error);
-  return (data ?? []).map(mapClient);
+  const rows = data ?? [];
+  // Projects are resolved separately so the query works before and after `project_id` exists.
+  const ids = [...new Set(rows.map((r) => r.project_id).filter((id): id is string => Boolean(id)))];
+  if (ids.length === 0) return rows.map(mapClient);
+  const projects = await supabase.from("projects").select("id, slug, name, published").in("id", ids);
+  if (projects.error) fail("client projects", projects.error);
+  const byId = new Map((projects.data ?? []).map((p) => [p.id, p]));
+  return rows.map((r) => mapClient({ ...r, project: r.project_id ? (byId.get(r.project_id) ?? null) : null }));
 }
 
 export async function getTestimonials(): Promise<Testimonial[]> {

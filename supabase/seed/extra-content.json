@@ -5,24 +5,54 @@
     "short_name": "Aditya Z",
     "wordmark_top": "ADITYA",
     "wordmark_bottom": "ZULKARNAEN",
-    "headline": "Passionate developer who excels in crafting scalable architectures and thrives under pressure, converting complex technical bottlenecks into seamless, scalable, production-ready systems.",
+    "headline": "Software Engineering student at Universitas Gadjah Mada (GPA 3.85). I build full-stack web apps with Next.js, Express, Flask and FastAPI on Supabase, Firebase and AWS, and have shipped platforms used by 300+ registrants and participants.",
+    "roles": [
+      "Full-stack developer",
+      "Mobile developer",
+      "Smart contract developer"
+    ],
+    "bio": [
+      "i build the whole thing: the contract, the api, and the dashboard people actually use.",
+      "at girlmeetstech that meant **4 mainnet dApps|BOT Chain · 80+ Solidity tests** in about five weeks. for ugm cup, live brackets for **300+ players|Supabase Realtime on AWS EC2**. for a national competition, sign-ups and payment checks for **300+ registrants|Civil in Action 2026**. i study software engineering at ugm, **gpa 3.85|D4 · class of 2028**."
+    ],
     "location": "Yogyakarta, Indonesia",
     "timezone": "Asia/Jakarta",
-    "availability": "Open for work — 2026",
+    "availability": "Available Jan 2027 · 4–6 mo internship · Jakarta or remote",
     "email": "adityazulkarnaen083@gmail.com",
     "socials": [
-      { "label": "GitHub", "href": "https://github.com/AdityaZulkarnaen" },
-      { "label": "Instagram", "href": "https://www.instagram.com/adlkyzkrnn/" },
-      { "label": "LinkedIn", "href": "https://www.linkedin.com/in/aditya-zulkarnaen-7596142a8/" },
-      { "label": "Spotify", "href": "https://open.spotify.com/user/76p6n2lekwfklqm77tt0b6h85?si=9d3c1630f89045e8" }
+      {
+        "label": "GitHub",
+        "href": "https://github.com/AdityaZulkarnaen"
+      },
+      {
+        "label": "Instagram",
+        "href": "https://www.instagram.com/adlkyzkrnn/"
+      },
+      {
+        "label": "LinkedIn",
+        "href": "https://www.linkedin.com/in/aditya-zulkarnaen-7596142a8/"
+      },
+      {
+        "label": "Spotify",
+        "href": "https://open.spotify.com/user/76p6n2lekwfklqm77tt0b6h85?si=9d3c1630f89045e8"
+      }
     ],
     "metrics": [
-      { "value": "5+", "label": "Clients" },
-      { "value": "1k+", "label": "Web users" },
-      { "value": "iOS + Android", "label": "Shipped to App Store & Play Store" }
+      {
+        "value": "5+",
+        "label": "Clients"
+      },
+      {
+        "value": "1k+",
+        "label": "Web users"
+      },
+      {
+        "value": "iOS + Android",
+        "label": "Shipped to App Store & Play Store"
+      }
     ],
-    "resume_path": "/Aditya-Zulkarnaen-CV-Software-Engineer.pdf",
-    "footer_tagline": "Transforming **real-world** challenges into impactful digital **solutions**. Driven by **engineering excellence** and a **commitment** to meaningful **innovation**."
+    "resume_path": "/Aditya-Zulkarnaen-CV-Fullstack-Intern.pdf",
+    "footer_tagline": "Built in Yogyakarta, from the **schema** to the **screen**. Looking for a full-stack internship from January 2027."
   },
   "projects": {
     "$comment": "Per-slug overrides. Featured projects come first, in this order; position is applied by the seed and the fallback.",
@@ -68,70 +98,276 @@
       "kahasolusi-company-profile": "#A3BE8C",
       "cv-screener": "#8FB8DE",
       "space-war-games": "#B48EAD"
+    },
+    "overrides": {
+      "$comment": "Per-slug field overrides over legacy-content.json, checked against the latest CV.",
+      "ugm-cup-2026": {
+        "role": "Full-stack Developer",
+        "summary": "Live brackets and scores for the 300+ participants of UGM's badminton tournament, replacing end-of-day score updates. Supabase Realtime underneath; frontend and backend containerised and run with PM2 on AWS EC2.",
+        "stack": [
+          "Next.js",
+          "Supabase Realtime",
+          "Docker",
+          "PM2",
+          "AWS EC2"
+        ]
+      },
+      "society-of-petroleum-engineer-ugm": {
+        "summary": "Public site, role-based admin dashboards and QR-code attendance for the SPE UGM student chapter. About 60 members use it, and it ran the vote for the chapter's new president.",
+        "body": "A public landing page for **SPE UGM**, with role-based dashboards behind it for admins and members. Attendance runs on QR codes scanned at events, and the chapter held its presidential vote on the site.",
+        "stack": [
+          "Next.js",
+          "Supabase",
+          "Vercel"
+        ]
+      },
+      "civil-in-action-14th": {
+        "name": "Civil in Action 14th",
+        "year": "2026",
+        "role": "Full-stack Developer",
+        "summary": "Registration for a national civil-engineering competition with 300+ registrants: email and OAuth login, team data and abstract submission, bank-transfer and QRIS payment proofs, and an organiser dashboard to verify payments and review abstracts.",
+        "stack": [
+          "Next.js",
+          "Firebase Auth",
+          "Firestore",
+          "Tailwind"
+        ]
+      },
+      "bpal-gis": {
+        "year": "2026",
+        "role": "Full-stack Developer",
+        "summary": "A web map of manhole and pipeline assets for Yogyakarta's waste water and construction agency (Dinas PUP-ESDM DIY), built with Leaflet inside the agency's Laravel codebase. A web complaint form with an admin repair-status view replaced phone-call reports, and the work is merged into the agency's repo.",
+        "stack": [
+          "Laravel",
+          "Blade",
+          "Leaflet",
+          "Tailwind"
+        ]
+      },
+      "tbxpert": {
+        "year": "2026",
+        "summary": "Tuberculosis screening from a cough. The Flutter app records it; a FastAPI service on Hugging Face scores it with Google HeAR embeddings and a DNN trained on 4,200 recordings (TB recall 0.87). Top 5 at the GDGoC UGM Hackathon.",
+        "stack": [
+          "Flutter",
+          "FastAPI",
+          "Hugging Face",
+          "Firebase"
+        ]
+      },
+      "satu-teladan-apk": {
+        "role": "Mobile Developer",
+        "summary": "The KATY SMAN 1 Yogyakarta alumni app, replacing scattered WhatsApp groups. A simplified UI for older alumni, and a Google Maps view to find alumni by city.",
+        "stack": [
+          "React Native",
+          "Expo",
+          "NativeWind",
+          "Google Maps API",
+          "Supabase"
+        ]
+      }
     }
   },
   "skills": [
-    { "name": "JavaScript", "category": "language", "marquee_row": 1 },
-    { "name": "TypeScript", "category": "language", "marquee_row": 1 },
-    { "name": "Python", "category": "language", "marquee_row": 1 },
-    { "name": "PHP", "category": "language", "marquee_row": 1 },
-    { "name": "Solidity", "category": "language", "marquee_row": 1 },
-    { "name": "React", "category": "frontend", "marquee_row": 1 },
-    { "name": "Next.js", "category": "frontend", "marquee_row": 1 },
-    { "name": "SvelteKit", "category": "frontend", "marquee_row": 1 },
-    { "name": "TailwindCSS", "category": "frontend", "marquee_row": 1 },
-    { "name": "HTML/CSS", "category": "frontend", "marquee_row": 1 },
-    { "name": "React Native (Expo)", "category": "mobile", "marquee_row": 2 },
-    { "name": "Flutter", "category": "mobile", "marquee_row": 2 },
-    { "name": "NativeWind", "category": "mobile", "marquee_row": 2 },
-    { "name": "Express.js", "category": "backend", "marquee_row": 2 },
-    { "name": "FastAPI", "category": "backend", "marquee_row": 2 },
-    { "name": "Laravel", "category": "backend", "marquee_row": 2 },
-    { "name": "Flask", "category": "backend", "marquee_row": 2 },
-    { "name": "Monad", "category": "web3", "marquee_row": 2 },
-    { "name": "PostgreSQL", "category": "data", "marquee_row": 3 },
-    { "name": "Supabase", "category": "data", "marquee_row": 3 },
-    { "name": "Firebase", "category": "data", "marquee_row": 3 },
-    { "name": "PyTorch", "category": "data", "marquee_row": 3 },
-    { "name": "TensorFlow", "category": "data", "marquee_row": 3 },
-    { "name": "AWS", "category": "tools", "marquee_row": 3 },
-    { "name": "Git", "category": "tools", "marquee_row": 3 },
-    { "name": "Docker", "category": "tools", "marquee_row": 3 },
-    { "name": "Figma", "category": "tools", "marquee_row": 3 },
-    { "name": "Linux", "category": "tools", "marquee_row": 3 }
+    {
+      "name": "TypeScript",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "JavaScript",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "Python",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "PHP",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "SQL",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "Dart",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "Solidity",
+      "category": "language",
+      "marquee_row": 1
+    },
+    {
+      "name": "React",
+      "category": "frontend",
+      "marquee_row": 1
+    },
+    {
+      "name": "Next.js",
+      "category": "frontend",
+      "marquee_row": 1
+    },
+    {
+      "name": "SvelteKit",
+      "category": "frontend",
+      "marquee_row": 1
+    },
+    {
+      "name": "TailwindCSS",
+      "category": "frontend",
+      "marquee_row": 1
+    },
+    {
+      "name": "Express.js",
+      "category": "backend",
+      "marquee_row": 2
+    },
+    {
+      "name": "FastAPI",
+      "category": "backend",
+      "marquee_row": 2
+    },
+    {
+      "name": "Flask",
+      "category": "backend",
+      "marquee_row": 2
+    },
+    {
+      "name": "Laravel",
+      "category": "backend",
+      "marquee_row": 2
+    },
+    {
+      "name": "REST APIs",
+      "category": "backend",
+      "marquee_row": 2
+    },
+    {
+      "name": "React Native (Expo)",
+      "category": "mobile",
+      "marquee_row": 2
+    },
+    {
+      "name": "Flutter",
+      "category": "mobile",
+      "marquee_row": 2
+    },
+    {
+      "name": "PostgreSQL",
+      "category": "data",
+      "marquee_row": 3
+    },
+    {
+      "name": "Supabase",
+      "category": "data",
+      "marquee_row": 3
+    },
+    {
+      "name": "Firebase",
+      "category": "data",
+      "marquee_row": 3
+    },
+    {
+      "name": "AWS",
+      "category": "data",
+      "marquee_row": 3
+    },
+    {
+      "name": "Git",
+      "category": "tools",
+      "marquee_row": 3
+    },
+    {
+      "name": "Docker",
+      "category": "tools",
+      "marquee_row": 3
+    },
+    {
+      "name": "PM2",
+      "category": "tools",
+      "marquee_row": 3
+    },
+    {
+      "name": "Linux",
+      "category": "tools",
+      "marquee_row": 3
+    },
+    {
+      "name": "Figma",
+      "category": "tools",
+      "marquee_row": 3
+    }
   ],
   "achievements": [
     {
-      "slug": "monad-blitz-hackathon-2026",
-      "kind": "competition",
-      "title": "2nd Place — Monad Blitz Hackathon 2026",
-      "org": "Monad",
-      "period": "2026",
-      "summary": "Built *VISTA Protocol*, a dApp that rewards users for their attention on social ads. Wrote and deployed the **smart contracts** and the reward flow in Solidity on the Monad testnet."
-    },
-    {
       "slug": "pkm-kc-2026",
       "kind": "award",
-      "title": "National Funding Recipient — PKM-KC 2026",
-      "org": "Ministry of Education",
+      "title": "National Funding Recipient & PIMNAS Finalist",
+      "org": "PKM-KC 2026 · Ministry of Education",
       "period": "2026",
-      "summary": "Funded to build a *non-invasive hemoglobin screening device* for anemia detection in pregnant women, pairing a **PPG sensor** with an **ExtraTrees** model."
+      "summary": "A non-invasive hemoglobin screening device for pregnant women: a *PPG sensor* read by an *ExtraTrees* model."
+    },
+    {
+      "slug": "monad-blitz-v2",
+      "kind": "competition",
+      "title": "2nd Place, Monad Blitz V2",
+      "org": "Monad",
+      "period": "2026",
+      "summary": "*Depths*, an on-chain roguelike written in Solidity on Monad testnet."
+    },
+    {
+      "slug": "monad-blitz-hackathon-2026",
+      "kind": "competition",
+      "title": "2nd Place, Monad Blitz 2026",
+      "org": "Monad",
+      "period": "2026",
+      "summary": "*VISTA Protocol*, a dApp that pays users for their attention on social ads. Contracts and reward flow in Solidity on Monad testnet."
     },
     {
       "slug": "gdgoc-ugm-hackathon-2026",
       "kind": "competition",
-      "title": "Top 5 Finalist — GDGoC UGM Hackathon",
+      "title": "Top 5 Finalist, GDGoC UGM Hackathon",
       "org": "GDGoC UGM",
       "period": "2026",
-      "summary": "Reached the final five with a *tuberculosis screening* app."
+      "summary": "A *TB screening app*: a FastAPI model trained on 4,200 cough recordings (recall 0.87 for TB) behind a Flutter app that records the cough."
     },
     {
       "slug": "universitas-gadjah-mada",
       "kind": "education",
       "title": "Universitas Gadjah Mada",
-      "org": "Applied Bachelor (D4) Software Engineering",
+      "org": "D4 Software Engineering",
       "period": "2024–2028",
-      "summary": "GPA **3.85/4.00**."
+      "summary": "GPA **3.85**/4.00."
+    },
+    {
+      "slug": "gamaforce-ugm",
+      "kind": "organization",
+      "title": "GAMAFORCE UGM",
+      "org": "Software Programmer",
+      "period": "2024–2026",
+      "summary": "Ground control station software for the university's UAV team."
+    },
+    {
+      "slug": "gdgoc-ugm-hacker-division",
+      "kind": "organization",
+      "title": "GDGoC UGM",
+      "org": "Hacker Division",
+      "period": "2025–2026",
+      "summary": ""
+    },
+    {
+      "slug": "ugm-blockchain-club",
+      "kind": "organization",
+      "title": "UGM Blockchain Club",
+      "org": "Member",
+      "period": "2026",
+      "summary": ""
     },
     {
       "slug": "sma-negeri-1-yogyakarta",
@@ -158,5 +394,177 @@
         "focal_y": 0.32
       }
     }
-  ]
+  ],
+  "clients": [
+    {
+      "name": "GirlMeetsTech",
+      "kind": "Internship",
+      "url": null,
+      "project_slug": null,
+      "logo": {
+        "file": "clients/gmt.webp",
+        "width": 200,
+        "height": 200,
+        "alt": "GirlMeetsTech logo"
+      }
+    },
+    {
+      "name": "Dinas PUP-ESDM DIY",
+      "kind": "Government",
+      "url": null,
+      "project_slug": "bpal-gis",
+      "logo": {
+        "file": "clients/ipal.webp",
+        "width": 1315,
+        "height": 1706,
+        "alt": "Dinas PUP-ESDM DIY logo"
+      }
+    },
+    {
+      "name": "UGM Cup 2026",
+      "kind": "Competition",
+      "url": null,
+      "project_slug": "ugm-cup-2026",
+      "logo": {
+        "file": "clients/ugmcup.webp",
+        "width": 898,
+        "height": 898,
+        "alt": "UGM Cup 2026 logo"
+      }
+    },
+    {
+      "name": "Civil in Action 14th",
+      "kind": "Competition",
+      "url": null,
+      "project_slug": "civil-in-action-14th",
+      "logo": {
+        "file": "clients/cia.webp",
+        "width": 953,
+        "height": 953,
+        "alt": "Civil in Action 14th logo"
+      }
+    },
+    {
+      "name": "SPE UGM Student Chapter",
+      "kind": "Organisation",
+      "url": null,
+      "project_slug": "society-of-petroleum-engineer-ugm",
+      "logo": {
+        "file": "clients/spe.webp",
+        "width": 1080,
+        "height": 1080,
+        "alt": "SPE UGM Student Chapter logo"
+      }
+    },
+    {
+      "name": "KATY SMAN 1 Yogyakarta",
+      "kind": "Organisation",
+      "url": null,
+      "project_slug": "satu-teladan-apk",
+      "logo": {
+        "file": "clients/satel.webp",
+        "width": 200,
+        "height": 200,
+        "alt": "KATY SMAN 1 Yogyakarta logo"
+      }
+    }
+  ],
+  "experiences": [
+    {
+      "slug": "junior-project-builder-intern-girl-meets-tech",
+      "role": "Junior Project Builder (Intern)",
+      "org": "GirlMeetsTech · Bangkok, remote",
+      "start_date": "2026-10-01",
+      "end_date": "2026-11-01",
+      "summary": "Shipped four MVPs end to end on one-week cycles. Each went to BOT Chain mainnet with a launch campaign on X, backed by 80+ Solidity tests across the four.",
+      "highlights": [
+        "BOT Launchpad: no-code deployment of five contract templates from the user's wallet, plus a registry contract that only accepts contracts matching an official template's code hash.",
+        "InstantBlog: Gemini drafts cited articles from sources the user supplies; a SHA-256 fingerprint stamped on-chain shows who published a text and when.",
+        "GitAura: GitHub OAuth with server-signed proofs that the contract verifies on-chain.",
+        "ABI Studio: generates an interface for any contract from its ABI and publishes the layout to IPFS."
+      ],
+      "stack": [
+        "Next.js",
+        "Solidity",
+        "ethers.js",
+        "Gemini",
+        "IPFS"
+      ]
+    },
+    {
+      "slug": "freelance-full-stack-developer",
+      "role": "Freelance Full-Stack Developer",
+      "org": "Independent · Yogyakarta",
+      "start_date": "2026-02-01",
+      "end_date": null,
+      "summary": "Platforms for UGM organisations and competitions, from the database schema to the deploy.",
+      "highlights": [
+        "Civil in Action 2026: registration for a national competition with 300+ registrants. Email and OAuth login, team and abstract submission, bank-transfer and QRIS payment proofs, and an organiser dashboard to verify payments and review submissions.",
+        "UGM Cup 2026: live brackets and scores for 300+ participants on Supabase Realtime, replacing end-of-day updates. Frontend and backend containerised and run with PM2 on AWS EC2.",
+        "SPE UGM: public site, role-based admin dashboards and QR-code attendance for about 60 members, including the vote for the chapter's new president."
+      ],
+      "stack": [
+        "Next.js",
+        "Supabase",
+        "Firebase",
+        "Docker",
+        "PM2",
+        "AWS EC2"
+      ]
+    },
+    {
+      "slug": "software-programmer-gamaforce",
+      "role": "Software Programmer",
+      "org": "GAMAFORCE UGM",
+      "start_date": "2024-12-01",
+      "end_date": "2026-10-01",
+      "summary": "The ground control station for UGM's UAV research team.",
+      "highlights": [
+        "Flask services for orthomosaic stitching, heatmaps and segmentation, wired in through an Express backend.",
+        "Moved mission logs to Supabase (PostgreSQL), so past flight telemetry can be queried."
+      ],
+      "stack": [
+        "Flask",
+        "Express.js",
+        "Supabase",
+        "PostgreSQL"
+      ]
+    },
+    {
+      "slug": "mobile-front-end-developer-katy-sman-1-yk",
+      "role": "Mobile Developer (Freelance)",
+      "org": "KATY SMAN 1 Yogyakarta",
+      "start_date": "2025-02-01",
+      "end_date": "2025-11-01",
+      "summary": "Satu Teladan, the alumni association's cross-platform app, replacing a scatter of WhatsApp groups.",
+      "highlights": [
+        "A simplified UI sized for older alumni.",
+        "An alumni map on the Google Maps API to find alumni by city."
+      ],
+      "stack": [
+        "Expo",
+        "React Native",
+        "NativeWind",
+        "Google Maps API"
+      ]
+    }
+  ],
+  "retired": {
+    "$comment": "Rows the seed unpublishes because the CV no longer lists them (experience/achievement slugs, skill names).",
+    "experiences": [
+      "ugm-cup",
+      "hacker-frontend-gdgoc-ugm",
+      "backend-mentee-ugm-bcc",
+      "software-research-development-member-komatik-ugm",
+      "dolfin"
+    ],
+    "skills": [
+      "HTML/CSS",
+      "NativeWind",
+      "Monad",
+      "PyTorch",
+      "TensorFlow"
+    ],
+    "achievements": []
+  }
 }

@@ -9,11 +9,15 @@ type Props = {
   lede?: ReactNode;
   children?: ReactNode;
   size?: "lg" | "md";
+  /** `booth`: the hero's light lowercase display type under a slate kicker. */
+  variant?: "display" | "booth";
+  kicker?: ReactNode;
   className?: string;
 };
 
 /** Section heading row: big display title left (8 cols), lede + actions right (4 cols). */
-export function SectionHead({ id, title, lede, children, size = "md", className }: Props) {
+export function SectionHead({ id, title, lede, children, size = "md", variant = "display", kicker, className }: Props) {
+  const booth = variant === "booth";
   return (
     <header
       className={cn(
@@ -24,12 +28,21 @@ export function SectionHead({ id, title, lede, children, size = "md", className 
         className,
       )}
     >
+      {booth && kicker ? (
+        <p className="slate flex items-center gap-2.5 text-bone-400 md:col-span-12">
+          <span aria-hidden="true" className="size-1.5 rounded-full bg-(--tint,var(--color-ember-500))" />
+          {kicker}
+        </p>
+      ) : null}
       <SplitReveal
         as="h2"
         id={id}
         type="lines"
         className={cn(
-          "display md:col-span-8 [&_.hl]:text-[1.1em] [&_.hl]:leading-[0.8]",
+          "md:col-span-8",
+          booth
+            ? "pb-[0.08em] leading-[0.92] font-light tracking-[-0.045em] text-balance lowercase"
+            : "display [&_.hl]:text-[1.1em] [&_.hl]:leading-[0.8]",
           size === "lg" ? "text-[clamp(3rem,8.4vw,9.5rem)]" : "text-[clamp(2.6rem,6vw,6.5rem)]",
         )}
       >

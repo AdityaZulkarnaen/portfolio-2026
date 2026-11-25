@@ -64,6 +64,8 @@ export type ExtraContent = {
     wordmark_top: string;
     wordmark_bottom: string;
     headline: string;
+    roles?: string[];
+    bio?: string[];
     location: string;
     timezone: string;
     availability: string;
@@ -77,7 +79,10 @@ export type ExtraContent = {
     order: string[];
     featured: string[];
     accents: Record<string, string>;
+    overrides?: Record<string, ProjectOverride | string>;
   };
+  experiences?: SeedExperience[];
+  retired?: { experiences?: string[]; skills?: string[]; achievements?: string[] };
   skills: { name: string; category: string; marquee_row: number }[];
   achievements: {
     slug: string;
@@ -89,6 +94,23 @@ export type ExtraContent = {
     url?: string | null;
   }[];
   testimonials?: SeedTestimonial[];
+  clients?: SeedClient[];
+};
+
+/** Logo files live in public/ (served as-is offline, uploaded to storage by the seed). */
+export type SeedClient = {
+  name: string;
+  kind: string;
+  url: string | null;
+  project_slug: string | null;
+  logo: { file: string; width: number; height: number; alt: string } | null;
+};
+
+export type ProjectOverride = Partial<Pick<LegacyContent["projects"][number], "name" | "year" | "role" | "summary" | "body" | "stack">>;
+
+export type SeedExperience = Omit<LegacyContent["experiences"][number], "position"> & {
+  highlights: string[];
+  stack: string[];
 };
 
 export type SeedProfile = {
@@ -151,10 +173,12 @@ export type SeedBundle = {
   profile: SeedProfile;
   photos: { image: LegacyImage; slot: "portrait" | "about"; position: number }[];
   projects: SeedProject[];
-  experiences: LegacyContent["experiences"];
+  experiences: (SeedExperience & { position: number })[];
+  retired: { experiences: string[]; skills: string[]; achievements: string[] };
   skills: { name: string; category: string; marquee_row: number; position: number }[];
   achievements: (ExtraContent["achievements"][number] & { position: number })[];
   testimonials: (SeedTestimonial & { position: number })[];
+  clients: (SeedClient & { position: number })[];
 };
 
 /** Single-image default frame from the device/shape preset. */
@@ -186,6 +210,10 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
   const featured = new Set(extra.projects.featured);
 
   const projects = legacy.projects
+    .map((source) => {
+      const override = extra.projects.overrides?.[source.slug];
+      return typeof override === "object" ? { ...source, ...override } : source;
+    })
     .map((p): SeedProject => {
       const device = p.device === "mobile" ? "mobile" : "desktop";
       const { preset, frames } = defaultFramesFor(device, p.cover);
@@ -226,8 +254,8 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
       wordmark_top: extra.profile.wordmark_top,
       wordmark_bottom: extra.profile.wordmark_bottom,
       headline: extra.profile.headline,
-      roles: legacy.profile.roles,
-      bio: legacy.profile.bio,
+      roles: extra.profile.roles ?? legacy.profile.roles,
+      bio: extra.profile.bio ?? legacy.profile.bio,
       location: extra.profile.location,
       timezone: extra.profile.timezone,
       availability: extra.profile.availability,
@@ -239,9 +267,17 @@ export function buildSeedBundle(legacy: LegacyContent, extra: ExtraContent): See
     },
     photos,
     projects,
-    experiences: legacy.experiences,
+    experiences: extra.experiences
+      ? extra.experiences.map((e, i) => ({ ...e, position: i }))
+      : legacy.experiences.map((e) => ({ ...e, highlights: [], stack: [] })),
+    retired: {
+      experiences: extra.retired?.experiences ?? [],
+      skills: extra.retired?.skills ?? [],
+      achievements: extra.retired?.achievements ?? [],
+    },
     skills: extra.skills.map((s, i) => ({ ...s, position: i })),
     achievements: extra.achievements.map((a, i) => ({ ...a, position: i })),
     testimonials: (extra.testimonials ?? []).map((t, i) => ({ ...t, position: i })),
+    clients: (extra.clients ?? []).map((c, i) => ({ ...c, position: i })),
   };
 }

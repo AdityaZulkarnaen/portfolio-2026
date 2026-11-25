@@ -8,7 +8,7 @@ const CATEGORY_LABEL: Record<SkillCategory, string> = {
   frontend: "Frontend",
   backend: "Backend",
   mobile: "Mobile",
-  data: "Data",
+  data: "Database & Cloud",
   web3: "Web3",
   tools: "Tools",
 };

@@ -10,6 +10,7 @@ import type { Tables } from "@/lib/supabase/database.types";
 
 import {
   mapAchievement,
+  mapClient,
   mapExperience,
   mapProfile,
   mapProject,
@@ -165,8 +166,8 @@ export async function fallbackExperiences(): Promise<Experience[]> {
       start_date: e.start_date,
       end_date: e.end_date,
       summary: e.summary,
-      highlights: [],
-      stack: [],
+      highlights: e.highlights,
+      stack: e.stack,
       published: true,
       position: e.position,
       ...stamps,
@@ -209,7 +210,42 @@ export async function fallbackAchievements(): Promise<Achievement[]> {
 }
 
 export async function fallbackClients(): Promise<Client[]> {
-  return [];
+  const bundle = await loadBundle();
+  const projects = projectRows(bundle);
+  return bundle.clients.map((c) => {
+    const id = `seed-client-${c.position}`;
+    const project = c.project_slug ? projects.find((p) => p.slug === c.project_slug) : undefined;
+    const logo: MediaRow | null = c.logo
+      ? {
+          id: `${id}-logo`,
+          kind: "image",
+          source: "public",
+          path: c.logo.file,
+          width: c.logo.width,
+          height: c.logo.height,
+          alt: c.logo.alt,
+          lqip: null,
+          focal_x: null,
+          focal_y: null,
+          duration_s: null,
+          position: c.position,
+          ...stamps,
+        }
+      : null;
+    return mapClient({
+      id,
+      name: c.name,
+      kind: c.kind,
+      url: c.url,
+      logo_media_id: logo?.id ?? null,
+      project_id: project?.id ?? null,
+      position: c.position,
+      published: true,
+      ...stamps,
+      logo,
+      project: project ? { slug: project.slug, name: project.name, published: project.published } : null,
+    });
+  });
 }
 
 export async function fallbackTestimonials(): Promise<Testimonial[]> {

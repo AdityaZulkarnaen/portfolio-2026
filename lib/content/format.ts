@@ -27,6 +27,17 @@ export function dateRange(start: string, end: string | null): string {
   return `${monthYear(start)} – ${monthYear(end)}`;
 }
 
+/** `2026-10-01` → `10.2026`, like a slate timecode. */
+export function monthStamp(iso: string | null): string {
+  if (!iso) return "now";
+  const [y, m] = iso.split("-");
+  return m ? `${m}.${y}` : y;
+}
+
+export function timecodeRange(start: string, end: string | null): string {
+  return `${monthStamp(start)} — ${monthStamp(end)}`;
+}
+
 /** Frames for a placement, in reading order. */
 export function framesFor<T extends { placement: string }>(frames: T[], where: "showcase" | "case"): T[] {
   return frames.filter((f) => f.placement === where || f.placement === "both");

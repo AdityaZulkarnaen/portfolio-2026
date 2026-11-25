@@ -8,7 +8,7 @@
  * (`projects/<slug>/cover.webp`, `profile/photo-<n>.webp`) → upsert media, projects,
  * default project_media (from layout presets; only for projects without frames),
  * profile, profile_media, experiences, skills, achievements, testimonials (photos from
- * supabase/seed/assets), and the admins row
+ * supabase/seed/assets), clients (logos from public/clients), and the admins row
  * for ADMIN_EMAIL (looked up through the auth admin API).
  *
  * Node 22 native TypeScript: erasable syntax only, explicit `.ts` imports, no `@/` alias.
@@ -47,6 +47,7 @@ if (!url || !secret) {
 
 const here = dirname(fileURLToPath(import.meta.url));
 const seedDir = resolve(here, "..", "..", "supabase", "seed");
+const publicDir = resolve(here, "..", "..", "public");
 const legacy = JSON.parse(readFileSync(resolve(seedDir, "legacy-content.json"), "utf8")) as LegacyContent;
 const extra = JSON.parse(readFileSync(resolve(seedDir, "extra-content.json"), "utf8")) as ExtraContent;
 const bundle = buildSeedBundle(legacy, extra);
@@ -107,6 +108,7 @@ async function resetContent() {
   await removeStoragePrefix("projects");
   await removeStoragePrefix("profile");
   await removeStoragePrefix("testimonials");
+  await removeStoragePrefix("clients");
 }
 
 // ---------------------------------------------------------------------------
@@ -160,10 +162,12 @@ async function uploadImage(image: LegacyImage, path: string, position: number): 
 }
 
 async function uploadLocalImage(
-  photo: NonNullable<SeedTestimonial["photo"]>,
+  photo: Pick<NonNullable<SeedTestimonial["photo"]>, "file" | "width" | "height" | "alt"> &
+    Partial<Pick<NonNullable<SeedTestimonial["photo"]>, "focal_x" | "focal_y">>,
   position: number,
+  root = resolve(seedDir, "assets"),
 ): Promise<string> {
-  const bytes = new Uint8Array(readFileSync(resolve(seedDir, "assets", photo.file)));
+  const bytes = new Uint8Array(readFileSync(resolve(root, photo.file)));
   const uploaded = await db.storage.from(BUCKET).upload(photo.file, bytes, {
     contentType: "image/webp",
     cacheControl: "31536000",
@@ -182,8 +186,8 @@ async function uploadLocalImage(
           width: photo.width,
           height: photo.height,
           alt: photo.alt,
-          focal_x: photo.focal_x,
-          focal_y: photo.focal_y,
+          focal_x: photo.focal_x ?? null,
+          focal_y: photo.focal_y ?? null,
           position,
         },
         { onConflict: "source,path" },
@@ -301,12 +305,24 @@ async function seedLists() {
         start_date: e.start_date,
         end_date: e.end_date,
         summary: e.summary,
+        highlights: e.highlights,
+        stack: e.stack,
         position: e.position,
         published: true,
       })),
       { onConflict: "slug" },
     ),
   );
+  const { retired } = bundle;
+  if (retired.experiences.length) {
+    check("retire experiences", await db.from("experiences").update({ published: false }).in("slug", retired.experiences));
+  }
+  if (retired.skills.length) {
+    check("retire skills", await db.from("skills").update({ published: false }).in("name", retired.skills));
+  }
+  if (retired.achievements.length) {
+    check("retire achievements", await db.from("achievements").update({ published: false }).in("slug", retired.achievements));
+  }
   check(
     "skills",
     await db.from("skills").upsert(
@@ -370,6 +386,39 @@ async function seedTestimonials() {
   console.log(`  ✓ ${bundle.testimonials.length} testimonials`);
 }
 
+async function seedClients() {
+  // `kind` and `project_id` arrive with migration 20261128000100; seed without them until it is applied.
+  const extended = !(await db.from("clients").select("kind, project_id").limit(1)).error;
+  if (!extended) console.warn("  ! clients.kind / project_id missing: run `pnpm db:push`, then re-seed.");
+  for (const c of bundle.clients) {
+    const logoId = c.logo ? await uploadLocalImage(c.logo, c.position, publicDir) : null;
+    let projectId: string | null = null;
+    if (c.project_slug) {
+      projectId = must(
+        `client project ${c.project_slug}`,
+        await db.from("projects").select("id").eq("slug", c.project_slug).single(),
+      ).id;
+    }
+    const values = {
+      name: c.name,
+      url: c.url,
+      logo_media_id: logoId,
+      position: c.position,
+      published: true,
+      ...(extended ? { kind: c.kind, project_id: projectId } : {}),
+    };
+    const existing = check(
+      `client ${c.name}`,
+      await db.from("clients").select("id").eq("name", c.name).limit(1).maybeSingle(),
+    );
+    check(
+      `client ${c.name}`,
+      existing ? await db.from("clients").update(values).eq("id", existing.id) : await db.from("clients").insert(values),
+    );
+  }
+  console.log(`  ✓ ${bundle.clients.length} clients`);
+}
+
 async function seedAdmin() {
   if (!adminEmail) {
     console.warn("  ! ADMIN_EMAIL is not set — skipping the admins row.");
@@ -399,6 +448,7 @@ async function main() {
   await seedProfile();
   await seedLists();
   await seedTestimonials();
+  await seedClients();
   await seedAdmin();
   console.log("Done. Revalidate the site (tag `content`) to see changes.");
 }
