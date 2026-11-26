@@ -8,8 +8,10 @@
     "headline": "Software Engineering student at Universitas Gadjah Mada (GPA 3.85). I build full-stack web apps with Next.js, Express, Flask and FastAPI on Supabase, Firebase and AWS, and have shipped platforms used by 300+ registrants and participants.",
     "roles": [
       "Full-stack developer",
+      "Blockchain engineer",
       "Mobile developer",
-      "Smart contract developer"
+      "ML engineer",
+      "Backend engineer"
     ],
     "bio": [
       "i build the whole thing: the contract, the api, and the dashboard people actually use.",

@@ -44,18 +44,16 @@ type Props = {
   /** h1 text, e.g. "Aditya Zulkarnaen" (set lowercase by CSS). */
   name: string;
   descriptor: [string, string];
-  discipline: string;
+  /** Rotating roles, lowercase ("full-stack developer"). Set on two lines: first word / the rest. */
+  roles: string[];
   devProbe: boolean;
 };
 
 const SLIDE_MS = 6000;
 /** When no other cover is ready yet, look again this often. */
 const RETRY_MS = 400;
-/**
- * One verb per slide; the big word turns over with the reel. "scales" is from his own
- * headline (scalable architectures). Max 6 letters: the verb's size is tuned to that.
- */
-const VERBS = ["builds", "ships", "scales", "debugs"];
+/** How long each role holds before the next turns over. */
+const ROLE_MS = 3200;
 /** Yogyakarta. */
 const LAT = "-7.7956°";
 const LON = "110.3695°";
@@ -145,8 +143,9 @@ function Plus({ className }: { className: string }) {
  * the window (and is the GL source), the slide follows the chapter on screen, and a
  * "Now playing: 0X / Project" chip under the window scrolls to that project's card.
  */
-export function HeroProjector({ slides, reel, name, descriptor, discipline, devProbe }: Props) {
+export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe }: Props) {
   const [cycled, setIndex] = useState(0);
+  const [roleIndex, setRoleIndex] = useState(0);
   const [visible, setVisible] = useState(true);
   const [chapter, setChapter] = useState(0);
   const [reelOpen, setReelOpen] = useState(false);
@@ -229,6 +228,14 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
     return () => window.clearTimeout(timer);
   }, [running, slides.length, index]);
 
+  // Roles turn over on their own clock while the hero is on screen (not tied to the reel).
+  const rolesRunning = motion && visible && !parked && roles.length > 1;
+  useLayoutEffect(() => {
+    if (!rolesRunning) return;
+    const id = window.setInterval(() => setRoleIndex((i) => (i + 1) % roles.length), ROLE_MS);
+    return () => window.clearInterval(id);
+  }, [rolesRunning, roles.length]);
+
   // Reel playhead: slide start + time into the slide, written straight to the nodes
   // (HUD label and the fullscreen slate).
   useEffect(() => {
@@ -289,8 +296,7 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
 
   const slide = slides[index];
   const accent = slide?.accent ?? "var(--color-ember-500)";
-  const verb = VERBS[index % VERBS.length];
-  const prevVerb = slides.length > 1 ? VERBS[(index - 1 + VERBS.length) % VERBS.length] : null;
+  const prevRole = (roleIndex - 1 + roles.length) % roles.length;
   const hudLabel = reel ? "Play reel" : "Now showing";
 
   const caseLink = slide ? (
@@ -330,13 +336,13 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
       </div>
 
       <div data-seq-out>
-        <Plus className="top-[calc(var(--spacing-header)+0.75rem)] left-gutter max-md:hidden" />
+        <Plus className="top-[calc(var(--spacing-header)+0.75rem)] right-gutter max-md:hidden" />
         <Plus className="right-gutter bottom-[clamp(1.25rem,3.2svh,2.75rem)] max-md:hidden" />
       </div>
 
-      {/* Top right: who, where, what, and the one call to action. */}
-      <div data-seq-out className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:right-gutter md:w-[min(28vw,24rem)]">
-        <p className="slate grid text-bone-400">
+      {/* Top left: where and who. The name is the h1, set lowercase. */}
+      <div data-seq-out className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:left-gutter md:max-w-[46vw]">
+        <p className="slate flex flex-wrap gap-x-4 text-bone-400">
           {descriptor.map((line) => (
             <span key={line} className="block overflow-clip">
               <span data-rise className="block">
@@ -345,36 +351,21 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
             </span>
           ))}
         </p>
-        <p className="mt-2 overflow-clip pb-[0.1em] text-[clamp(2.75rem,4.4vw,5rem)] leading-[0.92] font-light tracking-[-0.04em] text-bone-100">
+        <h1
+          id="hero-title"
+          className="mt-3 overflow-clip pb-[0.08em] text-[clamp(2rem,3.6vw,4rem)] leading-[0.95] font-light tracking-[-0.035em] text-bone-100 lowercase"
+        >
           <span data-rise className="block">
-            {discipline}
+            {name}
           </span>
-        </p>
-        <div data-hud-fade className="mt-5">
-          <Magnetic strength={0.25}>
-            <a
-              href="#contact"
-              onClick={(e) => {
-                e.preventDefault();
-                history.replaceState(null, "", "#contact");
-                scrollToTarget("#contact");
-              }}
-              className="slate group/cta inline-flex h-11 items-center gap-3 rounded-full pr-4 pl-5 text-bone-100 shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-[background-color,color,box-shadow] duration-(--dur-fast) ease-fluid hover:bg-bone-100 hover:text-ink-950 hover:shadow-[inset_0_0_0_1px_var(--color-bone-100)]"
-            >
-              Start a project
-              <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3 transition-transform duration-(--dur-base) ease-fluid group-hover/cta:translate-x-0.5">
-                <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
-              </svg>
-            </a>
-          </Magnetic>
-        </div>
+        </h1>
       </div>
 
       {/* The instrument: ring, HUD line, reel window. */}
-      <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,27vw,620px)]">
+      <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 [--cx:50%] md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,30vw,660px)] lg:[--cx:66%]">
         <div className="relative">
           <div data-seq-ring className="pointer-events-none absolute inset-0">
-          <div data-ring aria-hidden="true" className="pointer-events-none absolute top-1/2 left-1/2 size-(--ring) -translate-1/2 text-[rgb(236_233_226/0.09)] md:text-[rgb(236_233_226/0.15)]">
+          <div data-ring aria-hidden="true" className="pointer-events-none absolute top-1/2 left-(--cx) size-(--ring) -translate-1/2 text-[rgb(236_233_226/0.09)] md:text-[rgb(236_233_226/0.15)]">
             <svg viewBox="0 0 200 200" className="absolute inset-0 size-full overflow-visible max-md:hidden">
               {[0, 90, 180, 270].map((deg) => {
                 const a = polar(deg, 101.5);
@@ -413,14 +404,14 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
           {/* HUD labels: along the line on desktop, above the window on phones. */}
           <div
             data-hud-fade
-            className="slate pointer-events-none absolute bottom-[calc(50%+var(--win)*0.28125+0.75rem)] left-0 flex w-1/2 gap-3 tracking-[0.12em] text-bone-400 tabular-nums md:right-[calc(50%+var(--win)/2+2.75rem)] md:bottom-[calc(50%+0.625rem)] md:w-auto md:justify-between md:tracking-[0.16em]"
+            className="slate pointer-events-none absolute bottom-[calc(50%+var(--win)*0.28125+0.75rem)] left-0 flex w-1/2 gap-3 tracking-[0.12em] text-bone-400 tabular-nums xl:right-[calc(100%-var(--cx)+var(--win)/2+2.75rem)] xl:bottom-[calc(50%+0.625rem)] xl:left-auto xl:w-auto xl:justify-between xl:tracking-[0.16em]"
           >
             <span>{LAT}</span>
             <span className="text-bone-100">{hudLabel}</span>
           </div>
           <div
             data-hud-fade
-            className="slate pointer-events-none absolute right-0 bottom-[calc(50%+var(--win)*0.28125+0.75rem)] flex w-1/2 justify-end gap-3 tracking-[0.12em] text-bone-400 tabular-nums md:bottom-[calc(50%+0.625rem)] md:left-[calc(50%+var(--win)/2+2.75rem)] md:w-auto md:justify-between md:tracking-[0.16em]"
+            className="slate pointer-events-none absolute right-0 bottom-[calc(50%+var(--win)*0.28125+0.75rem)] flex w-1/2 justify-end gap-3 tracking-[0.12em] text-bone-400 tabular-nums xl:right-auto xl:bottom-[calc(50%+0.625rem)] xl:left-[calc(var(--cx)+var(--win)/2+2.75rem)] xl:w-auto xl:justify-between xl:tracking-[0.16em]"
           >
             <span className="text-bone-100">
               <span data-timecode>{timecode(index * SLIDE_MS)}</span> sec
@@ -429,7 +420,7 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
           </div>
           </div>
 
-          <div data-seq-slot className="relative mx-auto aspect-video w-(--win)">
+          <div data-seq-slot className="relative ml-[calc(var(--cx)-var(--win)/2)] aspect-video w-(--win)">
             {/* Absolute in a slot of the same size, so the home sequence can drive its box
                 (left/top/width/height, --win-r) without moving anything around it. */}
             <div
@@ -546,29 +537,54 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
         </div>
       </div>
 
-      {/* Bottom left: the name, small, over the verb that turns with the reel. */}
-      <div data-seq-out className="order-3 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter">
-        <h1 id="hero-title" className="overflow-clip pb-[0.08em] text-[clamp(1.375rem,2.2vw,2.5rem)] leading-none font-light tracking-[-0.03em] text-bone-100 lowercase">
-          <span data-rise className="block">
-            {name}
-          </span>
-        </h1>
-        <p aria-hidden="true" className="overflow-clip pb-[0.2em] text-[24vw] leading-[0.9] font-light tracking-[-0.04em] text-bone-100 md:-ml-[0.05em] md:text-[min(10vw,21svh)]">
-          <span data-rise className="grid">
-            {VERBS.map((w) => {
-              const state = w === verb ? "active" : w === prevVerb ? "past" : "next";
-              return (
-                <span
-                  key={w}
-                  data-state={state}
-                  className="col-start-1 row-start-1 translate-y-[35%] opacity-0 transition-[translate,opacity] duration-500 ease-io data-[state=active]:translate-y-0 data-[state=active]:opacity-100 data-[state=active]:delay-[450ms] data-[state=active]:duration-[900ms] data-[state=active]:ease-fluid data-[state=next]:transition-none data-[state=past]:-translate-y-[25%]"
-                >
-                  {w}
-                </span>
-              );
-            })}
-          </span>
-        </p>
+      {/* Bottom left: the role, large, turning over on its own clock; the one call to action beside it. */}
+      <div data-seq-out className="order-3 flex flex-col items-start gap-6 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter md:flex-row md:items-end md:gap-[clamp(2rem,4vw,4rem)]">
+        <div>
+          <p data-hud-fade className="slate flex items-center gap-2.5 text-bone-400">
+            <span aria-hidden="true" className="size-1.5 rounded-full bg-(--accent) transition-colors duration-700" />
+            Working as
+          </p>
+          <p className="sr-only">{roles.join(", ")}</p>
+          <p
+            aria-hidden="true"
+            className="mt-2 overflow-clip pb-[0.12em] text-[13vw] leading-[0.9] font-light tracking-[-0.045em] text-bone-100 md:-ml-[0.04em] md:text-[min(7vw,14svh)]"
+          >
+            <span data-rise className="grid">
+              {roles.map((role, i) => {
+                const state = i === roleIndex ? "active" : i === prevRole && roles.length > 1 ? "past" : "next";
+                const [first, ...rest] = role.split(/\s+/);
+                return (
+                  <span
+                    key={role}
+                    data-state={state}
+                    className="col-start-1 row-start-1 translate-y-[35%] opacity-0 transition-[translate,opacity] duration-500 ease-io data-[state=active]:translate-y-0 data-[state=active]:opacity-100 data-[state=active]:delay-[350ms] data-[state=active]:duration-[900ms] data-[state=active]:ease-fluid data-[state=next]:transition-none data-[state=past]:-translate-y-[25%]"
+                  >
+                    <span className="block">{first}</span>
+                    <span className="block text-bone-400">{rest.join(" ")}</span>
+                  </span>
+                );
+              })}
+            </span>
+          </p>
+        </div>
+        <div data-hud-fade className="md:mb-[0.6em]">
+          <Magnetic strength={0.25}>
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                history.replaceState(null, "", "#contact");
+                scrollToTarget("#contact");
+              }}
+              className="slate group/cta inline-flex h-11 items-center gap-3 rounded-full pr-4 pl-5 text-bone-100 shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-[background-color,color,box-shadow] duration-(--dur-fast) ease-fluid hover:bg-bone-100 hover:text-ink-950 hover:shadow-[inset_0_0_0_1px_var(--color-bone-100)]"
+            >
+              Start a project
+              <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3 transition-transform duration-(--dur-base) ease-fluid group-hover/cta:translate-x-0.5">
+                <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </a>
+          </Magnetic>
+        </div>
       </div>
 
       {/* Fullscreen hold (home sequence): the reel's slate, bottom left. Hidden otherwise. */}

@@ -11,6 +11,8 @@ type Props = {
   order: string[];
 };
 
+const DEFAULT_ROLES = ["Full-stack developer", "Blockchain engineer", "Mobile developer", "ML engineer"];
+
 function titleCase(word: string): string {
   const w = word.trim().toLowerCase();
   return w.charAt(0).toUpperCase() + w.slice(1);
@@ -18,7 +20,7 @@ function titleCase(word: string): string {
 
 /**
  * Home hero, "projection booth": a reel window in the dead centre of a smoke-filled room,
- * an instrument HUD across it, and the name set small above a large rotating verb.
+ * an instrument HUD across it, the name top left and a large rotating role bottom left.
  */
 export function Hero({ profile, featured, reel, order }: Props) {
   const slides: HeroSlide[] = featured.map((p) => ({
@@ -50,8 +52,8 @@ export function Hero({ profile, featured, reel, order }: Props) {
 
   const name = `${titleCase(profile?.wordmarkTop ?? "Aditya")} ${titleCase(profile?.wordmarkBottom ?? "Zulkarnaen")}`;
   const city = (profile?.location ?? "Yogyakarta, Indonesia").split(",")[0].trim();
-  // "Fullstack Developer" → "fullstack": the discipline, set large; the title stays in mono.
-  const discipline = (profile?.roles?.[0] ?? "Fullstack Developer").split(/\s+/)[0].toLowerCase();
+  // The large rotating line: profile roles (admin-editable), lowercase, "Full-stack developer" → "full-stack / developer".
+  const roles = (profile?.roles?.length ? profile.roles : DEFAULT_ROLES).map((r) => r.trim().toLowerCase()).filter(Boolean);
 
   return (
     <HeroProjector
@@ -59,7 +61,7 @@ export function Hero({ profile, featured, reel, order }: Props) {
       reel={heroReel}
       name={name}
       descriptor={["Software engineer", `Based in ${city}`]}
-      discipline={discipline}
+      roles={roles}
       devProbe={process.env.NODE_ENV === "development"}
     />
   );
