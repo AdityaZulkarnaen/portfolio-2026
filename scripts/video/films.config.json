@@ -37,7 +37,9 @@
     },
     "bpal-gis": {
       "source": "C:\\laragon\\www\\ipal-web",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 4, "duration": 7 },
+      "posterAt": 5.9
     },
     "civil-in-action-14th": {
       "source": "D:\\coding\\cia14th",

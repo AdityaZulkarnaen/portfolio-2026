@@ -1,6 +1,33 @@
 {
   "version": 1,
   "videos": {
+    "bpal-gis": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/bpal-gis/film-1080.a35eb143ea.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 8170864,
+          "durationS": 19
+        },
+        "loop-480": {
+          "src": "/videos/bpal-gis/loop-480.0c9a11db66.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 863474,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/bpal-gis/loop-720.ade9e56f30.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1729279,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/bpal-gis/poster.06de50bfc9.webp",
+      "durationS": 19
+    },
     "depths": {
       "variants": {
         "film-1080": {
