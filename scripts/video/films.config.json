@@ -25,7 +25,9 @@
     },
     "tbxpert": {
       "source": "D:\\coding\\tbxpert",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 3.9, "duration": 7 },
+      "posterAt": 10.6
     },
     "satu-teladan-apk": {
       "source": "D:\\coding\\SatelFrontEnd\\Frontend",

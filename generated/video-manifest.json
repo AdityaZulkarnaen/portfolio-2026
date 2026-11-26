@@ -55,6 +55,33 @@
       "poster": "/videos/society-of-petroleum-engineer-ugm/poster.5f54847bf7.webp",
       "durationS": 20
     },
+    "tbxpert": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/tbxpert/film-1080.3de70f2fcc.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 3953476,
+          "durationS": 19
+        },
+        "loop-480": {
+          "src": "/videos/tbxpert/loop-480.ff154cbe85.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 969774,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/tbxpert/loop-720.2fec65aad8.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1560604,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/tbxpert/poster.1037b11a2f.webp",
+      "durationS": 19
+    },
     "ugm-cup-2026": {
       "variants": {
         "film-1080": {
