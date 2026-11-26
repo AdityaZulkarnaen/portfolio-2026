@@ -401,6 +401,36 @@
         "focal_x": 0.47,
         "focal_y": 0.32
       }
+    },
+    {
+      "quote": "I've worked with Adit on three projects across three stacks: the Satu Teladan mobile app, a Monad hackathon build and the Civil in Action website. Every time, he adapts fast and ships, whatever the domain. He's reliable, proactive and communicative, someone I can count on to turn an idea into a working product. I'd recommend him to any team that needs a versatile, dependable developer.",
+      "author_name": "Muhammad Khoirunas",
+      "author_role": "Project Lead",
+      "author_org": "Satu Teladan APK",
+      "project_slug": "satu-teladan-apk",
+      "photo": {
+        "file": "testimonials/muhammad-khoirunas.webp",
+        "width": 854,
+        "height": 854,
+        "alt": "Muhammad Khoirunas",
+        "focal_x": 0.46,
+        "focal_y": 0.3
+      }
+    },
+    {
+      "quote": "I've known Adit since high school: he's tenacious and diligent. Working with him, I found him flexible and adaptable, focused on results, and open to criticism and feedback. His work has always met expectations and has never disappointed.",
+      "author_name": "Bunga Fedelein",
+      "author_role": "User",
+      "author_org": "Civil in Action 14th",
+      "project_slug": "civil-in-action-14th",
+      "photo": {
+        "file": "testimonials/bunga-fedelein.webp",
+        "width": 854,
+        "height": 854,
+        "alt": "Bunga Fedelein",
+        "focal_x": 0.5,
+        "focal_y": 0.38
+      }
     }
   ],
   "clients": [
