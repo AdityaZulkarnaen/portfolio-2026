@@ -4,7 +4,16 @@ import { type CSSProperties, type ReactNode, useLayoutEffect, useRef } from "rea
 
 import { stageBridge } from "@/gl/bridge";
 
-type Props = { className: string; style?: CSSProperties; behavior: "scroll" | "static"; children: ReactNode };
+/** Optional GL look (gl/plane.ts `lookOf`): graded tone, edge fade, contain fit, background, hover source. */
+export type PlaneLook = { tone?: "portrait"; fade?: "portrait"; fit?: "contain"; bg?: string; hover?: "figure" };
+
+type Props = {
+  className: string;
+  style?: CSSProperties;
+  behavior: "scroll" | "static";
+  look?: PlaneLook;
+  children: ReactNode;
+};
 
 /**
  * The media window of a <MediaFrame> or a featured card, registered as a GL plane while
@@ -12,7 +21,7 @@ type Props = { className: string; style?: CSSProperties; behavior: "scroll" | "s
  * by <Activity> gets its DOM media back before it is hidden. Inside a `[data-pose]` card
  * the plane follows the card's GSAP transform (gl/plane.ts).
  */
-export function PlaneWindow({ className, style, behavior, children }: Props) {
+export function PlaneWindow({ className, style, behavior, look, children }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
@@ -23,7 +32,18 @@ export function PlaneWindow({ className, style, behavior, children }: Props) {
   }, []);
 
   return (
-    <div ref={ref} className={className} data-behavior={behavior} data-gl-media style={style}>
+    <div
+      ref={ref}
+      className={className}
+      data-behavior={behavior}
+      data-gl-media
+      data-gl-tone={look?.tone}
+      data-gl-fade={look?.fade}
+      data-gl-fit={look?.fit}
+      data-gl-bg={look?.bg}
+      data-gl-hover={look?.hover}
+      style={style}
+    >
       {children}
     </div>
   );

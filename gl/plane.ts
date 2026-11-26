@@ -7,6 +7,7 @@ import {
   RawShaderMaterial,
   Scene,
   Vector2,
+  Vector3,
   Vector4,
   type Texture,
 } from "three";
@@ -63,11 +64,58 @@ type Layout = {
   origin: [number, number] | null;
 };
 
+/**
+ * Optional per-window look, read once from data attributes on the window:
+ * - `data-gl-tone="portrait"`: graded (grayscale/sepia/contrast/brightness) like the DOM filter, lifting on hover.
+ * - `data-gl-fade="portrait"`: alpha fade to the right (md+) or bottom, matching the DOM mask.
+ * - `data-gl-fit="contain"`: object-fit contain; transparent texels and the letterbox show `uBg`.
+ * - `data-gl-hover="figure"`: hover follows the enclosing <figure> instead of the window.
+ */
+type Tone = [number, number, number, number];
+type Look = { tone: [Tone, Tone] | null; fade: boolean; contain: boolean; bg: [number, number, number] };
+
+const TONES: Record<string, [Tone, Tone]> = {
+  portrait: [
+    [1, 0.14, 1.12, 0.54],
+    [0.35, 0.05, 1.05, 0.68],
+  ],
+};
+const IDENTITY_TONE: Tone = [0, 0, 1, 1];
+const INK: [number, number, number] = [0.047, 0.055, 0.071];
+let mdQuery: MediaQueryList | null = null;
+/** The portrait fade runs right on md+ and down below it (the DOM mask switches the same way). */
+function isMd() {
+  mdQuery ??= window.matchMedia("(min-width: 768px)");
+  return mdQuery.matches;
+}
+
+function hexToRgb(hex: string | undefined): [number, number, number] | null {
+  const m = hex ? /^#?([0-9a-f]{6})$/i.exec(hex.trim()) : null;
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+function lookOf(el: HTMLElement): Look {
+  const d = el.dataset;
+  return {
+    tone: d.glTone ? (TONES[d.glTone] ?? null) : null,
+    fade: d.glFade === "portrait",
+    contain: d.glFit === "contain",
+    bg: hexToRgb(d.glBg) ?? INK,
+  };
+}
+
 type Plane = {
   el: HTMLElement;
+  look: Look;
+  /** Element whose pointer enter/leave drives `hover`. */
+  hoverEl: HTMLElement;
   img: HTMLImageElement;
   frame: HTMLElement | null;
   mover: HTMLElement | null;
+  /** The mover is a `[data-gl-mover]` riser: also follow its opacity. */
+  riser: boolean;
   /**
    * A transformed card (`[data-pose]`, e.g. a scattered featured print): the plane is
    * measured untransformed and follows its GSAP x/y/rotation/scale in the vertex shader.
@@ -169,6 +217,11 @@ export class PlaneSystem {
         uOpacity: { value: 1 },
         uSeed: { value: (this.seed++ % 17) * 3.7 },
         uTime: { value: 0 },
+        uToneA: { value: new Vector4(...IDENTITY_TONE) },
+        uToneB: { value: new Vector4(...IDENTITY_TONE) },
+        uHover: { value: 0 },
+        uFade: { value: new Vector3(0, 0.35, 0.96) },
+        uBg: { value: new Vector3(...INK) },
         uPose: { value: new Vector4(0, 0, 0, 1) },
         uPoseOrigin: { value: new Vector2() },
       },
@@ -185,11 +238,23 @@ export class PlaneSystem {
     const frame = el.closest<HTMLElement>("[data-frame]");
     const figure = el.closest<HTMLElement>("figure");
     const depth = Number(el.closest<HTMLElement>("[data-depth]")?.dataset.depth ?? 0);
+    const look = lookOf(el);
+    if (look.tone) {
+      (mat.uniforms.uToneA.value as Vector4).set(...look.tone[0]);
+      (mat.uniforms.uToneB.value as Vector4).set(...look.tone[1]);
+    }
+    (mat.uniforms.uBg.value as Vector3).set(...look.bg);
+    // A `[data-gl-mover]` ancestor (e.g. a card rising in with GSAP y + autoAlpha): the plane follows its y and opacity.
+    const riser = el.closest<HTMLElement>("[data-gl-mover]");
+    const hoverEl = el.dataset.glHover === "figure" && figure ? figure : el;
     const plane: Plane = {
       el,
+      look,
+      hoverEl,
+      riser: depth === 0 && riser !== null,
       img,
       frame,
-      mover: depth !== 0 ? el.closest<HTMLElement>("[data-depth]") : null,
+      mover: depth !== 0 ? el.closest<HTMLElement>("[data-depth]") : riser,
       pose: el.closest<HTMLElement>("[data-pose]"),
       marker: figure ?? frame ?? el,
       tex: null,
@@ -208,8 +273,8 @@ export class PlaneSystem {
       onEnter: () => (plane.hoverTarget = 1),
       onLeave: () => (plane.hoverTarget = 0),
     };
-    el.addEventListener("pointerenter", plane.onEnter);
-    el.addEventListener("pointerleave", plane.onLeave);
+    hoverEl.addEventListener("pointerenter", plane.onEnter);
+    hoverEl.addEventListener("pointerleave", plane.onLeave);
     this.ro.observe(el);
     this.planes.add(plane);
     this.dirty = true;
@@ -311,7 +376,8 @@ export class PlaneSystem {
         const m = INSET.exec(clipStyle);
         p.clip = m ? [Number(m[1]) / 100, Number(m[2]) / 100, Number(m[3]) / 100, Number(m[4]) / 100] : NO_CLIP;
       }
-      const opacity = p.frame?.style.opacity ? Number(p.frame.style.opacity) : 1;
+      let opacity = p.frame?.style.opacity ? Number(p.frame.style.opacity) : 1;
+      if (p.riser && p.mover !== p.frame && p.mover?.style.opacity) opacity *= Number(p.mover.style.opacity);
 
       const s = Number(gsap.getProperty(p.img, "scaleX")) || 1;
       const ty = Number(gsap.getProperty(p.img, "y")) || 0;
@@ -323,7 +389,8 @@ export class PlaneSystem {
       const ta = tex.width / Math.max(1, tex.height);
       let dw = w0;
       let dh = w0 / ta;
-      if (ta > w0 / Math.max(1, h0)) {
+      // cover: fill the box (overflow on one axis); contain: fit inside it (letterbox on one axis).
+      if (p.look.contain ? dh > h0 : ta > w0 / Math.max(1, h0)) {
         dh = h0;
         dw = h0 * ta;
       }
@@ -342,6 +409,11 @@ export class PlaneSystem {
       u.uBend.value = bend;
       u.uRgb.value = (p.hover * RGB_SPLIT_PX) / L.w;
       u.uReveal.value = p.reveal;
+      u.uHover.value = p.hover;
+      if (p.look.fade) {
+        const md = isMd();
+        (u.uFade.value as Vector3).set(md ? 1 : 2, md ? 0.35 : 0.45, 0.96);
+      }
       (u.uPose.value as Vector4).set(ptx, pty, rot, sc);
       if (L.origin) (u.uPoseOrigin.value as Vector2).set(L.origin[0] - sx, L.origin[1] - sy);
       u.uTime.value = this.time;
@@ -403,8 +475,8 @@ export class PlaneSystem {
   private drop(p: Plane) {
     if (!this.planes.delete(p)) return;
     this.unmark(p);
-    p.el.removeEventListener("pointerenter", p.onEnter);
-    p.el.removeEventListener("pointerleave", p.onLeave);
+    p.hoverEl.removeEventListener("pointerenter", p.onEnter);
+    p.hoverEl.removeEventListener("pointerleave", p.onLeave);
     this.ro.unobserve(p.el);
     this.scene.remove(p.mesh);
     p.mat.dispose();

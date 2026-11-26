@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import { PlaneWindow } from "@/components/showcase/plane-window";
 import { TransitionLink } from "@/components/site/transition-link";
 import type { Client, Media, Profile, Testimonial } from "@/lib/content/types";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,10 @@ import { ClientsMotion } from "./clients-motion";
 const DEV = process.env.NODE_ENV !== "production";
 const MAX_CLIENTS = 6;
 const MAX_TESTIMONIALS = 3;
+
+/** DOM media under a GL plane: hidden once the plane draws (same as the work cards' PLANE_MEDIA). */
+const PLANE_MEDIA = "transition-opacity duration-500 ease-io gl-plane:opacity-0 gl-handoff:transition-none";
+const INK_800 = "#14171d";
 
 type LogoCell = { kind: "client"; client: Client } | { kind: "placeholder"; id: string };
 type QuoteCard = { kind: "testimonial"; item: Testimonial } | { kind: "placeholder"; id: string };
@@ -69,7 +74,7 @@ export function Clients({ profile, clients, testimonials }: Props) {
 function LogoPanel({ cells }: { cells: LogoCell[] }) {
   const n = cells.length;
   return (
-    <div data-rise className="rounded-2xl border border-line bg-ink-900/60">
+    <div data-rise data-gl-mover className="rounded-2xl border border-line bg-ink-900/60 [html[data-gl=on]_&]:bg-transparent">
       <p className="slate flex items-center gap-2.5 px-5 pt-5 text-bone-400">
         <span className="size-1 rounded-full bg-bone-400" aria-hidden="true" />
         Clients
@@ -104,16 +109,18 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
 function ClientLogo({ client }: { client: Client }) {
   const body = (
     <>
-      <span className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ink-800 motion-safe:transition-transform motion-safe:duration-(--dur-base) motion-safe:ease-fluid group-hover/logo:-translate-y-0.5 group-focus-visible/logo:-translate-y-0.5">
+      <span data-frame className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-ink-800 gl-plane:bg-transparent motion-safe:transition-transform motion-safe:duration-(--dur-base) motion-safe:ease-fluid group-hover/logo:-translate-y-0.5 group-focus-visible/logo:-translate-y-0.5">
         {client.logo ? (
-          <Image
-            src={client.logo.src}
-            alt=""
-            fill
-            sizes="48px"
-            unoptimized={/\.svg(\?|$)/i.test(client.logo.src)}
-            className="object-contain"
-          />
+          <PlaneWindow className="absolute inset-0" behavior="static" look={{ fit: "contain", bg: INK_800 }}>
+            <Image
+              src={client.logo.src}
+              alt=""
+              fill
+              sizes="48px"
+              unoptimized={/\.svg(\?|$)/i.test(client.logo.src)}
+              className={`object-contain ${PLANE_MEDIA}`}
+            />
+          </PlaneWindow>
         ) : (
           <span aria-hidden="true" className="grid size-full place-items-center text-sm font-semibold text-bone-400">
             {client.name.charAt(0)}
@@ -184,8 +191,10 @@ function QuoteCardView({ card, large }: { card: QuoteCard; large: boolean }) {
   return (
     <figure
       data-rise
+      data-frame
+      data-gl-mover
       className={cn(
-        "group/q relative grid w-full overflow-hidden rounded-2xl border border-line bg-ink-900/60",
+        "group/q relative grid w-full overflow-hidden rounded-2xl border border-line bg-ink-900/60 gl-plane:bg-transparent",
         large ? "md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" : "md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]",
         !t && "border-dashed",
       )}
@@ -244,15 +253,18 @@ function Portrait({ media, large }: { media: Media | null; large: boolean }) {
   }
   return (
     <div className={frame}>
-      <Image
-        src={media.src}
-        alt=""
-        fill
-        sizes={large ? "(min-width: 768px) 26vw, 100vw" : "(min-width: 768px) 14vw, 100vw"}
-        quality={75}
-        className="object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.54)] group-hover/q:filter-[grayscale(0.35)_sepia(0.05)_contrast(1.05)_brightness(0.68)] motion-safe:transition-[filter] motion-safe:duration-(--dur-slower) motion-safe:ease-fluid"
-        style={{ objectPosition: `${(media.focalX ?? 0.5) * 100}% ${(media.focalY ?? 0.3) * 100}%` }}
-      />
+      {/* GL: the portrait develops through the scroll wave, graded and faded like the DOM filter + mask. */}
+      <PlaneWindow className="absolute inset-0" behavior="static" look={{ tone: "portrait", fade: "portrait", hover: "figure" }}>
+        <Image
+          src={media.src}
+          alt=""
+          fill
+          sizes={large ? "(min-width: 768px) 26vw, 100vw" : "(min-width: 768px) 14vw, 100vw"}
+          quality={75}
+          className={`object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.54)] group-hover/q:filter-[grayscale(0.35)_sepia(0.05)_contrast(1.05)_brightness(0.68)] motion-safe:transition-[filter,opacity] motion-safe:duration-(--dur-slower) motion-safe:ease-fluid ${PLANE_MEDIA}`}
+          style={{ objectPosition: `${(media.focalX ?? 0.5) * 100}% ${(media.focalY ?? 0.3) * 100}%` }}
+        />
+      </PlaneWindow>
     </div>
   );
 }

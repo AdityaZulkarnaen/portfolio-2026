@@ -25,6 +25,11 @@ uniform float uReveal;
 uniform float uOpacity;
 uniform float uSeed;
 uniform float uTime;
+uniform vec4 uToneA; // grayscale, sepia, contrast, brightness (identity: 0, 0, 1, 1)
+uniform vec4 uToneB; // the same on hover
+uniform float uHover;
+uniform vec3 uFade;  // axis (0 none, 1 x, 2 y), opaque until, transparent at
+uniform vec3 uBg;    // shown through transparent texels and the contain letterbox
 out vec4 outColor;
 
 ${noiseChunk}
@@ -41,7 +46,19 @@ float roundedMask(vec2 p, vec4 rect, vec4 r) {
 
 vec3 sampleMap(vec2 local) {
   vec2 uv = uUvA + local * uUvB;
-  return texture(uMap, clamp(vec2(uv.x, 1.0 - uv.y), 0.0, 1.0)).rgb;
+  vec4 t = texture(uMap, clamp(vec2(uv.x, 1.0 - uv.y), 0.0, 1.0));
+  // Outside the texture (contain letterbox) or transparent texels: the window background.
+  vec2 inside = step(0.0, uv) * step(uv, vec2(1.0));
+  return mix(uBg, t.rgb, t.a * inside.x * inside.y);
+}
+
+vec3 grade(vec3 c, vec4 t) {
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  c = mix(c, vec3(l), t.x);
+  vec3 sep = vec3(dot(c, vec3(0.393, 0.769, 0.189)), dot(c, vec3(0.349, 0.686, 0.168)), dot(c, vec3(0.272, 0.534, 0.131)));
+  c = mix(c, min(sep, vec3(1.0)), t.y);
+  c = (c - 0.5) * t.z + 0.5;
+  return clamp(c * t.w, 0.0, 1.0);
 }
 
 void main() {
@@ -67,12 +84,19 @@ void main() {
   vec3 col = split > 1e-5
     ? vec3(sampleMap(local + shift).r, sampleMap(local).g, sampleMap(local - shift).b)
     : sampleMap(local);
+  col = grade(col, mix(uToneA, uToneB, uHover));
+
   // Dark crest, a thin cold glint riding its leading edge.
   col *= 1.0 - w.x * 0.6;
   col += vec3(0.85, 0.95, 1.0) * w.x * (1.0 - w.z) * 0.35;
 
   // Ahead of the wave the card is dark ink (undeveloped), not see-through.
   col = mix(vec3(0.047, 0.055, 0.071), col, alpha);
-  outColor = vec4(col, mask * uOpacity);
+  float fade = 1.0;
+  if (uFade.x > 0.5) {
+    float t = uFade.x < 1.5 ? vLocal.x : vLocal.y;
+    fade = 1.0 - clamp((t - uFade.y) / max(1e-3, uFade.z - uFade.y), 0.0, 1.0);
+  }
+  outColor = vec4(col, mask * uOpacity * fade);
 }
 `;
