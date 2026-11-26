@@ -81,6 +81,33 @@
       },
       "poster": "/videos/ugm-cup-2026/poster.b42b9fddba.webp",
       "durationS": 21
+    },
+    "vista": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/vista/film-1080.0f565252c2.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 8309572,
+          "durationS": 19
+        },
+        "loop-480": {
+          "src": "/videos/vista/loop-480.35ac5dbed1.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 875558,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/vista/loop-720.83280adc3e.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1717651,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/vista/poster.9f910d5d34.webp",
+      "durationS": 19
     }
   },
   "reels": {}

@@ -19,7 +19,9 @@
     },
     "vista": {
       "source": "D:\\coding\\Vista\\VISTA-Base",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 4.4, "duration": 7 },
+      "posterAt": 6.5
     },
     "tbxpert": {
       "source": "D:\\coding\\tbxpert",
