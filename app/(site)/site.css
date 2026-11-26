@@ -132,7 +132,9 @@ body:has(> canvas.gl-stage) {
 html[data-gl="on"] [data-gl-hero] {
   background-color: transparent;
 }
-html[data-gl="on"] [data-gl-hero] [data-gl-media] {
+/* The hero's own media is drawn by the stage; plane windows (`data-behavior`, e.g. the
+   operator's print) hide their DOM image themselves once their plane draws. */
+html[data-gl="on"] [data-gl-hero] [data-gl-media]:not([data-behavior]) {
   opacity: 0;
   transition: opacity 0.8s var(--ease-io);
 }

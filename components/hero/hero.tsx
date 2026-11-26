@@ -1,7 +1,7 @@
 import type { Profile, Project, Reel } from "@/lib/content/types";
 import { resolveReelSource } from "@/lib/content/video-manifest";
 
-import { HeroProjector, type HeroReel, type HeroSlide } from "./hero-projector";
+import { HeroProjector, type HeroPhoto, type HeroReel, type HeroSlide } from "./hero-projector";
 
 type Props = {
   profile: Profile | null;
@@ -55,6 +55,13 @@ export function Hero({ profile, featured, reel, order }: Props) {
   // The large rotating line: profile roles (admin-editable), lowercase, "Full-stack developer" → "full-stack / developer".
   const roles = (profile?.roles?.length ? profile.roles : DEFAULT_ROLES).map((r) => r.trim().toLowerCase()).filter(Boolean);
 
+  // The operator's print: the second profile photo (the first is the About portrait).
+  const shot = profile?.aboutPhotos?.[0] ?? profile?.portrait?.[1] ?? null;
+  const photo: HeroPhoto | null =
+    shot && shot.width && shot.height
+      ? { src: shot.src, width: shot.width, height: shot.height, alt: shot.alt, lqip: shot.lqip, focalX: shot.focalX, focalY: shot.focalY }
+      : null;
+
   return (
     <HeroProjector
       slides={slides}
@@ -62,6 +69,7 @@ export function Hero({ profile, featured, reel, order }: Props) {
       name={name}
       descriptor={["Software engineer", `Based in ${city}`]}
       roles={roles}
+      photo={photo}
       devProbe={process.env.NODE_ENV === "development"}
     />
   );

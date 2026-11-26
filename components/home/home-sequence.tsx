@@ -191,7 +191,12 @@ export function HomeSequence({ children }: { children: ReactNode }) {
           const glOn = document.documentElement.dataset.gl === "on";
           if (glOn) {
             if (lastRoomGl !== true) room.style.opacity = "";
-          } else room.style.opacity = String(1 - range(c, 0, 0.5));
+          } else {
+            // Only write while actually fading: a leftover inline "1" would beat the GL rule
+            // (opacity 0) if GL comes on before the next scroll render, covering the canvas.
+            const o = 1 - range(c, 0, 0.5);
+            room.style.opacity = o >= 1 ? "" : String(o);
+          }
           lastRoomGl = glOn;
         }
 

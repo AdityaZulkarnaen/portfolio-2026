@@ -15,6 +15,9 @@ import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 import { onSiteReady } from "@/lib/motion/site-ready";
 
+import { PlaneWindow } from "@/components/showcase/plane-window";
+import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
+
 import { DevReelProbe } from "./dev-reel-probe";
 import { HERO_PILL, PlayReelButton } from "./play-reel-button";
 
@@ -25,6 +28,16 @@ export type HeroSlide = {
   year: string;
   accent: string | null;
   image: { src: string; width: number; height: number; alt: string; lqip: string | null } | null;
+};
+
+export type HeroPhoto = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+  lqip: string | null;
+  focalX: number | null;
+  focalY: number | null;
 };
 
 export type HeroReel = {
@@ -46,6 +59,8 @@ type Props = {
   descriptor: [string, string];
   /** Rotating roles, lowercase ("full-stack developer"). Set on two lines: first word / the rest. */
   roles: string[];
+  /** The operator's print on the HUD line; null = none. */
+  photo: HeroPhoto | null;
   devProbe: boolean;
 };
 
@@ -54,28 +69,11 @@ const SLIDE_MS = 6000;
 const RETRY_MS = 400;
 /** How long each role holds before the next turns over. */
 const ROLE_MS = 3200;
-/** Yogyakarta. */
-const LAT = "-7.7956°";
-const LON = "110.3695°";
-
 const pad = (n: number) => String(n).padStart(2, "0");
 const timecode = (ms: number) => {
   const s = Math.floor(ms / 1000);
   return `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
 };
-
-/** Ring dots, in degrees from 12 o'clock. One ember marker; the rest bone. */
-const ORBIT_DOTS = [
-  { deg: 32, accent: true },
-  { deg: 148, accent: false },
-  { deg: 205, accent: false },
-  { deg: 291, accent: false },
-];
-
-function polar(deg: number, r = 99.5) {
-  const a = ((deg - 90) * Math.PI) / 180;
-  return { cx: 100 + r * Math.cos(a), cy: 100 + r * Math.sin(a) };
-}
 
 /**
  * The next slide after `from` that can be shown right now: its cover has loaded in the
@@ -143,7 +141,7 @@ function Plus({ className }: { className: string }) {
  * the window (and is the GL source), the slide follows the chapter on screen, and a
  * "Now playing: 0X / Project" chip under the window scrolls to that project's card.
  */
-export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe }: Props) {
+export function HeroProjector({ slides, reel, name, descriptor, roles, photo, devProbe }: Props) {
   const [cycled, setIndex] = useState(0);
   const [roleIndex, setRoleIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -151,7 +149,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
   const [reelOpen, setReelOpen] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const windowRef = useRef<HTMLDivElement>(null);
-  const spinRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const motion = useMotionAllowed();
   const seq = useSequenceState();
@@ -259,12 +257,13 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
       if (document.documentElement.dataset.motion === "off") return;
       const q = gsap.utils.selector(root);
       const line = q("[data-hud-line]");
-      const ring = q("[data-ring]");
       const rise = q("[data-rise]");
       const fade = q("[data-hud-fade]");
       const win = windowRef.current;
+      const print = printRef.current;
       gsap.set(line, { scaleX: 0 });
-      gsap.set(ring, { autoAlpha: 0, scale: 0.94 });
+      // The print develops through the GL wave (and the DOM mask without GL) as the room opens.
+      if (print) gsap.set(print, { "--dev": 0 });
       gsap.set(rise, { yPercent: 112 });
       gsap.set(fade, { autoAlpha: 0 });
       if (win) gsap.set(win, { "--reveal": 0 });
@@ -272,26 +271,12 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
         const tl = gsap.timeline({ delay: 0.1 });
         tl.to(line, { scaleX: 1, duration: 1.5, ease: "expo" }, 0);
         if (win) tl.to(win, { "--reveal": 1, duration: 1.25, ease: "expo" }, 0.4);
-        tl.to(ring, { autoAlpha: 1, scale: 1, duration: 2, ease: "fluid" }, 0.3);
+        if (print) tl.to(print, { "--dev": 1, duration: 2.2, ease: "power2.inOut" }, 0.6);
         tl.to(rise, { yPercent: 0, duration: 1.3, ease: "expo", stagger: 0.07 }, 0.5);
         tl.to(fade, { autoAlpha: 1, duration: 0.9, ease: "fluid", stagger: 0.035 }, 0.8);
       });
     },
     { scope: rootRef },
-  );
-
-  // Ring turns with the scroll-out; static when motion is off.
-  useGSAP(
-    () => {
-      const el = spinRef.current;
-      if (!motion || !el) return;
-      gsap.fromTo(
-        el,
-        { rotate: 0 },
-        { rotate: 40, ease: "none", scrollTrigger: { trigger: rootRef.current, start: "top top", end: "bottom top", scrub: 0.8 } },
-      );
-    },
-    { dependencies: [motion], revertOnUpdate: true },
   );
 
   const slide = slides[index];
@@ -341,7 +326,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
       </div>
 
       {/* Top left: where and who. The name is the h1, set lowercase. */}
-      <div data-seq-out className="order-1 md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:left-gutter md:max-w-[46vw]">
+      <div data-seq-out className="order-1 pr-[calc(19vw+1rem)] md:absolute md:top-[calc(var(--spacing-header)+2rem)] md:left-gutter md:max-w-[46vw] md:pr-0">
         <p className="slate flex flex-wrap gap-x-4 text-bone-400">
           {descriptor.map((line) => (
             <span key={line} className="block overflow-clip">
@@ -361,39 +346,52 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
         </h1>
       </div>
 
-      {/* The instrument: ring, HUD line, reel window. */}
-      <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--ring:112vw] [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 [--cx:50%] md:[--ring:max(42vw,calc(var(--win)*1.5))] md:[--win:clamp(300px,30vw,660px)] lg:[--cx:66%]">
-        <div className="relative">
-          <div data-seq-ring className="pointer-events-none absolute inset-0">
-          <div data-ring aria-hidden="true" className="pointer-events-none absolute top-1/2 left-(--cx) size-(--ring) -translate-1/2 text-[rgb(236_233_226/0.09)] md:text-[rgb(236_233_226/0.15)]">
-            <svg viewBox="0 0 200 200" className="absolute inset-0 size-full overflow-visible max-md:hidden">
-              {[0, 90, 180, 270].map((deg) => {
-                const a = polar(deg, 101.5);
-                const b = polar(deg, 104);
-                return <line key={deg} x1={a.cx} y1={a.cy} x2={b.cx} y2={b.cy} stroke="currentColor" vectorEffect="non-scaling-stroke" />;
-              })}
-            </svg>
-            <div ref={spinRef} className="size-full">
-              <div className="size-full animate-orbit [animation-play-state:paused] group-data-running/hero:[animation-play-state:running] motion-off:animate-none">
-                <svg viewBox="0 0 200 200" className="size-full overflow-visible max-md:opacity-60">
-                  <circle cx="100" cy="100" r="99.5" fill="none" stroke="currentColor" vectorEffect="non-scaling-stroke" />
-                  {ORBIT_DOTS.map(({ deg, accent: a }) => {
-                    const p = polar(deg);
-                    return (
-                      <circle
-                        key={deg}
-                        {...p}
-                        r={a ? 1.15 : 0.85}
-                        className={a ? "fill-ember-500" : "fill-bone-400"}
-                      />
-                    );
-                  })}
-                </svg>
-              </div>
+      {/* The operator's print, pinned on the HUD line (top right on phones). Developed through
+          the GL plane wave like the work prints, graded like the testimonial portraits. */}
+      {photo ? (
+        <div
+          data-seq-out
+          data-gl-mover
+          className="absolute top-[calc(var(--spacing-header)+1.25rem)] right-gutter z-20 w-[19vw] md:top-[calc(50%-clamp(140px,12vw,230px)*0.625)] md:right-auto md:left-gutter md:w-[clamp(140px,12vw,230px)]"
+        >
+          <div data-hud-fade>
+            <div
+              ref={printRef}
+              data-frame
+              className="relative aspect-[4/5] overflow-hidden rounded-[8px] shadow-[0_0_0_1px_rgb(236_233_226/0.12)]"
+              style={{ "--dev": 1 } as React.CSSProperties}
+            >
+              <PlaneWindow className="absolute inset-0 bg-ink-900 gl-plane:bg-transparent" behavior="static" look={{ tone: "portrait" }}>
+                <Image
+                  src={photo.src}
+                  alt={photo.alt || name}
+                  fill
+                  sizes="(min-width: 768px) 12vw, 20vw"
+                  quality={75}
+                  placeholder={photo.lqip ? "blur" : "empty"}
+                  blurDataURL={photo.lqip ?? undefined}
+                  className={`object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.54)] ${PLANE_MEDIA} ${DEV_MASK}`}
+                  style={{
+                    objectPosition:
+                      photo.focalX != null && photo.focalY != null ? `${photo.focalX * 100}% ${photo.focalY * 100}%` : "50% 25%",
+                  }}
+                />
+              </PlaneWindow>
+              {(["top-1.5 left-1.5", "top-1.5 right-1.5", "bottom-1.5 left-1.5", "right-1.5 bottom-1.5"] as const).map((pos) => (
+                <span key={pos} aria-hidden="true" className={`absolute size-[3px] rounded-full bg-bone-100/70 ${pos}`} />
+              ))}
             </div>
+            <p className="slate mt-2 flex justify-between gap-2 text-bone-400 max-md:hidden">
+              <span>Operator</span>
+              <span className="text-bone-100">{name.split(" ")[0]}</span>
+            </p>
           </div>
-          </div>
+        </div>
+      ) : null}
 
+      {/* The instrument: HUD line, reel window. */}
+      <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 [--cx:50%] md:[--win:clamp(300px,30vw,660px)] lg:[--cx:66%]">
+        <div className="relative">
           <div data-seq-out className="pointer-events-none absolute inset-0">
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2">
             <div data-hud-line className="absolute inset-0 origin-center bg-[rgb(236_233_226/0.2)]" />
@@ -406,7 +404,6 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
             data-hud-fade
             className="slate pointer-events-none absolute bottom-[calc(50%+var(--win)*0.28125+0.75rem)] left-0 flex w-1/2 gap-3 tracking-[0.12em] text-bone-400 tabular-nums xl:right-[calc(100%-var(--cx)+var(--win)/2+2.75rem)] xl:bottom-[calc(50%+0.625rem)] xl:left-auto xl:w-auto xl:justify-between xl:tracking-[0.16em]"
           >
-            <span>{LAT}</span>
             <span className="text-bone-100">{hudLabel}</span>
           </div>
           <div
@@ -416,7 +413,6 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, devProbe 
             <span className="text-bone-100">
               <span data-timecode>{timecode(index * SLIDE_MS)}</span> sec
             </span>
-            <span>{LON}</span>
           </div>
           </div>
 
