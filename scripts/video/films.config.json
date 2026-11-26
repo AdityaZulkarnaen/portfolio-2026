@@ -31,7 +31,9 @@
     },
     "satu-teladan-apk": {
       "source": "D:\\coding\\SatelFrontEnd\\Frontend",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 4.6, "duration": 7 },
+      "posterAt": 8.4
     },
     "bpal-gis": {
       "source": "C:\\laragon\\www\\ipal-web",

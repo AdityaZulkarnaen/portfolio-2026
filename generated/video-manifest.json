@@ -28,6 +28,33 @@
       "poster": "/videos/depths/poster.b8cb950620.webp",
       "durationS": 60
     },
+    "satu-teladan-apk": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/satu-teladan-apk/film-1080.bd5e5eaf8c.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 5219853,
+          "durationS": 19
+        },
+        "loop-480": {
+          "src": "/videos/satu-teladan-apk/loop-480.c5fa085aff.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 1005795,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/satu-teladan-apk/loop-720.e81da07810.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1968415,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/satu-teladan-apk/poster.14559a1ad7.webp",
+      "durationS": 19
+    },
     "society-of-petroleum-engineer-ugm": {
       "variants": {
         "film-1080": {
