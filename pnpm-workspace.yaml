@@ -1,4 +1,5 @@
 allowBuilds:
   sharp: false
+  ffmpeg-static: true
   supabase: true
   unrs-resolver: false

@@ -1,1 +1,60 @@
-{"version":1,"videos":{},"reels":{}}
+{
+  "version": 1,
+  "videos": {
+    "depths": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/depths/film-1080.821a82b7a7.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 8417361,
+          "durationS": 60
+        },
+        "loop-480": {
+          "src": "/videos/depths/loop-480.b8319c56b4.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 925921,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/depths/loop-720.5fba65b5a3.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1750102,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/depths/poster.b8cb950620.webp",
+      "durationS": 60
+    },
+    "ugm-cup-2026": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/ugm-cup-2026/film-1080.d086131002.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 5788188,
+          "durationS": 21
+        },
+        "loop-480": {
+          "src": "/videos/ugm-cup-2026/loop-480.f94d028fd3.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 905442,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/ugm-cup-2026/loop-720.450f1ac9d4.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1769740,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/ugm-cup-2026/poster.b42b9fddba.webp",
+      "durationS": 21
+    }
+  },
+  "reels": {}
+}

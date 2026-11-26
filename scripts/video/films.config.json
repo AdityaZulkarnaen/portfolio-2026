@@ -1,0 +1,44 @@
+{
+  "$comment": "slug → source repo → master. `master` is relative to `source`. `loop` picks the representative segment (seconds into the master) for loop-720/loop-480; `posterAt` defaults to the loop midpoint. `film: false` = stills only, never encoded.",
+  "mastersDir": "D:\\coding\\portfolio-films\\masters",
+  "films": {
+    "depths": {
+      "source": "D:\\coding\\Depths",
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 28, "duration": 7 }
+    },
+    "ugm-cup-2026": {
+      "source": "D:\\coding\\ugmcup\\ugmcup-fe",
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 7, "duration": 7 }
+    },
+    "society-of-petroleum-engineer-ugm": {
+      "source": "D:\\coding\\SPE\\spe-website",
+      "master": "brag-output/brag.mp4"
+    },
+    "vista": {
+      "source": "D:\\coding\\Vista\\VISTA-Base",
+      "master": "brag-output/brag.mp4"
+    },
+    "tbxpert": {
+      "source": "D:\\coding\\tbxpert",
+      "master": "brag-output/brag.mp4"
+    },
+    "satu-teladan-apk": {
+      "source": "D:\\coding\\SatelFrontEnd\\Frontend",
+      "master": "brag-output/brag.mp4"
+    },
+    "bpal-gis": {
+      "source": "C:\\laragon\\www\\ipal-web",
+      "master": "brag-output/brag.mp4"
+    },
+    "civil-in-action-14th": {
+      "source": "D:\\coding\\cia14th",
+      "master": "brag-output/brag.mp4"
+    },
+    "resku": {
+      "film": false,
+      "note": "No source repo available; stills only."
+    }
+  }
+}

@@ -2,6 +2,7 @@
 import type { Json, Tables } from "@/lib/supabase/database.types";
 
 import { resolveMediaUrl } from "./media-url";
+import { projectVideo, resolveVideoKey } from "./video-manifest";
 import type {
   Achievement,
   AchievementKind,
@@ -65,7 +66,8 @@ export function mapMedia(row: MediaRow): Media {
     kind: row.kind === "video" ? "video" : "image",
     source,
     path: row.path,
-    src: resolveMediaUrl(source, row.path),
+    // Public video rows may store a stable manifest key (`depths/loop-720`) instead of a hashed file.
+    src: (source === "public" && row.kind === "video" ? resolveVideoKey(row.path) : null) ?? resolveMediaUrl(source, row.path),
     width: row.width,
     height: row.height,
     alt: row.alt,
@@ -170,8 +172,9 @@ export function mapProject(row: ProjectRowWithRelations): Project {
     featured: row.featured,
     position: row.position,
     cover: row.cover ? mapMedia(row.cover) : (frames.find((f) => f.isCover)?.media ?? null),
-    film: row.film ? mapMedia(row.film) : null,
-    loop: row.loop ? mapMedia(row.loop) : null,
+    // A linked media row wins; otherwise an encoded entry in the video manifest (keyed by slug).
+    film: row.film ? mapMedia(row.film) : projectVideo(row.slug, "film"),
+    loop: row.loop ? mapMedia(row.loop) : projectVideo(row.slug, "loop"),
     facts: mapFacts(row.facts),
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
