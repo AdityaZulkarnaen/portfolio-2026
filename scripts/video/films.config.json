@@ -14,7 +14,8 @@
     },
     "society-of-petroleum-engineer-ugm": {
       "source": "D:\\coding\\SPE\\spe-website",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 7, "duration": 7 }
     },
     "vista": {
       "source": "D:\\coding\\Vista\\VISTA-Base",
