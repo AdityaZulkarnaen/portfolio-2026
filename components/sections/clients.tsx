@@ -46,10 +46,9 @@ export function Clients({ profile, clients, testimonials }: Props) {
       </h2>
       <ClientsMotion className="grid gap-3">
         {logos.length > 0 ? <LogoPanel cells={logos} /> : null}
-        <div className="grid gap-3 md:grid-cols-12">
-          <CtaCard availability={profile?.availability} wide={quotes.length === 0} />
+        <div className="grid gap-3">
           {quotes.length > 0 ? (
-            <ul className="grid gap-3 md:col-span-8 md:grid-cols-2" aria-label="Testimonials">
+            <ul className="grid gap-3 md:grid-cols-2" aria-label="Testimonials">
               {quotes.map((card, i) => (
                 <li
                   key={card.kind === "testimonial" ? card.item.id : card.id}
@@ -60,6 +59,7 @@ export function Clients({ profile, clients, testimonials }: Props) {
               ))}
             </ul>
           ) : null}
+          <CtaCard availability={profile?.availability} />
         </div>
       </ClientsMotion>
     </section>
@@ -148,29 +148,20 @@ function ClientLogo({ client }: { client: Client }) {
   return <div className={cls}>{body}</div>;
 }
 
-function CtaCard({ availability, wide }: { availability: string | undefined; wide: boolean }) {
+function CtaCard({ availability }: { availability: string | undefined }) {
   return (
     <div
       data-rise
-      className={cn(
-        "grid gap-8 rounded-2xl border border-line bg-ink-900/60 p-[clamp(1.5rem,2.4vw,2.25rem)]",
-        wide ? "md:col-span-12 md:grid-cols-2 md:items-end" : "content-between md:col-span-4 md:min-h-136",
-      )}
+      className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 rounded-2xl border border-line bg-ink-900/60 px-6 py-4 md:justify-self-end"
     >
-      <div className={cn("grid gap-8", wide && "md:order-2 md:justify-items-end")}>
-        <p className="slate text-bone-400">
-          {availability || "Available for work"}
-        </p>
-        <Sheets className={cn("w-full max-w-60 text-bone-100", wide && "md:max-w-52")} />
-      </div>
-      <div className="grid justify-items-start gap-5">
-        <h3 className="max-w-[14ch] text-[clamp(1.75rem,2.6vw,2.6rem)] leading-[1.02] font-bold tracking-tight text-balance font-stretch-112%">
+      <div className="grid gap-1">
+        <p className="slate text-bone-400">{availability || "Available for work"}</p>
+        <h3 className="text-lg leading-tight font-bold tracking-tight font-stretch-112%">
           Got something worth building?
         </h3>
-        <p className="max-w-[36ch] leading-relaxed text-pretty text-bone-400">
-          Send the rough version and we&apos;ll work out scope, stack and timeline together.
-        </p>
-        <a href="#contact" className="pill-btn group/pb mt-2">
+      </div>
+      <div className="flex">
+        <a href="#contact" className="pill-btn group/pb">
           <span>Start a project</span>
           <svg
             viewBox="0 0 12 12"
@@ -263,58 +254,5 @@ function Portrait({ media, large }: { media: Media | null; large: boolean }) {
         style={{ objectPosition: `${(media.focalX ?? 0.5) * 100}% ${(media.focalY ?? 0.3) * 100}%` }}
       />
     </div>
-  );
-}
-
-function Sheets({ className }: { className?: string }) {
-  const sheets = [0, 1, 2, 3].map((i) => {
-    const cx = 110 + i * 8;
-    const cy = 130 - i * 22;
-    return `${cx - 80},${cy} ${cx},${cy - 40} ${cx + 80},${cy} ${cx},${cy + 40}`;
-  });
-  const grid = [
-    [80.67, 77.33, 160.67, 37.33],
-    [107.33, 90.67, 187.33, 50.67],
-    [80.67, 50.67, 160.67, 90.67],
-    [107.33, 37.33, 187.33, 77.33],
-  ];
-  const dots = [
-    [54, 64],
-    [134, 24],
-    [214, 64],
-    [134, 104],
-    [107.33, 50.67],
-    [160.67, 77.33],
-  ];
-  return (
-    <svg viewBox="20 14 204 166" fill="none" aria-hidden="true" className={className}>
-      {sheets.map((points, i) => (
-        <polygon
-          key={i}
-          points={points}
-          stroke="currentColor"
-          strokeOpacity={0.12 + i * 0.1}
-          strokeWidth="1"
-          fill="currentColor"
-          fillOpacity={i === 3 ? 0.03 : 0}
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-      {[
-        [30, 130, 54, 64],
-        [190, 130, 214, 64],
-        [110, 170, 134, 104],
-      ].map(([x1, y1, x2, y2], i) => (
-        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeOpacity="0.22" strokeDasharray="2 4" />
-      ))}
-      {grid.map(([x1, y1, x2, y2], i) => (
-        <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="currentColor" strokeOpacity="0.18" />
-      ))}
-      {dots.map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="1.8" fill="currentColor" fillOpacity="0.7" />
-      ))}
-      <circle cx="134" cy="64" r="3" className="fill-tide-400" />
-      <circle cx="134" cy="64" r="8" className="stroke-tide-400" strokeOpacity="0.35" />
-    </svg>
   );
 }
