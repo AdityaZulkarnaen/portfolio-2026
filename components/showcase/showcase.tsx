@@ -3,6 +3,7 @@ import { ViewTransition, type CSSProperties } from "react";
 import { TransitionLink } from "@/components/site/transition-link";
 import { accentOrDefault } from "@/lib/content/format";
 import type { Metric, Project } from "@/lib/content/types";
+import { projectVideo } from "@/lib/content/video-manifest";
 
 import { WorkCardMedia } from "./work-card-media";
 
@@ -63,7 +64,8 @@ function WorkCard({ project, index, variant }: Item) {
               <div className="relative aspect-[9/19.5] overflow-hidden rounded-[clamp(14px,2.1vw,27px)]">
                 <WorkCardMedia
                   cover={project.cover}
-                  loop={project.loop}
+                  // The 16:9 film loop would be cropped to a sliver here; phone shells only take a portrait loop.
+                  loop={projectVideo(project.slug, "phoneLoop")}
                   sizes={SIZES.phone}
                   label={project.name}
                   className="rounded-[clamp(14px,2.1vw,27px)]"

@@ -7,7 +7,7 @@ import type { Media } from "@/lib/content/types";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 
 import { PlaneWindow } from "./plane-window";
-import { claim, releasePlayback } from "./video-frame";
+import { IN_VIEW_RATIO, IN_VIEW_THRESHOLDS, releasePlayback, requestPlayback } from "./playback";
 
 type Props = {
   cover: Media | null;
@@ -39,7 +39,10 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   useEffect(() => {
     const v = ref.current;
     if (!v) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.intersectionRatio >= 0.5), { threshold: [0, 0.5, 1] });
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e.isIntersecting && e.intersectionRatio >= IN_VIEW_RATIO),
+      { threshold: IN_VIEW_THRESHOLDS },
+    );
     io.observe(v);
     return () => io.disconnect();
   }, []);
@@ -47,17 +50,9 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   useLayoutEffect(() => {
     const v = ref.current;
     if (!v) return;
-    if (inView && motion) {
-      claim(v);
-      v.play().catch(() => releasePlayback(v));
-    } else {
-      v.pause();
-      releasePlayback(v);
-    }
-    return () => {
-      v.pause();
-      releasePlayback(v);
-    };
+    if (inView && motion) requestPlayback(v);
+    else releasePlayback(v);
+    return () => releasePlayback(v);
   }, [inView, motion]);
 
   return (

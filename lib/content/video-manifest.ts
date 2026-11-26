@@ -26,9 +26,9 @@ export function resolveReelSource(key: string): ReelSource | null {
   return { src: variant.src, poster: entry.poster ?? null, durationS: entry.durationS ?? null };
 }
 
-export type ProjectVideoRole = "film" | "loop";
+export type ProjectVideoRole = "film" | "loop" | "phoneLoop";
 
-const ROLE_VARIANT: Record<ProjectVideoRole, string> = { film: "film-1080", loop: "loop-720" };
+const ROLE_VARIANT: Record<ProjectVideoRole, string> = { film: "film-1080", loop: "loop-720", phoneLoop: "loop-phone" };
 
 /**
  * `<slug>/<variant>` (optionally prefixed `videos/`), e.g. `depths/loop-720`: the stable key a

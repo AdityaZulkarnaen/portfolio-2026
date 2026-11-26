@@ -17,6 +17,7 @@
     "db:push": "node --env-file-if-exists=.env.local scripts/db-push.mjs",
     "video:collect": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/video/collect.ts",
     "video:encode": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/video/encode.ts",
+    "video:phone": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/video/phone-loops.ts",
     "video:manifest": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/video/manifest.ts"
   },
   "dependencies": {

@@ -6,29 +6,7 @@ import type { FrameChrome } from "@/lib/content/types";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 
 import { frameClass, windowClass } from "./media-frame";
-
-/** At most two inline videos play at once across the document. */
-const MAX_PLAYING = 2;
-const playing = new Set<HTMLVideoElement>();
-
-/** Exported for other inline loops (featured cards) so the cap is document-wide. */
-export function releasePlayback(video: HTMLVideoElement) {
-  playing.delete(video);
-}
-
-export function claim(video: HTMLVideoElement) {
-  if (playing.has(video)) return true;
-  if (playing.size >= MAX_PLAYING) {
-    // Evict the oldest so the one entering view wins.
-    const oldest = playing.values().next().value;
-    if (oldest) {
-      oldest.pause();
-      playing.delete(oldest);
-    }
-  }
-  playing.add(video);
-  return true;
-}
+import { IN_VIEW_RATIO, IN_VIEW_THRESHOLDS, releasePlayback, requestPlayback } from "./playback";
 
 type Props = {
   src: string;
@@ -57,7 +35,10 @@ export function VideoFrame({ src, poster, ratio, chrome, label }: Props) {
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.intersectionRatio >= 0.5), { threshold: [0, 0.5, 1] });
+    const io = new IntersectionObserver(
+      ([e]) => setInView(e.isIntersecting && e.intersectionRatio >= IN_VIEW_RATIO),
+      { threshold: IN_VIEW_THRESHOLDS },
+    );
     io.observe(v);
     return () => io.disconnect();
   }, []);
@@ -65,17 +46,9 @@ export function VideoFrame({ src, poster, ratio, chrome, label }: Props) {
   useLayoutEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (inView && motion && !userPaused) {
-      claim(v);
-      v.play().catch(() => playing.delete(v));
-    } else {
-      v.pause();
-      playing.delete(v);
-    }
-    return () => {
-      v.pause();
-      playing.delete(v);
-    };
+    if (inView && motion && !userPaused) requestPlayback(v);
+    else releasePlayback(v);
+    return () => releasePlayback(v);
   }, [inView, motion, userPaused]);
 
   useEffect(() => {
@@ -118,11 +91,10 @@ export function VideoFrame({ src, poster, ratio, chrome, label }: Props) {
             if (!v) return;
             if (v.paused) {
               setUserPaused(false);
-              claim(v);
-              v.play().catch(() => {});
+              requestPlayback(v);
             } else {
               setUserPaused(true);
-              v.pause();
+              releasePlayback(v);
             }
           }}
         >

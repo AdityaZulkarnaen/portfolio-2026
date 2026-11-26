@@ -104,6 +104,13 @@
           "height": 720,
           "bytes": 1968415,
           "durationS": 7
+        },
+        "loop-phone": {
+          "src": "/videos/satu-teladan-apk/loop-phone.d95e9318f1.mp4",
+          "width": 480,
+          "height": 1040,
+          "bytes": 974272,
+          "durationS": 12
         }
       },
       "poster": "/videos/satu-teladan-apk/poster.14559a1ad7.webp",
@@ -158,6 +165,13 @@
           "height": 720,
           "bytes": 1560604,
           "durationS": 7
+        },
+        "loop-phone": {
+          "src": "/videos/tbxpert/loop-phone.80b46fa87f.mp4",
+          "width": 480,
+          "height": 1040,
+          "bytes": 983230,
+          "durationS": 9.9
         }
       },
       "poster": "/videos/tbxpert/poster.1037b11a2f.webp",
