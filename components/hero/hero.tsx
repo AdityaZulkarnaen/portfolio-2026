@@ -3,7 +3,13 @@ import { resolveReelSource } from "@/lib/content/video-manifest";
 
 import { HeroProjector, type HeroReel, type HeroSlide } from "./hero-projector";
 
-type Props = { profile: Profile | null; featured: Project[]; reel: Reel | null };
+type Props = {
+  profile: Profile | null;
+  featured: Project[];
+  reel: Reel | null;
+  /** Every published project slug in site order: chapter numbers follow the site's (Resku is 06). */
+  order: string[];
+};
 
 function titleCase(word: string): string {
   const w = word.trim().toLowerCase();
@@ -14,7 +20,7 @@ function titleCase(word: string): string {
  * Home hero, "projection booth": a reel window in the dead centre of a smoke-filled room,
  * an instrument HUD across it, and the name set small above a large rotating verb.
  */
-export function Hero({ profile, featured, reel }: Props) {
+export function Hero({ profile, featured, reel, order }: Props) {
   const slides: HeroSlide[] = featured.map((p) => ({
     slug: p.slug,
     name: p.name,
@@ -34,7 +40,11 @@ export function Hero({ profile, featured, reel }: Props) {
           src: source.src,
           poster: source.poster,
           title: reel.title,
-          chapters: reel.chapters.map((c) => ({ label: c.label, startS: c.startS })),
+          hero: source.hero,
+          chapters: reel.chapters.map((c) => {
+            const at = c.projectSlug ? order.indexOf(c.projectSlug) : -1;
+            return { label: c.label, startS: c.startS, slug: c.projectSlug, number: String((at >= 0 ? at : c.position) + 1).padStart(2, "0") };
+          }),
         }
       : null;
 

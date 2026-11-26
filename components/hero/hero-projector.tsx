@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Magnetic } from "@/components/motion/magnetic";
 import { Grain } from "@/components/site/grain";
@@ -28,10 +28,14 @@ export type HeroSlide = {
 };
 
 export type HeroReel = {
+  /** Modal source (with sound). */
   src: string;
   poster: string | null;
   title: string;
-  chapters: { label: string; startS: number }[];
+  /** Muted loops for the hero window (video mode); null = stills only. */
+  hero: { large: string; small: string } | null;
+  /** `number` follows the site's project numbering; `slug` links the chapter to its slide/case. */
+  chapters: { label: string; startS: number; slug: string | null; number: string }[];
 };
 
 type Props = {
@@ -93,6 +97,32 @@ function nextReadySlide(root: HTMLElement | null, from: number, count: number): 
   return null;
 }
 
+const noop = () => () => {};
+
+/**
+ * Which hero loop this page view may play: none with Save-Data (or before hydration), the
+ * 480p loop on phones / coarse pointers, else 720p. Fixed for the page view.
+ */
+function useHeroVideoSize(enabled: boolean): "large" | "small" | null {
+  return useSyncExternalStore(
+    noop,
+    () => {
+      if (!enabled) return null;
+      const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      if (conn?.saveData) return null;
+      return window.matchMedia("(pointer: coarse), (max-width: 767px)").matches ? "small" : "large";
+    },
+    () => null,
+  );
+}
+
+/** Index of the chapter playing at `t` (chapters sorted by start), or -1 before the first. */
+function chapterAt(chapters: { startS: number }[], t: number): number {
+  let at = -1;
+  for (let i = 0; i < chapters.length; i++) if (chapters[i].startS <= t + 0.05) at = i;
+  return at;
+}
+
 function Plus({ className }: { className: string }) {
   return (
     <svg viewBox="0 0 11 11" aria-hidden="true" data-hud-fade className={`pointer-events-none absolute size-[11px] text-bone-400/70 ${className}`}>
@@ -110,21 +140,32 @@ function Plus({ className }: { className: string }) {
  * the CSS room stay underneath as the T0 / no-GL experience and fade out once GL draws.
  *
  * Reel video (P7) drops in through the same path: a reel with an encoded source turns the
- * pill into Play reel and the left HUD label into PLAY REEL.
+ * pill into Play reel and the left HUD label into PLAY REEL. With hero loops encoded (and no
+ * Save-Data / reduced motion) the window switches to video mode: the muted reel loop plays in
+ * the window (and is the GL source), the slide follows the chapter on screen, and a
+ * "Now playing: 0X / Project" chip under the window scrolls to that project's card.
  */
 export function HeroProjector({ slides, reel, name, descriptor, discipline, devProbe }: Props) {
   const [cycled, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
+  const [chapter, setChapter] = useState(0);
+  const [reelOpen, setReelOpen] = useState(false);
   const rootRef = useRef<HTMLElement>(null);
   const windowRef = useRef<HTMLDivElement>(null);
   const spinRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const motion = useMotionAllowed();
   const seq = useSequenceState();
+  const videoSize = useHeroVideoSize(!!reel?.hero);
+  const videoMode = videoSize !== null && motion;
   // Zooming out into the featured works, the reel parks on the lead project (slide 0),
   // so the frame lands on the card that shows the same cover.
   const parked = seq.active && seq.phase === "out";
-  const index = parked ? 0 : cycled;
-  const running = motion && visible && slides.length > 1 && !parked;
+  const videoLive = videoMode && !parked;
+  const current = videoMode ? reel?.chapters[chapter] : undefined;
+  const chapterSlide = current?.slug ? slides.findIndex((s) => s.slug === current.slug) : -1;
+  const index = parked ? 0 : videoLive && chapterSlide >= 0 ? chapterSlide : cycled;
+  const running = motion && visible && slides.length > 1 && !parked && !videoMode;
 
   useHeroSource(rootRef, {
     index,
@@ -132,7 +173,33 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
     accents: slides.map((s) => accentOrDefault(s.accent)),
     key: slides.map((s) => s.slug).join("|"),
     manualProgress: seq.active,
+    video: videoLive,
   });
+
+  // Video mode: the loop plays only while the hero is on screen, the tab is visible and the
+  // reel dialog is closed.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const sync = () => {
+      if (videoLive && visible && !reelOpen && document.visibilityState === "visible") v.play().catch(() => {});
+      else v.pause();
+    };
+    sync();
+    document.addEventListener("visibilitychange", sync);
+    return () => document.removeEventListener("visibilitychange", sync);
+  }, [videoLive, visible, reelOpen]);
+
+  // Chapter chip + timecode follow the loop's playhead.
+  const onReelTime = useCallback(
+    (t: number) => {
+      if (!reel) return;
+      setChapter(Math.max(0, chapterAt(reel.chapters, t)));
+      const text = timecode(t * 1000);
+      rootRef.current?.querySelectorAll<HTMLElement>("[data-timecode]").forEach((n) => (n.textContent = text));
+    },
+    [reel],
+  );
   useHeroWindow(windowRef);
 
   useEffect(() => {
@@ -166,7 +233,7 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
   // (HUD label and the fullscreen slate).
   useEffect(() => {
     const nodes = rootRef.current?.querySelectorAll<HTMLElement>("[data-timecode]");
-    if (!nodes?.length || !running) return;
+    if (!nodes?.length || !running || videoMode) return;
     const base = index * SLIDE_MS;
     const t0 = performance.now();
     const id = window.setInterval(() => {
@@ -174,7 +241,7 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
       for (const n of nodes) n.textContent = text;
     }, 250);
     return () => window.clearInterval(id);
-  }, [index, running]);
+  }, [index, running, videoMode]);
 
   // Entrance, once the curtain lifts: line draws out from the centre, the window opens
   // from it, the ring settles, words rise through their masks.
@@ -248,8 +315,8 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
       aria-labelledby="hero-title"
       className="group/hero relative isolate z-10 flex min-h-[max(100svh,640px)] flex-col overflow-clip px-gutter pt-[calc(var(--spacing-header)+1rem)] pb-[clamp(1.25rem,3svh,2.5rem)] md:block md:p-0"
       data-gl-hero
-      data-hero-mode="stills"
-      data-running={running || undefined}
+      data-hero-mode={videoMode ? "video" : "stills"}
+      data-running={running || (videoLive && visible) || undefined}
       style={{ "--accent": accent } as React.CSSProperties}
     >
       {/* The room without GL (T0): deep teal pools + film grain. GL draws its own. */}
@@ -399,6 +466,24 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
                   </div>
                 ) : null,
               )}
+              {videoMode && reel?.hero ? (
+                <video
+                  ref={videoRef}
+                  data-hero-video
+                  data-gl-media
+                  data-active={videoLive || undefined}
+                  className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-700 ease-io data-active:opacity-100"
+                  src={videoSize === "small" ? reel.hero.small : reel.hero.large}
+                  poster={reel.poster ?? undefined}
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  onTimeUpdate={(e) => onReelTime(e.currentTarget.currentTime)}
+                />
+              ) : null}
               <div data-gl-media className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_40px_rgb(0_0_0/0.45)]" />
             </div>
 
@@ -409,7 +494,13 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
 
             <div data-hud-fade className="pointer-events-none absolute inset-0 grid place-items-center">
               {reel ? (
-                <PlayReelButton src={reel.src} poster={reel.poster} title={reel.title} chapters={reel.chapters} />
+                <PlayReelButton
+                  src={reel.src}
+                  poster={reel.poster}
+                  title={reel.title}
+                  chapters={reel.chapters.map((c) => ({ label: `${c.number} · ${c.label}`, startS: c.startS }))}
+                  onOpenChange={setReelOpen}
+                />
               ) : devProbe ? (
                 <DevReelProbe fallback={caseLink} />
               ) : (
@@ -419,14 +510,32 @@ export function HeroProjector({ slides, reel, name, descriptor, discipline, devP
 
             {slide ? (
               <div className="absolute inset-x-0 top-full mt-3.5 flex items-start justify-between gap-4" aria-live="off">
-                <p className="min-w-0">
-                  <span key={slide.slug} data-hud-fade className="grid animate-fade-up gap-1">
-                    <span className="truncate text-sm leading-tight font-medium text-bone-100">{slide.name}</span>
-                    <span className="slate truncate text-bone-400">
-                      {slide.kind} · {slide.year}
+                {current ? (
+                  <button
+                    type="button"
+                    data-hud-fade
+                    data-cursor="view"
+                    className="pointer-events-auto grid min-w-0 gap-1 text-left"
+                    onClick={() => {
+                      if (current.slug) scrollToTarget(`#work a[href="/work/${current.slug}"]`, { offset: -120 });
+                    }}
+                    aria-label={`Now playing: ${current.number} / ${current.label}. Show the project`}
+                  >
+                    <span className="slate text-bone-400">Now playing</span>
+                    <span key={current.number} className="animate-fade-up truncate text-sm leading-tight font-medium text-bone-100">
+                      <span className="tabular-nums">{current.number}</span> / {current.label}
                     </span>
-                  </span>
-                </p>
+                  </button>
+                ) : (
+                  <p className="min-w-0">
+                    <span key={slide.slug} data-hud-fade className="grid animate-fade-up gap-1">
+                      <span className="truncate text-sm leading-tight font-medium text-bone-100">{slide.name}</span>
+                      <span className="slate truncate text-bone-400">
+                        {slide.kind} · {slide.year}
+                      </span>
+                    </span>
+                  </p>
+                )}
                 <p data-hud-fade className="slate shrink-0 text-bone-400 tabular-nums">
                   <span className="text-bone-100">{pad(index + 1)}</span> / {pad(slides.length)}
                 </p>

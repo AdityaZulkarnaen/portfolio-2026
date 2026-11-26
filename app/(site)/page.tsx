@@ -42,7 +42,7 @@ export default async function HomePage() {
     <PageTransition>
       <RouteSignal />
       <HomeSequence>
-        <Hero profile={profile} featured={featured} reel={reel} />
+        <Hero profile={profile} featured={featured} reel={reel} order={all.map((p) => p.slug)} />
         <Showcase projects={featured} metrics={profile?.metrics ?? DEFAULT_METRICS} total={all.length} />
       </HomeSequence>
       <TintZone tone="clients">

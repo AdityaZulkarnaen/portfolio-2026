@@ -232,5 +232,100 @@
       "durationS": 19
     }
   },
-  "reels": {}
+  "reels": {
+    "showreel": {
+      "variants": {
+        "reel-1080": {
+          "src": "/videos/showreel/reel-1080.3f614a8513.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 32092720,
+          "durationS": 44
+        },
+        "reel-hero-480": {
+          "src": "/videos/showreel/reel-hero-480.08d6bb30e1.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 6403607,
+          "durationS": 44
+        },
+        "reel-hero-720": {
+          "src": "/videos/showreel/reel-hero-720.085c6502e1.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 13645861,
+          "durationS": 44
+        }
+      },
+      "poster": "/videos/showreel/poster.2467f635d2.webp",
+      "durationS": 44,
+      "chapters": [
+        {
+          "number": "01",
+          "slug": "depths",
+          "label": "Depths",
+          "role": "Full-stack Developer · 2026",
+          "startS": 0,
+          "endS": 6
+        },
+        {
+          "number": "02",
+          "slug": "ugm-cup-2026",
+          "label": "UGM Cup 2026",
+          "role": "Full-stack Developer · 2026",
+          "startS": 6,
+          "endS": 10
+        },
+        {
+          "number": "03",
+          "slug": "society-of-petroleum-engineer-ugm",
+          "label": "SPE UGM Student Chapter",
+          "role": "Full-stack Developer · 2026",
+          "startS": 10,
+          "endS": 16
+        },
+        {
+          "number": "04",
+          "slug": "vista",
+          "label": "Vista",
+          "role": "Backend Developer · 2026",
+          "startS": 16,
+          "endS": 20
+        },
+        {
+          "number": "05",
+          "slug": "tbxpert",
+          "label": "TBXpert",
+          "role": "Frontend Developer · 2026",
+          "startS": 20,
+          "endS": 26
+        },
+        {
+          "number": "07",
+          "slug": "satu-teladan-apk",
+          "label": "Satu Teladan Apk",
+          "role": "Mobile Developer · 2025",
+          "startS": 26,
+          "endS": 30
+        },
+        {
+          "number": "08",
+          "slug": "bpal-gis",
+          "label": "BPAL GIS",
+          "role": "Full-stack Developer · 2026",
+          "startS": 30,
+          "endS": 36
+        },
+        {
+          "number": "09",
+          "slug": "civil-in-action-14th",
+          "label": "Civil In Action 14th",
+          "role": "Full-stack Developer · 2026",
+          "startS": 36,
+          "endS": 40
+        }
+      ],
+      "chaptersVtt": "/videos/showreel/chapters.vtt"
+    }
+  }
 }

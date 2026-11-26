@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap.min.js"></script>
+    <style>
+      :root { --ink: #07080b; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: var(--ink); }
+      #ground { position: absolute; inset: 0; background: var(--ink); }
+      /* Each film keeps its own caption pill (bottom left); the reel's chapter card sits bottom right. */
+      .cam { position: absolute; inset: 0; overflow: hidden; transform-origin: 50% 50%; }
+      .cam video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; }
+      /* Depths shows demo wallet addresses (header chip, session wallet): blank them, keep the UI. */
+      .mask { position: absolute; }
+      #depths-mask-chip { left: 1698px; top: 26px; width: 162px; height: 42px; background: #18191e; }
+      #depths-mask-session { left: 1762px; top: 370px; width: 128px; height: 34px; background: #13111d; }
+      /* BPAL is a light-mode map: ease the jump from the dark chapters before it. */
+      .dim { position: absolute; inset: 0; background: var(--ink); opacity: 0; }
+      #veil { position: absolute; inset: 0; background: var(--ink); pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="44" data-width="1920" data-height="1080">
+      <div id="ground" class="clip" data-start="0" data-duration="44" data-track-index="0" style="z-index: 0"></div>
+
+      <!-- Chapters, in site order (Resku, 06, has no film). Cuts land on bar lines at 120 BPM. -->
+      <div id="cam-depths" class="cam" style="z-index: 1">
+        <video id="depths" class="clip" src="assets/masters/depths.mp4" muted playsinline
+          data-start="0" data-duration="6" data-media-start="27" data-track-index="1"></video>
+        <div id="depths-mask-chip" class="mask"></div>
+        <div id="depths-mask-session" class="mask"></div>
+      </div>
+      <div id="cam-ugm-cup-2026" class="cam" style="z-index: 2">
+        <video id="ugm-cup-2026" class="clip" src="assets/masters/ugm-cup-2026.mp4" muted playsinline
+          data-start="6" data-duration="4" data-media-start="7.5" data-track-index="2"></video>
+      </div>
+      <div id="cam-society-of-petroleum-engineer-ugm" class="cam" style="z-index: 3">
+        <video id="society-of-petroleum-engineer-ugm" class="clip" src="assets/masters/society-of-petroleum-engineer-ugm.mp4" muted playsinline
+          data-start="10" data-duration="6" data-media-start="6.5" data-track-index="3"></video>
+      </div>
+      <div id="cam-vista" class="cam" style="z-index: 4">
+        <video id="vista" class="clip" src="assets/masters/vista.mp4" muted playsinline
+          data-start="16" data-duration="4" data-media-start="4.5" data-track-index="4"></video>
+      </div>
+      <div id="cam-tbxpert" class="cam" style="z-index: 5">
+        <video id="tbxpert" class="clip" src="assets/masters/tbxpert.mp4" muted playsinline
+          data-start="20" data-duration="6" data-media-start="4.4" data-track-index="5"></video>
+      </div>
+      <div id="cam-satu-teladan-apk" class="cam" style="z-index: 6">
+        <video id="satu-teladan-apk" class="clip" src="assets/masters/satu-teladan-apk.mp4" muted playsinline
+          data-start="26" data-duration="4" data-media-start="10.2" data-track-index="6"></video>
+      </div>
+      <div id="cam-bpal-gis" class="cam" style="z-index: 7">
+        <video id="bpal-gis" class="clip" src="assets/masters/bpal-gis.mp4" muted playsinline
+          data-start="30" data-duration="6" data-media-start="1.2" data-track-index="7"></video>
+        <div id="bpal-dim" class="dim"></div>
+      </div>
+      <div id="cam-civil-in-action-14th" class="cam" style="z-index: 8">
+        <video id="civil-in-action-14th" class="clip" src="assets/masters/civil-in-action-14th.mp4" muted playsinline
+          data-start="36" data-duration="4" data-media-start="7.7" data-track-index="8"></video>
+      </div>
+
+      <div id="veil" style="z-index: 9"></div>
+
+      <div id="chapters" data-composition-id="chapters" data-composition-src="compositions/chapters.html"
+        data-start="0" data-duration="40" data-track-index="9" data-track-kind="graphics"
+        data-width="1920" data-height="1080" style="z-index: 10"></div>
+      <div id="outro" data-composition-id="outro" data-composition-src="compositions/outro.html"
+        data-start="40" data-duration="4" data-track-index="10" data-track-kind="graphics"
+        data-width="1920" data-height="1080" style="z-index: 11"></div>
+
+      <audio id="music" class="clip" src="assets/music.wav" data-start="0" data-duration="44"
+        data-track-index="11" data-volume="1"></audio>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // Open from ink, close to ink: frame 0 and the last second are #07080B, so it loops.
+      tl.fromTo("#veil", { opacity: 1 }, { opacity: 0, duration: 0.9, ease: "sine.inOut" }, 0.05);
+      tl.to("#veil", { opacity: 1, duration: 0.6, ease: "sine.in" }, 39.4);
+      // A slow push-in per chapter (1 → 1.035), so no shot sits dead still.
+      const shots = [
+        ["depths", 0, 6], ["ugm-cup-2026", 6, 4], ["society-of-petroleum-engineer-ugm", 10, 6], ["vista", 16, 4],
+        ["tbxpert", 20, 6], ["satu-teladan-apk", 26, 4], ["bpal-gis", 30, 6], ["civil-in-action-14th", 36, 4],
+      ];
+      for (const [id, start, dur] of shots) {
+        tl.fromTo(`#cam-${id}`, { scale: 1 }, { scale: 1.035, duration: dur, ease: "none" }, start);
+      }
+      tl.fromTo("#bpal-dim", { opacity: 0.6 }, { opacity: 0, duration: 0.8, ease: "sine.out", immediateRender: false }, 30);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

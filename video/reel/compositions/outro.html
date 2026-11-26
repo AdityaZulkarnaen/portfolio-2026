@@ -1,0 +1,23 @@
+<template>
+  <style>
+    @font-face { font-family: "Mona Sans"; src: url("assets/fonts/mona-sans.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; }
+    @font-face { font-family: "JetBrains Mono Portfolio"; src: url("assets/fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; }
+    #root { position: absolute; inset: 0; background: #07080b; display: flex; align-items: center; justify-content: center; }
+    #outro-box { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+    #outro-title { font-family: "Mona Sans", sans-serif; font-weight: 600; font-size: 88px; letter-spacing: -0.025em; line-height: 1.05; color: #ece9e2; white-space: nowrap; }
+    #outro-sub { font-family: "JetBrains Mono Portfolio", monospace; font-size: 30px; font-weight: 400; letter-spacing: 0.04em; color: #9c9a93; white-space: nowrap; }
+  </style>
+  <!-- End card on ink; the last second is pure ink so the reel loops back into chapter 01. -->
+  <div id="root" data-composition-id="outro" data-width="1920" data-height="1080">
+    <div id="outro-box">
+      <h1 id="outro-title" class="clip" data-start="0" data-duration="3" data-track-index="0">Aditya Zulkarnaen</h1>
+      <p id="outro-sub" class="clip" data-start="0" data-duration="3" data-track-index="1">Selected work · 2025–2026</p>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo("#outro-box", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 0.15);
+    tl.to("#outro-box", { opacity: 0, duration: 0.45, ease: "sine.in" }, 2.45);
+    window.__timelines["outro"] = tl;
+  </script>
+</template>

@@ -27,13 +27,15 @@ export function useStageMode(mode: StageMode, enabled = true) {
 /**
  * Feeds the hero projector's DOM stills to the stage: `[data-slide="i"] img` inside
  * `rootRef`, the current slide index, hero click pulses and the hero scroll-out progress.
- * `key` changes when the slide set changes.
+ * `key` changes when the slide set changes. With `video` (reel video mode) the source is
+ * the `[data-hero-video]` element instead of the stills.
  */
 export function useHeroSource(
   rootRef: RefObject<HTMLElement | null>,
-  opts: { index: number; count: number; accents: string[]; key: string; manualProgress?: boolean },
+  opts: { index: number; count: number; accents: string[]; key: string; manualProgress?: boolean; video?: boolean },
 ) {
   const manualProgress = opts.manualProgress ?? false;
+  const video = opts.video ?? false;
   const { index, count, key } = opts;
   const accentsKey = opts.accents.join(",");
   const indexRef = useRef(index);
@@ -47,9 +49,10 @@ export function useHeroSource(
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    const reel = video ? root.querySelector<HTMLVideoElement>("[data-hero-video]") : null;
     const images: (HTMLImageElement | null)[] = [];
     for (let i = 0; i < count; i++) images.push(root.querySelector<HTMLImageElement>(`[data-slide="${i}"] img`));
-    const source: HeroSource = { kind: "images", images, accents: accentsKey.split(",") };
+    const source: HeroSource = reel ? { kind: "video", video: reel } : { kind: "images", images, accents: accentsKey.split(",") };
     stageBridge.setHeroSources(source, indexRef.current);
     const release = stageBridge.pushMode("hero");
 
@@ -63,7 +66,7 @@ export function useHeroSource(
       release();
       stageBridge.clearHeroSources(source);
     };
-  }, [rootRef, count, accentsKey, key]);
+  }, [rootRef, count, accentsKey, key, video]);
 
   // Scroll-out: 0 at the top, 1 once the hero has fully left the viewport. With
   // `manualProgress` (the pinned home sequence) the owner drives it instead.

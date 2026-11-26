@@ -38,6 +38,7 @@ import {
   type TestimonialRowWithRelations,
 } from "./mappers";
 import { SECTION_MEDIA_DIRS, sectionKey } from "./section-media";
+import { manifestChapters, manifestReel } from "./video-manifest";
 import type { Achievement, Client, Experience, Media, Profile, Project, Reel, Skill, Testimonial } from "./types";
 
 const PROJECT_SELECT = `
@@ -218,8 +219,11 @@ export async function getActiveReel(): Promise<Reel | null> {
   cacheLife("days");
   cacheTag("content", "reels");
 
+  // An active row in `reels` (admin) wins. Without one, the encoded reel in the video
+  // manifest is used with the chapters cut from its composition, so encoding the reel is
+  // enough for the hero to switch to video mode and show Play reel.
   const supabase = getPublicClient();
-  if (!supabase) return null; // No reel until Phase 2.
+  if (!supabase) return manifestReel();
 
   const { data, error } = await supabase
     .from("reels")
@@ -228,7 +232,9 @@ export async function getActiveReel(): Promise<Reel | null> {
     .maybeSingle()
     .overrideTypes<ReelRowWithChapters | null, { merge: false }>();
   if (error) fail("active reel", error);
-  return data ? mapReel(data) : null;
+  if (!data) return manifestReel();
+  const reel = mapReel(data);
+  return reel.chapters.length > 0 ? reel : { ...reel, chapters: manifestChapters(reel.key) };
 }
 
 export async function getClients(): Promise<Client[]> {

@@ -4,12 +4,18 @@
  *   pnpm video:encode                  # every film that has a master
  *   pnpm video:encode depths           # just these slugs
  *   pnpm video:encode depths --force   # re-encode even if the hashed output exists
+ *   pnpm video:encode --reel           # the showreel (video/reel/out/reel.mp4) → public/videos/showreel/
  *
  * Variants (H.264 High, yuv420p, +faststart, closed 2 s GOP, two-pass bitrate fitted to budget):
  *   film-1080  full film, AAC audio          ≤ 9 MB
  *   loop-720   ~7 s segment, muted, seam xfade ≤ 2.5 MB
  *   loop-480   same segment at 480p, muted     ≤ 1.2 MB
  *   poster     WebP still from the loop        ≤ 160 KB
+ * Reel variants (full length; the reel opens and closes on ink, so it loops without a seam):
+ *   reel-1080      AAC audio, for the modal    ≤ 35 MB
+ *   reel-hero-720  muted, the hero window      ≤ 15 MB
+ *   reel-hero-480  muted, phones / small hero  ≤ 7 MB
+ *   poster         WebP still                  ≤ 160 KB
  * (MB/KB are decimal: 1 MB = 1,000,000 bytes.)
  *
  * File names are `<variant>.<hash>.<ext>`, the hash covering the master's bytes and the
@@ -24,7 +30,21 @@ import { join } from "node:path";
 
 import sharp from "sharp";
 
-import { ffmpegBin, PUBLIC_VIDEOS, loadConfig, masterPath, parseOutputName, probe, run, selectSlugs, type FilmConfig } from "./lib.ts";
+import {
+  CHAPTERS_JSON,
+  ffmpegBin,
+  PUBLIC_VIDEOS,
+  REEL_KEY,
+  REEL_MASTER,
+  loadConfig,
+  masterPath,
+  parseOutputName,
+  probe,
+  run,
+  selectSlugs,
+  type FilmConfig,
+  type ReelChaptersFile,
+} from "./lib.ts";
 
 /** Bump to invalidate every hash when the encoder recipe changes. */
 const RECIPE = 2;
@@ -51,6 +71,14 @@ const VIDEO_SPECS: VideoSpec[] = [
   { variant: "loop-720", height: 720, audio: false, budget: 2.5 * MB, capKbps: 2000, segment: "loop" },
   { variant: "loop-480", height: 480, audio: false, budget: 1.2 * MB, capKbps: 1000, segment: "loop" },
 ];
+
+const REEL_SPECS: VideoSpec[] = [
+  { variant: "reel-1080", height: 1080, audio: true, budget: 35 * MB, capKbps: 6000, segment: "full" },
+  { variant: "reel-hero-720", height: 720, audio: false, budget: 15 * MB, capKbps: 2500, segment: "full" },
+  { variant: "reel-hero-480", height: 480, audio: false, budget: 7 * MB, capKbps: 1200, segment: "full" },
+];
+/** Poster frame: UGM Cup's bracket with its chapter card up (t = 8.5 s). */
+const REEL_FILM: FilmConfig = { posterAt: 8.5, loop: { start: 0, duration: 7 } };
 
 const POSTER = { variant: "poster", width: 1920, budget: 160 * KB, qualities: [80, 72, 64, 56, 48], fallbackWidths: [1600, 1280] };
 
@@ -183,9 +211,36 @@ async function encodePoster(slug: string, master: string, masterHash: string, fi
   throw new Error(`${slug}/poster cannot fit ${fmt(POSTER.budget)}`);
 }
 
+/** The rendered reel must match the composition the chapters came from (±0.1 s). */
+function checkReelDuration(master: string) {
+  const chapters = join(PUBLIC_VIDEOS, REEL_KEY, CHAPTERS_JSON);
+  if (!existsSync(chapters)) throw new Error(`${chapters} is missing: run \`pnpm video:chapters\` first`);
+  const expected = (JSON.parse(readFileSync(chapters, "utf8")) as ReelChaptersFile).durationS;
+  const actual = probe(master).durationS;
+  if (Math.abs(actual - expected) > 0.1) throw new Error(`reel master is ${actual.toFixed(2)} s but the chapters say ${expected} s: re-render`);
+}
+
+async function encodeReel(work: string) {
+  if (!existsSync(REEL_MASTER)) throw new Error(`No reel master at ${REEL_MASTER} (run \`pnpm video:reel\`)`);
+  console.log(`${REEL_KEY}:`);
+  checkReelDuration(REEL_MASTER);
+  const masterHash = sha(readFileSync(REEL_MASTER));
+  const dir = join(PUBLIC_VIDEOS, REEL_KEY);
+  for (const spec of REEL_SPECS) encodeVideo(REEL_KEY, REEL_MASTER, masterHash, REEL_FILM, spec, dir, work);
+  await encodePoster(REEL_KEY, REEL_MASTER, masterHash, REEL_FILM, dir, work);
+}
+
 const work = mkdtempSync(join(tmpdir(), "video-encode-"));
 try {
-  for (const slug of selectSlugs(config, process.argv.slice(2))) {
+  if (process.argv.includes("--reel")) {
+    try {
+      await encodeReel(work);
+    } catch (error) {
+      failures.push(`${REEL_KEY}: ${(error as Error).message}`);
+      console.error(`  ✗ ${(error as Error).message}`);
+    }
+  }
+  for (const slug of process.argv.includes("--reel") ? [] : selectSlugs(config, process.argv.slice(2))) {
     const film = config.films[slug];
     if (film.film === false) {
       console.log(`- ${slug}: no film (${film.note ?? "stills only"})`);

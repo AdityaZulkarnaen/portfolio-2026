@@ -1,0 +1,6 @@
+# Built by `pnpm video:reel` (scripts/video/reel.ts); the masters live outside the repo.
+assets/masters/
+assets/music.wav
+out/
+renders/
+.hyperframes/

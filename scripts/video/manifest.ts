@@ -8,17 +8,20 @@
  *   { version: 1,
  *     videos: { <slug>: { variants: { "film-1080" | "loop-720" | "loop-480": { src, width, height, bytes, durationS } },
  *                         poster, durationS } },
- *     reels:  { <key>:  { variants: { "reel-1080" | "reel-hero-720" | "reel-hero-480": … }, poster, durationS } } }
+ *     reels:  { <key>:  { variants: { "reel-1080" | "reel-hero-720" | "reel-hero-480": … }, poster, durationS,
+ *                         chapters: [{ number, slug, label, role, startS, endS }], chaptersVtt } } }
  * `durationS` on the entry is the film's (or the reel's) length. Directories whose variants
  * are `reel-*` go under `reels`; everything else under `videos`, keyed by folder name (= project slug).
+ * A reel's chapters come from the chapters.json / chapters.vtt that `pnpm video:chapters` writes
+ * into its folder.
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { MANIFEST_PATH, PUBLIC_VIDEOS, ROOT, parseOutputName, probe } from "./lib.ts";
+import { CHAPTERS_JSON, CHAPTERS_VTT, MANIFEST_PATH, PUBLIC_VIDEOS, ROOT, parseOutputName, probe, type ReelChapterData, type ReelChaptersFile } from "./lib.ts";
 
 type Variant = { src: string; width: number; height: number; bytes: number; durationS: number };
-type Entry = { variants: Record<string, Variant>; poster?: string; durationS?: number };
+type Entry = { variants: Record<string, Variant>; poster?: string; durationS?: number; chapters?: ReelChapterData[]; chaptersVtt?: string };
 type Manifest = { version: 1; videos: Record<string, Entry>; reels: Record<string, Entry> };
 
 function check(): never {
@@ -26,7 +29,11 @@ function check(): never {
   const missing: string[] = [];
   for (const group of [manifest.videos, manifest.reels]) {
     for (const entry of Object.values(group ?? {})) {
-      const srcs = [...Object.values(entry.variants ?? {}).map((v) => v.src), ...(entry.poster ? [entry.poster] : [])];
+      const srcs = [
+        ...Object.values(entry.variants ?? {}).map((v) => v.src),
+        ...(entry.poster ? [entry.poster] : []),
+        ...(entry.chaptersVtt ? [entry.chaptersVtt] : []),
+      ];
       for (const src of srcs) if (!existsSync(join(ROOT, "public", src))) missing.push(src);
     }
   }
@@ -71,6 +78,14 @@ for (const key of dirs) {
   const isReel = names.every((n) => n.startsWith("reel-"));
   const main = entry.variants["film-1080"] ?? entry.variants["reel-1080"] ?? entry.variants[names[0]];
   entry.durationS = main.durationS;
+  if (isReel && existsSync(join(dir, CHAPTERS_JSON))) {
+    const file = JSON.parse(readFileSync(join(dir, CHAPTERS_JSON), "utf8")) as ReelChaptersFile;
+    if (Math.abs(file.durationS - main.durationS) > 0.1) {
+      throw new Error(`${key}: chapters are for a ${file.durationS} s reel but the encode is ${main.durationS} s`);
+    }
+    entry.chapters = file.chapters;
+    if (existsSync(join(dir, CHAPTERS_VTT))) entry.chaptersVtt = `/videos/${key}/${CHAPTERS_VTT}`;
+  }
   (isReel ? manifest.reels : manifest.videos)[key] = entry;
   console.log(`${isReel ? "reel " : "video"} ${key}: ${names.join(", ")}${entry.poster ? ", poster" : ""}`);
 }

@@ -14,6 +14,28 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export const PUBLIC_VIDEOS = join(ROOT, "public", "videos");
 export const MANIFEST_PATH = join(ROOT, "generated", "video-manifest.json");
 
+/** The chaptered showreel: HyperFrames project, rendered master and manifest key. */
+export const REEL_KEY = "showreel";
+export const REEL_DIR = join(ROOT, "video", "reel");
+export const REEL_MASTER = join(REEL_DIR, "out", "reel.mp4");
+/** Pinned like the films' compositions, so a CLI update never changes a render silently. */
+export const HYPERFRAMES = "hyperframes@0.9.97";
+/** Written by scripts/video/chapters.ts next to the encoded reel; embedded in the manifest. */
+export const CHAPTERS_JSON = "chapters.json";
+export const CHAPTERS_VTT = "chapters.vtt";
+
+export type ReelChapterData = {
+  /** Site numbering ("06" is Resku, which has no film, so the reel skips it). */
+  number: string;
+  slug: string;
+  label: string;
+  role: string;
+  startS: number;
+  endS: number;
+};
+
+export type ReelChaptersFile = { key: string; title: string; durationS: number; chapters: ReelChapterData[] };
+
 export type FilmConfig = {
   source?: string;
   master?: string;
@@ -50,6 +72,29 @@ export function ffmpegBin(): string {
 
 export function ffprobeBin(): string {
   return ffprobeStatic.path;
+}
+
+/** Env for the HyperFrames CLI: point it at the static ffmpeg/ffprobe (no system ffmpeg here). */
+export function hyperframesEnv(): NodeJS.ProcessEnv {
+  return { ...process.env, HYPERFRAMES_FFMPEG_PATH: ffmpegBin(), HYPERFRAMES_FFPROBE_PATH: ffprobeBin() };
+}
+
+/** `npx hyperframes@<pinned> <args>` in the reel project. Throws on failure; returns stdout. */
+export function hyperframes(args: string[], opts: { quiet?: boolean } = {}): string {
+  const res = spawnSync("npx", ["--yes", HYPERFRAMES, ...args], {
+    cwd: REEL_DIR,
+    env: hyperframesEnv(),
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+    shell: process.platform === "win32", // npx is npx.cmd on Windows
+    stdio: ["ignore", "pipe", opts.quiet ? "pipe" : "inherit"],
+  });
+  if (res.error) throw res.error;
+  if (res.status !== 0) {
+    const tail = (res.stderr ?? "").split("\n").slice(-20).join("\n");
+    throw new Error(`hyperframes ${args[0]} exited with ${res.status}\n${tail}`);
+  }
+  return res.stdout;
 }
 
 /** Run a binary synchronously (one job at a time: the machine is low on RAM). Throws on non-zero exit. */

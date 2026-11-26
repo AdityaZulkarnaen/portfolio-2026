@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // HyperFrames project: vendored GSAP and render outputs.
+    "video/**",
   ]),
 ]);
 

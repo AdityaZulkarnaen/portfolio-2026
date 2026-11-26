@@ -1,0 +1,65 @@
+<template>
+  <style>
+    @font-face { font-family: "Mona Sans"; src: url("assets/fonts/mona-sans.woff2") format("woff2"); font-weight: 200 900; font-stretch: 75% 125%; }
+    @font-face { font-family: "JetBrains Mono Portfolio"; src: url("assets/fonts/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; }
+    #root { position: absolute; inset: 0; }
+    /* The chapter card: an ink plate like the films' own caption pills (which sit bottom left),
+       so it reads over light UI too (BPAL's map, CIA's form). */
+    .lt { position: absolute; right: 160px; bottom: 120px; }
+    .lt-box { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; text-align: right; padding: 26px 34px 28px; border-radius: 22px; background: rgb(7 8 11 / 0.86); box-shadow: 0 18px 60px -20px rgb(0 0 0 / 0.7), inset 0 0 0 1px rgb(236 233 226 / 0.08); }
+    .lt-title { font-family: "Mona Sans", sans-serif; font-weight: 600; font-size: 56px; letter-spacing: -0.025em; line-height: 1.05; color: #ece9e2; white-space: nowrap; }
+    .lt-num { color: #c4c2bc; font-weight: 500; }
+    .lt-role { font-family: "JetBrains Mono Portfolio", monospace; font-size: 28px; font-weight: 400; letter-spacing: 0.04em; color: #cfccc5; white-space: nowrap; }
+  </style>
+  <!-- One lower-third per chapter. data-chapter / data-slug / data-label / data-role are read by
+       scripts/video/chapters.ts together with `hyperframes timeline --json`. -->
+  <div id="root" data-composition-id="chapters" data-width="1920" data-height="1080">
+    <div id="lt-depths" class="clip lt" data-start="0" data-duration="6" data-track-index="0"
+      data-chapter="01" data-slug="depths" data-label="Depths" data-role="Full-stack Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">01 ·</span> Depths</p><p class="lt-role">Full-stack Developer · 2026</p></div>
+    </div>
+    <div id="lt-ugm-cup-2026" class="clip lt" data-start="6" data-duration="4" data-track-index="1"
+      data-chapter="02" data-slug="ugm-cup-2026" data-label="UGM Cup 2026" data-role="Full-stack Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">02 ·</span> UGM Cup 2026</p><p class="lt-role">Full-stack Developer · 2026</p></div>
+    </div>
+    <div id="lt-society-of-petroleum-engineer-ugm" class="clip lt" data-start="10" data-duration="6" data-track-index="2"
+      data-chapter="03" data-slug="society-of-petroleum-engineer-ugm" data-label="SPE UGM Student Chapter" data-role="Full-stack Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">03 ·</span> SPE UGM Student Chapter</p><p class="lt-role">Full-stack Developer · 2026</p></div>
+    </div>
+    <div id="lt-vista" class="clip lt" data-start="16" data-duration="4" data-track-index="3"
+      data-chapter="04" data-slug="vista" data-label="Vista" data-role="Backend Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">04 ·</span> Vista</p><p class="lt-role">Backend Developer · 2026</p></div>
+    </div>
+    <div id="lt-tbxpert" class="clip lt" data-start="20" data-duration="6" data-track-index="4"
+      data-chapter="05" data-slug="tbxpert" data-label="TBXpert" data-role="Frontend Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">05 ·</span> TBXpert</p><p class="lt-role">Frontend Developer · 2026</p></div>
+    </div>
+    <div id="lt-satu-teladan-apk" class="clip lt" data-start="26" data-duration="4" data-track-index="5"
+      data-chapter="07" data-slug="satu-teladan-apk" data-label="Satu Teladan Apk" data-role="Mobile Developer · 2025">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">07 ·</span> Satu Teladan Apk</p><p class="lt-role">Mobile Developer · 2025</p></div>
+    </div>
+    <div id="lt-bpal-gis" class="clip lt" data-start="30" data-duration="6" data-track-index="6"
+      data-chapter="08" data-slug="bpal-gis" data-label="BPAL GIS" data-role="Full-stack Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">08 ·</span> BPAL GIS</p><p class="lt-role">Full-stack Developer · 2026</p></div>
+    </div>
+    <div id="lt-civil-in-action-14th" class="clip lt" data-start="36" data-duration="4" data-track-index="7"
+      data-chapter="09" data-slug="civil-in-action-14th" data-label="Civil In Action 14th" data-role="Full-stack Developer · 2026">
+      <div class="lt-box"><p class="lt-title"><span class="lt-num">09 ·</span> Civil In Action 14th</p><p class="lt-role">Full-stack Developer · 2026</p></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    // [id, start, duration]: rise in half a beat after the cut, gone a beat before the next one.
+    const lts = [
+      ["depths", 0, 6], ["ugm-cup-2026", 6, 4], ["society-of-petroleum-engineer-ugm", 10, 6], ["vista", 16, 4],
+      ["tbxpert", 20, 6], ["satu-teladan-apk", 26, 4], ["bpal-gis", 30, 6], ["civil-in-action-14th", 36, 4],
+    ];
+    for (const [id, start, dur] of lts) {
+      const box = `#lt-${id} .lt-box`;
+      const enter = start === 0 ? 1.0 : start + 0.25;
+      tl.fromTo(box, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, enter);
+      tl.to(box, { opacity: 0, y: -10, duration: 0.35, ease: "sine.in" }, start + dur - 0.55);
+    }
+    window.__timelines["chapters"] = tl;
+  </script>
+</template>
