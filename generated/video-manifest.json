@@ -28,6 +28,33 @@
       "poster": "/videos/bpal-gis/poster.06de50bfc9.webp",
       "durationS": 19
     },
+    "civil-in-action-14th": {
+      "variants": {
+        "film-1080": {
+          "src": "/videos/civil-in-action-14th/film-1080.ee34f89266.mp4",
+          "width": 1920,
+          "height": 1080,
+          "bytes": 8224361,
+          "durationS": 19
+        },
+        "loop-480": {
+          "src": "/videos/civil-in-action-14th/loop-480.a058e39755.mp4",
+          "width": 854,
+          "height": 480,
+          "bytes": 896894,
+          "durationS": 7
+        },
+        "loop-720": {
+          "src": "/videos/civil-in-action-14th/loop-720.2bcf86a2f8.mp4",
+          "width": 1280,
+          "height": 720,
+          "bytes": 1766961,
+          "durationS": 7
+        }
+      },
+      "poster": "/videos/civil-in-action-14th/poster.ef7cc84ad1.webp",
+      "durationS": 19
+    },
     "depths": {
       "variants": {
         "film-1080": {

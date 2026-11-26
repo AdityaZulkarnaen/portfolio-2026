@@ -43,7 +43,9 @@
     },
     "civil-in-action-14th": {
       "source": "D:\\coding\\cia14th",
-      "master": "brag-output/brag.mp4"
+      "master": "brag-output/brag.mp4",
+      "loop": { "start": 7.5, "duration": 7 },
+      "posterAt": 11.0
     },
     "resku": {
       "film": false,
