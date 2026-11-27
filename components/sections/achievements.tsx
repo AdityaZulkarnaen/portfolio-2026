@@ -1,7 +1,9 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import Image from "next/image";
 import type { CSSProperties } from "react";
 
-import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { PlaneWindow } from "@/components/showcase/plane-window";
 import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/plane-classes";
 import { Markup } from "@/components/site/markup";
@@ -41,6 +43,24 @@ type Photo = { media: Media; name: string; position: string; own: boolean; lift?
  * the faces clear the caption. The GL plane reads the image box, so the develop follows.
  */
 const OWNER_LIFT: Record<string, number> = { "pkm-kc-2026": 0.26 };
+
+/** A team or school logo dropped in public/crew as `<slug>.svg|png|webp`; null until there is one. */
+function crewLogo(slug: string): string | null {
+  for (const ext of ["svg", "png", "webp"]) {
+    if (existsSync(join(process.cwd(), "public", "crew", `${slug}.${ext}`))) return `/crew/${slug}.${ext}`;
+  }
+  return null;
+}
+
+/** Placeholder mark: "Universitas Gadjah Mada" → "UGM", "GDGoC UGM" → "GU". */
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z]/.test(w))
+    .map((w) => w[0].toUpperCase())
+    .join("")
+    .slice(0, 3);
+}
 
 type Glyph = "pulse" | "wing";
 
@@ -315,21 +335,35 @@ export function Achievements({
         </TrophyWall>
       ) : null}
       {crew.length > 0 ? (
-        <div className="mt-[clamp(3rem,6vw,5rem)]">
-          <p className="slate mb-3 px-gutter text-bone-400">Teams & schools</p>
-          <VelocityMarquee label="Organisations and schools" speed={36}>
-            {crew.map((a) => (
-              <span key={a.id} className="flex items-baseline gap-[clamp(0.75rem,1.4vw,1.25rem)] pr-[clamp(2rem,4vw,4rem)] whitespace-nowrap">
-                <span className="text-[clamp(1.6rem,3.4vw,3.5rem)] leading-none font-light tracking-[-0.035em] text-bone-100 lowercase">
-                  {a.title}
-                </span>
-                <span className="slate text-bone-400 tabular-nums">
-                  {a.org} · {a.period}
-                </span>
-                <span aria-hidden="true" className="ml-[clamp(1rem,2vw,2rem)] h-px w-[clamp(2rem,4vw,4rem)] self-center bg-line-strong" />
-              </span>
-            ))}
-          </VelocityMarquee>
+        <div className="mt-[clamp(3.5rem,7vw,6rem)] px-gutter">
+          <p className="slate mb-5 text-bone-400">Teams & schools</p>
+          <ul className="border-b border-line">
+            {crew.map((a) => {
+              const logo = crewLogo(a.slug);
+              return (
+                <li
+                  key={a.id}
+                  className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-5 gap-y-1 border-t border-line py-5 md:grid-cols-[3.5rem_minmax(0,1.4fr)_minmax(0,1fr)_8rem] md:gap-x-8"
+                >
+                  <span className="relative row-span-2 grid size-12 place-items-center overflow-hidden rounded-[12px] bg-ink-900 shadow-[inset_0_0_0_1px_var(--color-line)] md:row-span-1 md:size-14">
+                    {logo ? (
+                      <Image src={logo} alt="" fill sizes="56px" className="object-contain p-2" />
+                    ) : (
+                      <span aria-hidden="true" className="slate text-bone-400">
+                        {initials(a.title)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[clamp(1.3rem,2.3vw,2.2rem)] leading-tight font-light tracking-[-0.025em] text-bone-100">{a.title}</span>
+                  <span className="text-bone-400 md:text-[1.05rem]">
+                    {a.org}
+                    <span className="md:hidden"> · {a.period}</span>
+                  </span>
+                  <span className="slate hidden text-right text-bone-400 tabular-nums md:block">{a.period}</span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : null}
     </section>

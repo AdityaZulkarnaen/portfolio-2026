@@ -166,20 +166,23 @@ export function Showcase({ projects, metrics, total }: Props) {
           )}
         </ol>
 
-        <p className="mt-[clamp(3.5rem,7vw,6rem)] flex justify-center">
-          <TransitionLink
-            href="/work"
-            transition="nav-forward"
-            className="group/all inline-flex items-center gap-[clamp(0.75rem,1.4vw,1.25rem)] rounded-full py-4 pr-6 pl-8 text-[clamp(1.25rem,2.2vw,2rem)] font-light tracking-[-0.02em] text-bone-100 shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-[background-color,color,box-shadow] duration-(--dur-base) ease-fluid hover:bg-bone-100 hover:text-ink-950 hover:shadow-[inset_0_0_0_1px_var(--color-bone-100)]"
-            data-cursor="open"
-          >
+        {/* A rule across the column with the way to the full index in the middle. */}
+        <TransitionLink
+          href="/work"
+          transition="nav-forward"
+          className="group/all mt-[clamp(3.5rem,7vw,6rem)] flex items-center gap-[clamp(1rem,2vw,1.75rem)]"
+          data-cursor="open"
+        >
+          <span aria-hidden="true" className="h-px flex-1 origin-right bg-line-strong transition-colors duration-(--dur-base) group-hover/all:bg-lilac-500" />
+          <span className="slate inline-flex items-center gap-3 text-[13px] text-bone-100 transition-colors duration-(--dur-base) group-hover/all:text-lilac-300">
             See all works
-            <span className="slate text-bone-400 transition-colors group-hover/all:text-ink-950/60">{total} projects</span>
-            <svg viewBox="0 0 12 12" aria-hidden="true" className="size-[0.7em] text-lilac-500 transition-transform duration-(--dur-base) ease-fluid group-hover/all:translate-x-1 group-hover/all:text-ink-950">
-              <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+            <span className="text-bone-400">{total}</span>
+            <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3 transition-transform duration-(--dur-base) ease-fluid group-hover/all:translate-x-1">
+              <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
             </svg>
-          </TransitionLink>
-        </p>
+          </span>
+          <span aria-hidden="true" className="h-px flex-1 origin-left bg-line-strong transition-colors duration-(--dur-base) group-hover/all:bg-lilac-500" />
+        </TransitionLink>
       </div>
     </section>
   );

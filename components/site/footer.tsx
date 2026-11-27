@@ -77,7 +77,7 @@ export async function Footer({ profile }: { profile: Profile | null }) {
       <div className="mt-[clamp(2.5rem,6vw,5rem)] text-center select-none">
         <VariableLetters
           text={wordmark}
-          className="block text-[clamp(2.5rem,13.6vw,18rem)] leading-[0.82] font-[760] tracking-[-0.04em] whitespace-nowrap [font-variation-settings:'wdth'_112,'wght'_760]"
+          className="block text-[clamp(2.5rem,12.4vw,16.5rem)] leading-[0.82] font-[760] tracking-[-0.04em] whitespace-nowrap [font-variation-settings:'wdth'_112,'wght'_760]"
         />
       </div>
 
