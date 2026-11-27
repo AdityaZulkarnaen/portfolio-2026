@@ -49,7 +49,7 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   return (
     <video
       ref={ref}
-      className={`absolute inset-0 size-full object-cover object-top ${DEV_MASK}`}
+      className="absolute inset-0 size-full object-cover object-top"
       src={src}
       poster={poster ?? undefined}
       muted
@@ -61,19 +61,8 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   );
 }
 
-/**
- * Card media: the loop video when the project has one, otherwise the cover still drawn
- * through a GL plane (which follows the card's pose transform).
- */
-export function WorkCardMedia({ cover, loop, sizes, preload = false, label, className = "" }: Props) {
-  if (loop && loop.kind === "video") {
-    return (
-      <div className="absolute inset-0 bg-ink-900">
-        <CardLoop src={loop.src} poster={cover?.src ?? null} label={label} />
-      </div>
-    );
-  }
-  if (!cover) return <div className="absolute inset-0 bg-ink-900" />;
+/** The cover still, drawn through a GL plane (which follows the card's pose transform). */
+function CoverPlane({ cover, sizes, preload, label, className }: { cover: Media; sizes: string; preload: boolean; label: string; className: string }) {
   return (
     <PlaneWindow className={`absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent ${className}`} behavior="static">
       <Image
@@ -91,5 +80,28 @@ export function WorkCardMedia({ cover, loop, sizes, preload = false, label, clas
         }}
       />
     </PlaneWindow>
+  );
+}
+
+/**
+ * Card media: the cover still through a GL plane, so every card develops with the same wave
+ * (dark ink, the front washing down). A project with a loop video lays it over the still
+ * once the develop has all but finished (`--dev` on the frame; unset = shown), so the wave
+ * plays on the poster and the motion takes over from the same picture.
+ */
+export function WorkCardMedia({ cover, loop, sizes, preload = false, label, className = "" }: Props) {
+  const still = cover ? (
+    <CoverPlane cover={cover} sizes={sizes} preload={preload} label={label} className={className} />
+  ) : (
+    <div className="absolute inset-0 bg-ink-900" />
+  );
+  if (!loop || loop.kind !== "video") return still;
+  return (
+    <>
+      {still}
+      <div className="absolute inset-0 [opacity:clamp(0,calc((var(--dev,1)-0.92)*12.5),1)]">
+        <CardLoop src={loop.src} poster={cover?.src ?? null} label={label} />
+      </div>
+    </>
   );
 }
