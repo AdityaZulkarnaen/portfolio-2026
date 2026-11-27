@@ -1,4 +1,4 @@
-import { Instrument_Serif, JetBrains_Mono, Mona_Sans } from "next/font/google";
+import { Instrument_Serif, Mona_Sans, Plus_Jakarta_Sans } from "next/font/google";
 
 /** Display + UI. Variable wght (200–900) plus the wdth axis (75–125). */
 export const monaSans = Mona_Sans({
@@ -8,11 +8,11 @@ export const monaSans = Mona_Sans({
   variable: "--font-mona",
 });
 
-/** Slate labels and UI metadata. Variable wght (100–800). */
-export const jetbrainsMono = JetBrains_Mono({
+/** Slate labels and UI metadata. Variable wght (200–800). */
+export const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-jetbrains",
+  variable: "--font-jakarta",
 });
 
 /** Italic serif used only for `*highlight*` words. Not preloaded. */
@@ -27,6 +27,6 @@ export const instrumentSerif = Instrument_Serif({
 
 export const fontVariables = [
   monaSans.variable,
-  jetbrainsMono.variable,
+  plusJakarta.variable,
   instrumentSerif.variable,
 ].join(" ");

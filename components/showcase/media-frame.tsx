@@ -47,7 +47,7 @@ function BrowserBar({ address }: { address?: string | null }) {
         <i className="size-[9px] rounded-full bg-bone-100/15" />
         <i className="size-[9px] rounded-full bg-bone-100/15" />
       </span>
-      {address ? <span className="mx-auto max-w-[260px] flex-1 -translate-x-5 truncate rounded-md bg-white/4 px-2.5 py-[3px] text-center font-mono text-[10px] tracking-[0.06em] text-bone-400">{address}</span> : null}
+      {address ? <span className="mx-auto max-w-[260px] flex-1 -translate-x-5 truncate rounded-md bg-white/4 px-2.5 py-[3px] text-center font-label text-[10px] tracking-[0.06em] text-bone-400">{address}</span> : null}
     </div>
   );
 }

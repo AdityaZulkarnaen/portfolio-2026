@@ -282,11 +282,11 @@ function Dossier({ visual, stack }: { visual: Extract<Visual, { kind: "dossier" 
           </g>
         </svg>
         <p className="slate absolute top-2 left-2 text-bone-400 tabular-nums">Grid ██-██ · Alt ███ m</p>
-        <p className="absolute top-1/2 left-1/2 -translate-1/2 -rotate-[9deg] rounded-[4px] px-3 py-2 font-mono text-[clamp(0.7rem,1vw,0.95rem)] font-medium tracking-[0.16em] whitespace-nowrap text-lilac-500 uppercase shadow-[inset_0_0_0_1.5px_var(--color-lilac-500)]">
+        <p className="absolute top-1/2 left-1/2 -translate-1/2 -rotate-[9deg] rounded-[4px] px-3 py-2 font-label text-[clamp(0.7rem,1vw,0.95rem)] font-medium tracking-[0.16em] whitespace-nowrap text-lilac-500 uppercase shadow-[inset_0_0_0_1.5px_var(--color-lilac-500)]">
           Confidential · Gamaforce GCS
         </p>
       </div>
-      <div className="grid gap-2 rounded-[6px] bg-bone-100 px-4 py-3.5 font-mono text-[0.72rem] leading-none tracking-[0.04em] text-ink-950/70 uppercase">
+      <div className="grid gap-2 rounded-[6px] bg-bone-100 px-4 py-3.5 font-label text-[0.72rem] leading-none tracking-[0.04em] text-ink-950/70 uppercase">
         <p className="flex items-center gap-2">
           System: ground control station <span className={`${REDACT} w-[28%]`} />
         </p>

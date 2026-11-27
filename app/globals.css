@@ -14,7 +14,7 @@
 
   /* Type */
   --font-sans: var(--font-mona), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-label: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
 
   /* Motion */
@@ -127,7 +127,7 @@
     padding: 0.625rem 1rem;
     background-color: var(--color-lilac-500);
     color: var(--color-ink-950);
-    font-family: var(--font-mono);
+    font-family: var(--font-label);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.16em;
@@ -142,7 +142,8 @@
 }
 
 @utility slate {
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
+  font-weight: 600;
   font-size: 11px;
   line-height: 1.4;
   text-transform: uppercase;
@@ -205,7 +206,7 @@
   min-height: 28px;
   padding-inline: 0.75rem;
   border-radius: 999px;
-  font-family: var(--font-mono);
+  font-family: var(--font-label);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -246,4 +247,10 @@
     color: var(--color-lilac-300);
     border-color: currentColor;
   }
+}
+
+/* SplitText line masks clip at the line box: give descenders (g, y, p) room without moving the lines. */
+.split-line-mask {
+  padding-bottom: 0.16em;
+  margin-bottom: -0.16em;
 }

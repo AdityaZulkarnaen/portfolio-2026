@@ -30,6 +30,8 @@ export function SplitReveal({ as: Tag = "div", children, className, type = "line
       const split = SplitText.create(el, {
         type: type === "chars" ? "lines,chars" : "lines",
         mask: "lines",
+        // The masks get `split-line-mask` (globals.css): room under each line for descenders.
+        linesClass: "split-line",
         autoSplit: true,
         onSplit(self) {
           const targets = type === "chars" ? self.chars : self.lines;

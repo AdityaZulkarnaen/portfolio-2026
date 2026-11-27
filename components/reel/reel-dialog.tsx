@@ -187,7 +187,7 @@ export function ReelDialog({ open, origin, src, poster, title, chapters, onClose
             {current ? ` · ${current.label}` : ""}
           </span>
           <button type="button" className="slate inline-flex h-10 items-center gap-2.5 rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10" onClick={requestClose}>
-            Close <kbd className="font-mono text-bone-400">Esc</kbd>
+            Close <kbd className="font-label text-bone-400">Esc</kbd>
           </button>
         </div>
 
