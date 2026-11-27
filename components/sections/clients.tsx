@@ -76,7 +76,7 @@ function LogoPanel({ cells }: { cells: LogoCell[] }) {
   return (
     <div data-rise data-gl-mover className="rounded-2xl border border-line bg-ink-900/60 [html[data-gl=on]_&]:bg-transparent">
       <p className="slate flex items-center gap-2.5 px-5 pt-5 text-bone-400">
-        <span className="size-1 rounded-full bg-bone-400" aria-hidden="true" />
+
         Clients
       </p>
       <ul

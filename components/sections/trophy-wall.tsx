@@ -87,7 +87,8 @@ export function TrophyWall({ count, children }: { count: number; children: React
             setX[i](-shift + off * SPEED[i % SPEED.length]);
             setY[i](hold);
             setS[i](DEPTH[i % DEPTH.length] + 0.04 * ease(f));
-            frames[i]?.style.setProperty("--dev", clamp01((vw - (left[i] - shift)) / (vw * 0.55)).toFixed(4));
+            // Develops from entering at the right edge until its left edge is ~20% in from the left.
+            frames[i]?.style.setProperty("--dev", clamp01((vw - (left[i] - shift)) / (vw * 0.8)).toFixed(4));
             return f;
           });
           chromeY.forEach((set) => set(hold));
@@ -148,7 +149,7 @@ export function TrophyWall({ count, children }: { count: number; children: React
     <div
       ref={ref}
       className="overflow-x-clip lg:motion-on:h-[calc(100svh+var(--run))]"
-      style={{ "--run": `${count * 16}vw` } as CSSProperties}
+      style={{ "--run": `${count * 26}vw` } as CSSProperties}
     >
       <div data-wall-stage className="lg:motion-on:flex lg:motion-on:h-svh lg:motion-on:flex-col lg:motion-on:pt-[5.5rem] lg:motion-on:pb-[clamp(1rem,3svh,2rem)]">
         <div data-wall-chrome className="slate mb-4 flex justify-between gap-4 px-gutter text-bone-400 tabular-nums">

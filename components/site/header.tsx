@@ -230,7 +230,6 @@ export function Header({ shortName, timezone, location }: Props) {
           className="pointer-events-none absolute top-0 left-0 flex h-full w-max items-center gap-2.5 px-5 opacity-0 transition-opacity duration-300 data-collapsed:opacity-100 data-collapsed:delay-150"
           data-collapsed={collapsed || undefined}
         >
-          <span className="size-1.5 rounded-full bg-lilac-500" />
           <span className="slate text-lilac-500 tabular-nums">{String(index + 1).padStart(2, "0")}</span>
           <span className="slate text-bone-100">{currentItem?.label ?? ""}</span>
         </div>

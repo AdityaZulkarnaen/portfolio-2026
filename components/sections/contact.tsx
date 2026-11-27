@@ -12,11 +12,7 @@ import { CopyEmail } from "./copy-email";
 export function Contact({ profile }: { profile: Profile | null }) {
   return (
     <section id="contact" aria-labelledby="contact-title" className="border-t border-line px-gutter pt-[clamp(5rem,10vw,10rem)]">
-      <p className="slate flex items-center gap-2.5 text-bone-400">
-        <span aria-hidden="true" className="relative flex size-2">
-          <span className="absolute inset-0 rounded-full bg-lilac-500 opacity-60 motion-on:animate-ping" />
-          <span className="relative size-2 rounded-full bg-lilac-500" />
-        </span>
+      <p className="slate text-bone-400">
         {profile?.availability ?? "Open for work"}
       </p>
       <SplitReveal

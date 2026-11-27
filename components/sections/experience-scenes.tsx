@@ -8,7 +8,7 @@ import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 
 const SCENES = "(min-width: 1024px)";
 /** Scroll per role, in viewport heights (the track's CSS height uses the same number). */
-const PER_ROLE = 0.85;
+const PER_ROLE = 1.1;
 /** The approach (track top from the viewport bottom to the top), in role units. */
 const LEAD = 1 / PER_ROLE;
 
@@ -58,7 +58,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
         gsap.set(frames.flat(), { "--dev": 0, opacity: (i: number) => (i < frames[0].length ? 1 : 0) });
 
         // The first role: its prints develop and its text rises as the section arrives.
-        tl.to(frames[0], { "--dev": 1, duration: LEAD * 0.6, stagger: 0.08, ease: "none" }, LEAD * 0.3);
+        tl.to(frames[0], { "--dev": 1, duration: LEAD * 0.45, stagger: 0.06, ease: "none" }, LEAD * 0.22);
         tl.fromTo(lines[0], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: LEAD * 0.4, stagger: 0.05, ease: "power3.out" }, LEAD * 0.45);
 
         for (let i = 0; i < n; i++) {
@@ -75,7 +75,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
           // In: the next role's prints come up as ink and the wave develops them; text rises.
           tl.set(panels[i + 1], { visibility: "visible" }, at - 0.02);
           tl.set(frames[i + 1], { opacity: 1 }, at - 0.02);
-          tl.to(frames[i + 1], { "--dev": 1, duration: 0.55, stagger: 0.07, ease: "power1.out" }, at);
+          tl.to(frames[i + 1], { "--dev": 1, duration: 0.4, stagger: 0.05, ease: "power1.out" }, at);
           if (imgs[i + 1].length) tl.fromTo(imgs[i + 1], { scale: 1.14 }, { scale: 1, duration: 0.7, ease: "power3.out" }, at);
           tl.fromTo(lines[i + 1], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.4, stagger: 0.04, ease: "power3.out" }, at + 0.04);
           if (labels[i + 1]) tl.to(labels[i + 1], { opacity: 1, duration: 0.2 }, at - 0.1);

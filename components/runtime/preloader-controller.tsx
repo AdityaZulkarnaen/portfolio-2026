@@ -6,6 +6,10 @@ import { markSiteReady } from "@/lib/motion/site-ready";
 
 const HARD_CAP_MS = 3500;
 const MIN_MS = 1100;
+/** How long the wave takes to wash the ink off. */
+const WASH_MS = 1500;
+/** Points across the wave front. */
+const STEPS = 32;
 
 function waitForHeroImage(): Promise<void> {
   const img = document.querySelector<HTMLImageElement>("[data-hero-still] img");
@@ -19,16 +23,21 @@ function waitForHeroImage(): Promise<void> {
   });
 }
 
-function timecode(ms: number): string {
-  const totalFrames = Math.floor(ms / (1000 / 24));
-  const f = totalFrames % 24;
-  const s = Math.floor(totalFrames / 24) % 60;
-  return `00:00:${String(s).padStart(2, "0")}:${String(f).padStart(2, "0")}`;
+/** Smooth churning noise along the front (0..1 across, time in s), roughly -1..1. */
+function churn(x: number, t: number) {
+  return (
+    Math.sin(x * 7.1 + t * 1.9) * 0.5 +
+    Math.sin(x * 13.7 - t * 2.6 + 1.3) * 0.3 +
+    Math.sin(x * 23.3 + t * 3.4 + 2.1) * 0.2
+  );
 }
 
+const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+
 /**
- * Drives the server-rendered curtain: weighted progress from real work (fonts + the
- * hero still's decode) with a time floor, a 3.5s hard cap, then a shutter lift.
+ * Drives the server-rendered curtain: weighted progress from real work (fonts + the hero
+ * still's decode) with a time floor and a 3.5s hard cap draws the wave line; then a wave
+ * front washes the ink off top to bottom (a polygon clip on the ink, a glint on its edge).
  */
 export function PreloaderController() {
   const ref = useRef<HTMLSpanElement>(null);
@@ -61,20 +70,51 @@ export function PreloaderController() {
       return () => window.clearTimeout(t);
     }
 
+    // JS is running: the CSS failsafe would cut the wash short, so this controller owns the exit.
+    overlay.style.animation = "none";
+    const ink = overlay.querySelector<HTMLElement>("[data-preloader-ink]");
     const count = overlay.querySelector<HTMLElement>("[data-preloader-count]");
-    const bar = overlay.querySelector<HTMLElement>("[data-preloader-bar]");
-    const tc = overlay.querySelector<HTMLElement>("[data-preloader-tc]");
+    const wave = overlay.querySelector<SVGRectElement>("[data-preloader-wave]");
+    const edgeSvg = overlay.querySelector<SVGSVGElement>("[data-preloader-edge]");
+    const edge = edgeSvg?.querySelector("path");
 
     let fontsDone = 0;
     let imageDone = 0;
     let shown = 0;
     let raf = 0;
-    let leaveTimer = 0;
     let cancelled = false;
+    let washFrom = 0;
     const start = performance.now();
 
     document.fonts?.ready.then(() => (fontsDone = 1)).catch(() => (fontsDone = 1));
     waitForHeroImage().then(() => (imageDone = 1));
+
+    // The front sits at `front` (0 = top, 1 = bottom) give or take the churn; the ink is kept below it.
+    const amp = 0.06;
+    const wash = (now: number) => {
+      if (cancelled) return;
+      const k = Math.min(1, (now - washFrom) / WASH_MS);
+      const front = easeInOut(k) * (1 + 2 * amp) - amp;
+      const t = now / 1000;
+      const ys: number[] = [];
+      for (let i = 0; i <= STEPS; i++) {
+        const x = i / STEPS;
+        ys.push(Math.max(0, Math.min(1, front + churn(x, t) * amp)) * 100);
+      }
+      if (ink) {
+        const pts = ys.map((y, i) => `${((i / STEPS) * 100).toFixed(2)}% ${y.toFixed(2)}%`);
+        ink.style.clipPath = `polygon(${pts.join(",")},100% 100%,0% 100%)`;
+      }
+      if (edge && edgeSvg) {
+        edge.setAttribute("d", ys.map((y, i) => `${i ? "L" : "M"}${((i / STEPS) * 100).toFixed(2)} ${y.toFixed(2)}`).join(""));
+        edgeSvg.style.opacity = String(Math.min(1, k * 6) * (1 - Math.max(0, (k - 0.85) / 0.15)));
+      }
+      if (k >= 1) {
+        finish();
+        return;
+      }
+      raf = requestAnimationFrame(wash);
+    };
 
     const tick = (now: number) => {
       if (cancelled) return;
@@ -86,15 +126,14 @@ export function PreloaderController() {
       shown += (target - shown) * 0.09;
       if (target === 1 && 1 - shown < 0.004) shown = 1;
 
-      const pct = Math.round(shown * 100);
-      if (count) count.textContent = String(pct).padStart(3, "0");
-      if (bar) bar.style.transform = `scaleX(${shown})`;
-      if (tc) tc.textContent = timecode(elapsed);
+      if (count) count.textContent = String(Math.round(shown * 100)).padStart(3, "0");
+      if (wave) wave.setAttribute("width", Math.max(0, shown * 1000).toFixed(1));
 
       if (shown >= 1) {
         overlay.dataset.state = "leaving";
         markSiteReady();
-        leaveTimer = window.setTimeout(finish, 1100);
+        washFrom = performance.now();
+        raf = requestAnimationFrame(wash);
         return;
       }
       raf = requestAnimationFrame(tick);
@@ -104,7 +143,6 @@ export function PreloaderController() {
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      window.clearTimeout(leaveTimer);
     };
   }, []);
 

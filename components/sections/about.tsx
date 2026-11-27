@@ -97,7 +97,7 @@ export function About({ profile }: { profile: Profile | null }) {
     >
       <div className="slate flex items-center justify-between gap-4 text-bone-400">
         <h2 id="about-title" className="inline-flex items-center gap-2.5 text-bone-100">
-          <span aria-hidden="true" className="size-1.5 rounded-full bg-(--tint)" />
+
           About
         </h2>
         <span className="tabular-nums">{profile.fullName}</span>

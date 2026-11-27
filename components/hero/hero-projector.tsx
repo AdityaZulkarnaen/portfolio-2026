@@ -402,7 +402,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photos, d
                       // The same <img> is the GL texture, and the home sequence zooms the
                       // window to fullscreen: request a full-width source, never a thumbnail.
                       sizes="100vw"
-                      quality={72}
+                      quality={75}
                       preload={i === 0}
                       fetchPriority={i === 0 ? "high" : "low"}
                       loading="eager"
