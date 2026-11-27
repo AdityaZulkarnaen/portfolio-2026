@@ -29,7 +29,7 @@ export function ContactForm() {
         </label>
         <input
           id="cf-name"
-          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-ember-500 focus-visible:shadow-[0_1px_0_0_var(--color-ember-500)] aria-[invalid=true]:border-ember-300"
+          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-lilac-500 focus-visible:shadow-[0_1px_0_0_var(--color-lilac-500)] aria-[invalid=true]:border-lilac-300"
           name="name"
           autoComplete="name"
           required
@@ -40,7 +40,7 @@ export function ContactForm() {
           aria-describedby={fe?.name ? "cf-name-err" : undefined}
         />
         {fe?.name ? (
-          <p id="cf-name-err" className="text-[0.9rem] text-ember-300">
+          <p id="cf-name-err" className="text-[0.9rem] text-lilac-300">
             {fe.name}
           </p>
         ) : null}
@@ -51,7 +51,7 @@ export function ContactForm() {
         </label>
         <input
           id="cf-email"
-          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-ember-500 focus-visible:shadow-[0_1px_0_0_var(--color-ember-500)] aria-[invalid=true]:border-ember-300"
+          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-lilac-500 focus-visible:shadow-[0_1px_0_0_var(--color-lilac-500)] aria-[invalid=true]:border-lilac-300"
           name="email"
           type="email"
           autoComplete="email"
@@ -61,7 +61,7 @@ export function ContactForm() {
           aria-describedby={fe?.email ? "cf-email-err" : undefined}
         />
         {fe?.email ? (
-          <p id="cf-email-err" className="text-[0.9rem] text-ember-300">
+          <p id="cf-email-err" className="text-[0.9rem] text-lilac-300">
             {fe.email}
           </p>
         ) : null}
@@ -72,7 +72,7 @@ export function ContactForm() {
         </label>
         <textarea
           id="cf-message"
-          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-ember-500 focus-visible:shadow-[0_1px_0_0_var(--color-ember-500)] aria-[invalid=true]:border-ember-300 min-h-32 resize-y leading-normal"
+          className="w-full rounded-none border-0 border-b border-line-strong bg-transparent py-3 text-lg text-bone-100 outline-none transition-colors focus-visible:border-lilac-500 focus-visible:shadow-[0_1px_0_0_var(--color-lilac-500)] aria-[invalid=true]:border-lilac-300 min-h-32 resize-y leading-normal"
           name="message"
           rows={5}
           required
@@ -83,7 +83,7 @@ export function ContactForm() {
           aria-describedby={fe?.message ? "cf-message-err" : undefined}
         />
         {fe?.message ? (
-          <p id="cf-message-err" className="text-[0.9rem] text-ember-300">
+          <p id="cf-message-err" className="text-[0.9rem] text-lilac-300">
             {fe.message}
           </p>
         ) : null}
@@ -93,10 +93,10 @@ export function ContactForm() {
         <input id="cf-company" name="company" tabIndex={-1} autoComplete="off" />
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-4 sm:col-span-2">
-        <button type="submit" className="pill-btn bg-ember-500 text-ink-950 shadow-none" disabled={pending} aria-disabled={pending}>
+        <button type="submit" className="pill-btn bg-lilac-500 text-ink-950 shadow-none" disabled={pending} aria-disabled={pending}>
           <span>{pending ? "Sending…" : "Send message"}</span>
         </button>
-        <p className="text-[0.95rem] text-bone-400 data-[status=error]:text-ember-300 data-[status=success]:text-tide-400" role="status" aria-live="polite" data-status={state.status}>
+        <p className="text-[0.95rem] text-bone-400 data-[status=error]:text-lilac-300 data-[status=success]:text-tide-400" role="status" aria-live="polite" data-status={state.status}>
           {state.status === "idle" ? "" : state.message}
         </p>
       </div>

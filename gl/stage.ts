@@ -53,7 +53,7 @@ const KEN_BURNS_MS = 8000;
 const CROSSFADE_S = 1.5;
 const FIELD_DIVISOR = 4;
 const READY_TIMEOUT_MS = 3000;
-const DEFAULT_TINT = "#ff5b2e";
+const DEFAULT_TINT = "#a99bff";
 
 type Slot = { index: number; start: number };
 

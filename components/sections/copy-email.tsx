@@ -26,7 +26,7 @@ export function CopyEmail({ email }: { email: string }) {
     <div>
       <Magnetic strength={0.25}>
         <button type="button" className="group grid justify-items-start gap-3 text-left" onClick={copy} data-copied={copied || undefined}>
-          <span className="link-underline text-[clamp(1.35rem,2.6vw,2.6rem)] font-bold tracking-[-0.02em] wrap-anywhere group-hover:text-ember-300">{email}</span>
+          <span className="link-underline text-[clamp(1.35rem,2.6vw,2.6rem)] font-bold tracking-[-0.02em] wrap-anywhere group-hover:text-lilac-300">{email}</span>
           <span className="slate inline-flex min-h-[34px] items-center rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] transition-colors group-data-[copied]:bg-tide-400 group-data-[copied]:text-ink-950 group-data-[copied]:shadow-none">{copied ? "Email copied" : "Copy email"}</span>
         </button>
       </Magnetic>

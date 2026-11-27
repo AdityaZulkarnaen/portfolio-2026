@@ -13,7 +13,7 @@ html {
 }
 body {
   overflow-x: clip;
-  caret-color: var(--color-ember-500);
+  caret-color: var(--color-lilac-500);
 }
 
 /* ---------- View transitions ---------- */

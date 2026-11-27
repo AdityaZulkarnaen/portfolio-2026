@@ -55,5 +55,5 @@ export function framesFor<T extends { placement: string }>(frames: T[], where: "
 
 /** Readable text color (ink or bone) on top of an accent hex. */
 export function accentOrDefault(accent: string | null | undefined): string {
-  return accent && /^#[0-9a-f]{6}$/i.test(accent) ? accent : "#ff5b2e";
+  return accent && /^#[0-9a-f]{6}$/i.test(accent) ? accent : "#a99bff";
 }

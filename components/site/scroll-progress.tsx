@@ -28,5 +28,5 @@ export function ScrollProgress() {
     };
   }, []);
 
-  return <div ref={ref} className="pointer-events-none fixed inset-x-0 top-0 z-70 h-0.5 origin-left scale-x-0 bg-ember-500" aria-hidden="true" />;
+  return <div ref={ref} className="pointer-events-none fixed inset-x-0 top-0 z-70 h-0.5 origin-left scale-x-0 bg-lilac-500" aria-hidden="true" />;
 }

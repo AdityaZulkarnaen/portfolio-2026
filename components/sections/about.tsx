@@ -27,7 +27,7 @@ function Fact({ label, detail }: { label: string; detail?: string }) {
         data-decimals={decimals.length}
         data-suffix={suffix}
         tabIndex={detail ? 0 : undefined}
-        className="group/fact relative -my-[0.1em] inline-block text-[1.5em] leading-[0.86] tracking-[-0.04em] whitespace-nowrap text-ember-500 tabular-nums outline-none"
+        className="group/fact relative -my-[0.1em] inline-block text-[1.5em] leading-[0.86] tracking-[-0.04em] whitespace-nowrap text-lilac-500 tabular-nums outline-none"
       >
         <span aria-hidden="true" className="invisible">
           {final}

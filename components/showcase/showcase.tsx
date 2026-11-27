@@ -87,7 +87,7 @@ function WorkCard({ project, index, variant }: Item) {
         <div data-pose-caption className={`flex items-start justify-between ${phone ? "mt-3 gap-2" : "mt-4 gap-6"}`}>
           <div className="min-w-0">
             <h3
-              className={`leading-tight text-bone-100 transition-colors duration-(--dur-fast) group-hover/card:text-ember-300 ${
+              className={`leading-tight text-bone-100 transition-colors duration-(--dur-fast) group-hover/card:text-lilac-300 ${
                 phone ? "text-[clamp(0.95rem,1.4vw,1.25rem)] tracking-[-0.01em]" : "text-[clamp(1.25rem,1.6vw,1.5rem)] tracking-[-0.02em]"
               }`}
             >
@@ -106,7 +106,7 @@ function WorkCard({ project, index, variant }: Item) {
 
 function Dots() {
   return (
-    <svg viewBox="0 0 18 4" aria-hidden="true" className="mt-2.5 h-1 w-[18px] flex-none text-bone-400 transition-colors duration-(--dur-fast) group-hover/card:text-ember-500">
+    <svg viewBox="0 0 18 4" aria-hidden="true" className="mt-2.5 h-1 w-[18px] flex-none text-bone-400 transition-colors duration-(--dur-fast) group-hover/card:text-lilac-500">
       <circle cx="2" cy="2" r="1.6" fill="currentColor" />
       <circle cx="9" cy="2" r="1.6" fill="currentColor" />
       <circle cx="16" cy="2" r="1.6" fill="currentColor" />

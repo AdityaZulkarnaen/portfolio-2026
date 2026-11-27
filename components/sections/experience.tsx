@@ -278,11 +278,11 @@ function Dossier({ visual, stack }: { visual: Extract<Visual, { kind: "dossier" 
             ].map(([x, y]) => (
               <circle key={`${x}-${y}`} cx={x} cy={y} r="5" />
             ))}
-            <path d="M344 66V102M326 84H362" stroke="var(--color-ember-500)" />
+            <path d="M344 66V102M326 84H362" stroke="var(--color-lilac-500)" />
           </g>
         </svg>
         <p className="slate absolute top-2 left-2 text-bone-400 tabular-nums">Grid ██-██ · Alt ███ m</p>
-        <p className="absolute top-1/2 left-1/2 -translate-1/2 -rotate-[9deg] rounded-[4px] px-3 py-2 font-mono text-[clamp(0.7rem,1vw,0.95rem)] font-medium tracking-[0.16em] whitespace-nowrap text-ember-500 uppercase shadow-[inset_0_0_0_1.5px_var(--color-ember-500)]">
+        <p className="absolute top-1/2 left-1/2 -translate-1/2 -rotate-[9deg] rounded-[4px] px-3 py-2 font-mono text-[clamp(0.7rem,1vw,0.95rem)] font-medium tracking-[0.16em] whitespace-nowrap text-lilac-500 uppercase shadow-[inset_0_0_0_1.5px_var(--color-lilac-500)]">
           Confidential · Gamaforce GCS
         </p>
       </div>
@@ -344,7 +344,7 @@ export function Experience({
   );
 
   return (
-    <section aria-labelledby="exp-title" className="border-t border-line">
+    <section id="experience" aria-labelledby="exp-title" className="border-t border-line">
       <SectionHead
         id="exp-title"
         variant="booth"
@@ -384,7 +384,7 @@ export function Experience({
                     <p aria-label={`${from} to ${to}`} className="grid leading-[0.9] font-light tracking-[-0.05em]">
                       <span className="text-[clamp(2.75rem,min(5.4vw,11svh),6.25rem)] text-bone-100">{from}</span>
                       <span className="text-[clamp(1.5rem,min(2.8vw,5.5svh),3.25rem)] text-bone-400">
-                        — <span className={item.endDate ? "" : "text-ember-500"}>{to}</span>
+                        — <span className={item.endDate ? "" : "text-lilac-500"}>{to}</span>
                       </span>
                     </p>
                     <p className="slate text-bone-400"><Tenure start={item.startDate} end={item.endDate} /></p>

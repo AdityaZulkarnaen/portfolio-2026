@@ -26,7 +26,7 @@ export function Stack({ skills }: { skills: Skill[] }) {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <section aria-labelledby="stack-title" className="overflow-clip border-t border-line pb-[clamp(3rem,6vw,6rem)]">
+    <section id="stack" aria-labelledby="stack-title" className="overflow-clip border-t border-line pb-[clamp(3rem,6vw,6rem)]">
       <SectionHead
         id="stack-title"
         variant="booth"

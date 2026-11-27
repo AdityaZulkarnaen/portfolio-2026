@@ -89,10 +89,10 @@ export function Cursor() {
       aria-hidden="true"
       className="group pointer-events-none fixed top-0 left-0 z-[150] transition-opacity duration-(--dur-fast) data-[visible=false]:opacity-0"
     >
-      <span className="absolute -top-[5px] -left-[5px] size-2.5 rounded-full bg-ember-500 transition-transform duration-500 ease-out-expo group-data-[kind]:scale-0 group-[.is-down]:scale-60" />
+      <span className="absolute -top-[5px] -left-[5px] size-2.5 rounded-full bg-lilac-500 transition-transform duration-500 ease-out-expo group-data-[kind]:scale-0 group-[.is-down]:scale-60" />
       <span
         ref={labelRef}
-        className="slate absolute -top-[46px] -left-[46px] grid size-[92px] scale-0 place-items-center rounded-full bg-bone-100 font-semibold text-ink-950 transition-transform duration-[550ms] ease-out-expo group-data-[kind]:scale-100 group-data-[kind=pause]:bg-ember-500 group-data-[kind=play]:bg-ember-500 group-[.is-down]:group-data-[kind]:scale-90"
+        className="slate absolute -top-[46px] -left-[46px] grid size-[92px] scale-0 place-items-center rounded-full bg-bone-100 font-semibold text-ink-950 transition-transform duration-[550ms] ease-out-expo group-data-[kind]:scale-100 group-data-[kind=pause]:bg-lilac-500 group-data-[kind=play]:bg-lilac-500 group-[.is-down]:group-data-[kind]:scale-90"
       />
     </div>
   );

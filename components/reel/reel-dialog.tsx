@@ -201,7 +201,7 @@ export function ReelDialog({ open, origin, src, poster, title, chapters, onClose
           <div className="relative flex-1">
             <input
               type="range"
-              className="w-full accent-ember-500"
+              className="w-full accent-lilac-500"
               min={0}
               max={duration || 0}
               step={0.1}

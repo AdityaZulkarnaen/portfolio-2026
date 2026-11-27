@@ -6,7 +6,7 @@ import { noiseChunk, utilChunk, waveChunk } from "./common";
  * Hero layer (uHero → 1 on the homepage hero), "projection booth":
  *   - room: a generative volumetric smoke field (two parallax layers of the ¼-res
  *     domain-warped field, self-shadowed by a density gradient toward a top-right key
- *     light), ink → deep teal, a very faint ember lift from the current slide's accent,
+ *     light), ink → deep teal, a very faint accent lift from the current slide's accent,
  *     printed through a fine 45° halftone screen. The pointer trail pushes the domain.
  *   - reel window: a rounded rect (uWin, device px, y up) that is the only place project
  *     media appears. Covers change with the shared wave (waveChunk) under a slow push-in; fluid + trail
@@ -17,7 +17,7 @@ import { noiseChunk, utilChunk, waveChunk } from "./common";
  *
  * Shared: click ripple, pulse scanline + hue kick, vignette, grain.
  * uProgress (hero scroll-out): smoke zoom 1 → 0.92, darken, noise-threshold dissolve
- * with a faint ember burn edge into the ambient layer.
+ * with a faint accent burn edge into the ambient layer.
  */
 export const backgroundFrag = /* glsl */ `
 precision highp float;
@@ -67,7 +67,7 @@ uniform float uScrollVel;
 
 const vec3 INK = vec3(0.027, 0.031, 0.043);
 const vec3 TIDE = vec3(0.247, 0.788, 0.745);
-const vec3 EMBER = vec3(1.0, 0.357, 0.18);
+const vec3 ACCENT = vec3(0.663, 0.608, 1.0); // lilac #a99bff
 const vec3 TEAL_FAR = vec3(0.030, 0.070, 0.082);
 const vec3 TEAL_MID = vec3(0.052, 0.138, 0.150);
 const vec3 TEAL_LIT = vec3(0.110, 0.250, 0.255);
@@ -251,7 +251,7 @@ void main() {
   float edge = (1.0 - smoothstep(0.0, 0.05, abs(n - th))) * step(0.001, prog) * (1.0 - prog);
   float h = uHero * keep;
   vec3 col = mix(amb, hero, h);
-  col += EMBER * edge * 0.1 * uHero;
+  col += ACCENT * edge * 0.1 * uHero;
 
   // ---- reel window: over the dissolve, so the frame survives the scroll-out (home
   // sequence: it zooms to fullscreen, then out into the lead card, then fades) ----

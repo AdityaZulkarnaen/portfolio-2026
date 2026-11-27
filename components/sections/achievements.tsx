@@ -98,7 +98,7 @@ function Wing() {
           <rect key={i} x={45 + i * 36} y={116} width="30" height="22" />
         ))}
       </g>
-      <path d="M45 127H261" stroke="var(--color-ember-500)" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray="2 5" />
+      <path d="M45 127H261" stroke="var(--color-lilac-500)" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray="2 5" />
     </svg>
   );
 }
@@ -289,7 +289,7 @@ export function Achievements({
   };
 
   return (
-    <section aria-labelledby="ach-title" className="border-t border-line pb-[clamp(4rem,8vw,8rem)]">
+    <section id="achievements" aria-labelledby="ach-title" className="border-t border-line pb-[clamp(4rem,8vw,8rem)]">
       <SectionHead
         id="ach-title"
         variant="booth"

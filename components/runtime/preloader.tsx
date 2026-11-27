@@ -27,7 +27,7 @@ export function Preloader() {
           000
         </div>
         <div className="mt-6 mb-4 h-px bg-line">
-          <span data-preloader-bar className="block h-full origin-left scale-x-0 bg-ember-500" />
+          <span data-preloader-bar className="block h-full origin-left scale-x-0 bg-lilac-500" />
         </div>
         <div className="slate flex justify-between text-bone-400">
           <span>Threading the reel</span>

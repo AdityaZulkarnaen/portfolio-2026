@@ -13,7 +13,7 @@ import type { HeroSource, HeroWindowRect, PlaneHandle, StageApi, StageMode } fro
  * - mode: "hero" while any hero registration exists, else "ambient".
  * - tint: the most recently activated active entry, else the default.
  */
-const DEFAULT_TINT = "#ff5b2e";
+const DEFAULT_TINT = "#a99bff";
 
 let stage: StageApi | null = null;
 let modeSeq = 0;

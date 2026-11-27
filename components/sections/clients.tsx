@@ -213,7 +213,7 @@ function QuoteCardView({ card, large }: { card: QuoteCard; large: boolean }) {
             !t && "text-bone-400",
           )}
         >
-          {t ? null : <span className="slate mb-4 block text-ember-300">Dev placeholder</span>}
+          {t ? null : <span className="slate mb-4 block text-lilac-300">Dev placeholder</span>}
           <p>
             <span className={cn(t && "font-normal text-bone-100")}>{lead}</span>
             {rest ? ` ${rest}` : null}

@@ -39,7 +39,7 @@ function renderInline(nodes: InlineNode[], keyPrefix = ""): ReactNode[] {
   });
 }
 
-/** Markup-lite → paragraphs. `*highlight*` becomes the serif italic in ember. */
+/** Markup-lite → paragraphs. `*highlight*` becomes the serif italic in lilac. */
 export function Markup({ source, className, paragraphClassName }: { source: string | null | undefined; className?: string; paragraphClassName?: string }) {
   const doc = parseMarkup(source);
   if (doc.length === 0) return null;

@@ -275,7 +275,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photos, d
   );
 
   const slide = slides[index];
-  const accent = slide?.accent ?? "var(--color-ember-500)";
+  const accent = slide?.accent ?? "var(--color-lilac-500)";
   const prevRole = (roleIndex - 1 + roles.length) % roles.length;
   const hudLabel = reel ? "Play reel" : "Now showing";
 

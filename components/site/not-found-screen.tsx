@@ -7,7 +7,7 @@ export function NotFoundScreen() {
   return (
     <section className="relative grid min-h-svh content-center gap-7 overflow-hidden px-gutter py-header">
       <Grain className="opacity-60" />
-      <p className="slate text-ember-500">Error 404 · Reel missing · 00:00:00:00</p>
+      <p className="slate text-lilac-500">Error 404 · Reel missing · 00:00:00:00</p>
       <h1 className="display text-[clamp(4rem,17vw,20rem)] leading-[0.82]">
         Lost <em className="hl">frame</em>
       </h1>

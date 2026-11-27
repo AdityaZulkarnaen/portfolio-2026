@@ -13,7 +13,7 @@ async function currentYear() {
   return new Date().getFullYear();
 }
 
-const linkCls = "text-[1.05rem] transition-colors duration-(--dur-fast) hover:text-ember-300";
+const linkCls = "text-[1.05rem] transition-colors duration-(--dur-fast) hover:text-lilac-300";
 
 export async function Footer({ profile }: { profile: Profile | null }) {
   const year = await currentYear();
