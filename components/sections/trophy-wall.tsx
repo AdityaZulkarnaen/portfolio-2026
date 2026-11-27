@@ -130,13 +130,32 @@ export function TrophyWall({ count, children }: { count: number; children: React
           });
           const max = track.scrollWidth - track.clientWidth;
           paint(focus, max > 0 ? track.scrollLeft / max : 0);
+          // Develop as the strip comes up the page and as each card is swiped in.
+          const vh = window.innerHeight;
+          cards.forEach((c, i) => {
+            const r = c.getBoundingClientRect();
+            const down = clamp01((vh * 0.92 - r.top) / (vh * 0.45));
+            const across = clamp01((vw - r.left) / (vw * 0.6));
+            frames[i]?.style.setProperty("--dev", Math.min(down, across).toFixed(4));
+          });
+        };
+        let raf = 0;
+        const schedule = () => {
+          raf ||= requestAnimationFrame(() => {
+            raf = 0;
+            update();
+          });
         };
         update();
-        track.addEventListener("scroll", update, { passive: true });
-        window.addEventListener("resize", update);
+        track.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("resize", schedule);
         return () => {
-          track.removeEventListener("scroll", update);
-          window.removeEventListener("resize", update);
+          cancelAnimationFrame(raf);
+          track.removeEventListener("scroll", schedule);
+          window.removeEventListener("scroll", schedule);
+          window.removeEventListener("resize", schedule);
+          frames.forEach((f) => f?.style.removeProperty("--dev"));
         };
       });
 

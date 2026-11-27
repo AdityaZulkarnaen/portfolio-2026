@@ -250,6 +250,18 @@
   }
 }
 
+/*
+ * DOM develop (no GL planes: phones, no WebGL): a wavy-edged mask (public/dev-mask.svg,
+ * opaque above a soft wave at its middle) 2.5x the element's height, slid by `--dev`:
+ * 0 = the wave still above the element (nothing shown), 1 = past its foot (all shown).
+ */
+.dev-mask {
+  mask-image: url("/dev-mask.svg");
+  mask-size: 100% 250%;
+  mask-repeat: no-repeat;
+  mask-position: 0% calc((1 - var(--dev, 1)) * 100%);
+}
+
 /* SplitText line masks clip at the line box: give descenders (g, y, p) room without moving the lines. */
 .split-line-mask {
   padding-bottom: 0.16em;

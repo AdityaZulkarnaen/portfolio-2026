@@ -22,8 +22,7 @@ export function windowClass(chrome: FrameChrome) {
   return cn("relative overflow-hidden bg-ink-900 gl-plane:bg-transparent", chrome === "phone" && "rounded-[clamp(20px,2.7vw,37px)]");
 }
 
-/** DOM image under a GL plane: faded out once the plane draws, instantly back for snapshots. */
-const PLANE_MEDIA = "transition-opacity duration-500 ease-io gl-plane:opacity-0 gl-handoff:transition-none";
+import { DEV_MASK, PLANE_MEDIA } from "./plane-classes";
 
 type Props = {
   media: Media;
@@ -36,6 +35,8 @@ type Props = {
   address?: string | null;
   preload?: boolean;
   quality?: number;
+  /** Develop with the scroll (the wave; DevScroll drives `--dev`). Off for a hero shown on arrival. */
+  develop?: boolean;
 };
 
 /** Browser bar (three lights + address) for desktop frames. */
@@ -57,14 +58,14 @@ function BrowserBar({ address }: { address?: string | null }) {
  * natural height so the grid's motion layer can pan it inside the window on scroll.
  * The window registers as a GL plane (desktop T2); the DOM image stays until its texture is drawn.
  */
-export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, preload = false, quality = 75 }: Props) {
+export function MediaFrame({ media, chrome, behavior, ratio, sizes, address, preload = false, quality = 75, develop = true }: Props) {
   const scroll = behavior === "scroll" && media.width && media.height;
   const windowRatio = chrome === "phone" ? 9 / 19.5 : ratio;
 
   return (
-    <div data-frame className={frameClass(chrome)}>
+    <div data-frame data-dev-scroll={develop || undefined} className={frameClass(chrome)}>
       {chrome === "browser" ? <BrowserBar address={address} /> : null}
-      <PlaneWindow className={windowClass(chrome)} behavior={scroll ? "scroll" : "static"} style={{ aspectRatio: String(windowRatio) }}>
+      <PlaneWindow className={cn(windowClass(chrome), develop && DEV_MASK)} behavior={scroll ? "scroll" : "static"} style={{ aspectRatio: String(windowRatio) }}>
         {scroll ? (
           <Image
             src={media.src}

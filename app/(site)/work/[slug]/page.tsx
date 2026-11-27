@@ -80,6 +80,7 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
                   address={host}
                   preload
                   quality={85}
+                  develop={false}
                 />
               </div>
             </ViewTransition>

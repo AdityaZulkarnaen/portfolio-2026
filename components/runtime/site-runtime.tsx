@@ -4,6 +4,8 @@ import Lenis from "lenis";
 import { useEffect } from "react";
 
 import { StageProvider } from "@/gl/stage-provider";
+
+import { DevScroll } from "./dev-scroll";
 import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { emitVelocity, setLenis } from "@/lib/motion/lenis-store";
 import { useMotionPrefs } from "@/lib/motion/motion-prefs";
@@ -56,5 +58,10 @@ export function SiteRuntime() {
     };
   }, [smooth]);
 
-  return <StageProvider />;
+  return (
+    <>
+      <StageProvider />
+      <DevScroll />
+    </>
+  );
 }

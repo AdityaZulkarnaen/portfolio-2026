@@ -59,7 +59,7 @@ function WorkCard({ project, index, variant }: Item) {
           {phone ? (
             <div
               data-frame
-              className="relative rounded-[clamp(18px,2.6vw,34px)] bg-[#101217] p-[clamp(4px,0.5vw,7px)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12)] gl-plane:bg-transparent gl-plane:shadow-[inset_0_0_0_1px_rgb(255_255_255/calc(0.12*var(--dev,1))),inset_0_0_0_clamp(4px,0.5vw,7px)_rgb(16_18_23/var(--dev,1))]"
+              className="relative rounded-[clamp(18px,2.6vw,34px)] p-[clamp(4px,0.5vw,7px)] shadow-[inset_0_0_0_1px_rgb(255_255_255/calc(0.12*var(--dev,1))),inset_0_0_0_clamp(4px,0.5vw,7px)_rgb(16_18_23/var(--dev,1))]"
             >
               <div className="relative aspect-[9/19.5] overflow-hidden rounded-[clamp(14px,2.1vw,27px)]">
                 <WorkCardMedia
@@ -76,7 +76,7 @@ function WorkCard({ project, index, variant }: Item) {
             <div
               data-frame
               data-work-lead={lead ? "" : undefined}
-              className={`relative overflow-hidden rounded-[14px] bg-ink-900 shadow-[inset_0_0_0_1px_var(--color-line)] gl-plane:bg-transparent gl-plane:shadow-[inset_0_0_0_1px_rgb(236_233_226/calc(0.12*var(--dev,1)))] ${
+              className={`relative overflow-hidden rounded-[14px] shadow-[inset_0_0_0_1px_rgb(236_233_226/calc(0.12*var(--dev,1)))] ${
                 variant === "big" ? "aspect-video md:aspect-[12/5]" : "aspect-[16/10]"
               }`}
             >

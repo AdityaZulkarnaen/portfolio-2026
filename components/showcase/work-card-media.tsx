@@ -70,7 +70,7 @@ function CardLoop({ src, label }: { src: string; label: string }) {
 /** The cover still, drawn through a GL plane (which follows the card's pose transform). */
 function CoverPlane({ cover, sizes, preload, label, className }: { cover: Media; sizes: string; preload: boolean; label: string; className: string }) {
   return (
-    <PlaneWindow className={`absolute inset-0 overflow-hidden bg-ink-900 gl-plane:bg-transparent ${className}`} behavior="static">
+    <PlaneWindow className={`absolute inset-0 overflow-hidden ${className}`} behavior="static">
       <Image
         src={cover.src}
         alt={cover.alt || label}

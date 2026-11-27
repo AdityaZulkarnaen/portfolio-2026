@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
+import { DEV_MASK } from "@/components/showcase/plane-classes";
 import { PlaneWindow } from "@/components/showcase/plane-window";
 import { TransitionLink } from "@/components/site/transition-link";
 import type { Client, Media, Profile, Testimonial } from "@/lib/content/types";
@@ -252,9 +253,9 @@ function Portrait({ media, large }: { media: Media | null; large: boolean }) {
     );
   }
   return (
-    <div className={frame}>
+    <div className={frame} data-dev-scroll>
       {/* GL: the portrait develops through the scroll wave, graded and faded like the DOM filter + mask. */}
-      <PlaneWindow className="absolute inset-0" behavior="static" look={{ tone: "portrait", fade: "portrait", hover: "figure" }}>
+      <PlaneWindow className={`absolute inset-0 ${DEV_MASK}`} behavior="static" look={{ tone: "portrait", fade: "portrait", hover: "figure" }}>
         <Image
           src={media.src}
           alt=""

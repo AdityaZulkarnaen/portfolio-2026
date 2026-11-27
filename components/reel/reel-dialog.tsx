@@ -122,8 +122,23 @@ export function ReelDialog({ open, origin, src, poster, title, chapters, onClose
   const fullscreen = () => {
     const el = dialogRef.current;
     if (!el) return;
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-    else el.requestFullscreen?.().catch(() => {});
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+      return;
+    }
+    // iOS Safari: only the <video> itself can go fullscreen.
+    const video = videoRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
+    if (!el.requestFullscreen && video?.webkitEnterFullscreen) {
+      video.webkitEnterFullscreen();
+      return;
+    }
+    el.requestFullscreen?.()
+      .then(() => {
+        // Phones: turn the 16:9 reel sideways where the browser allows it.
+        const orientation = screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> };
+        if (window.matchMedia("(pointer: coarse)").matches) orientation.lock?.("landscape").catch(() => {});
+      })
+      .catch(() => {});
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDialogElement>) => {
@@ -180,25 +195,20 @@ export function ReelDialog({ open, origin, src, poster, title, chapters, onClose
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 grid grid-rows-[auto_1fr_auto] bg-[linear-gradient(180deg,rgb(0_0_0/0.55),transparent_18%,transparent_78%,rgb(0_0_0/0.7))] p-gutter *:pointer-events-auto">
-        <div className="flex items-center justify-between">
-          <span className="slate">
+      <div className="pointer-events-none absolute inset-0 grid grid-rows-[auto_1fr_auto] bg-[linear-gradient(180deg,rgb(0_0_0/0.55),transparent_18%,transparent_72%,rgb(0_0_0/0.75))] p-gutter pb-[calc(var(--spacing-gutter)+env(safe-area-inset-bottom))] *:pointer-events-auto">
+        <div className="flex items-center justify-between gap-4">
+          <span className="slate min-w-0 truncate">
             {title}
             {current ? ` · ${current.label}` : ""}
           </span>
-          <button type="button" className="slate inline-flex h-10 items-center gap-2.5 rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10" onClick={requestClose}>
-            Close <kbd className="font-label text-bone-400">Esc</kbd>
+          <button type="button" className="slate inline-flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3.5 text-[10px] shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10 md:h-10 md:px-4 md:text-[11px]" onClick={requestClose}>
+            Close <kbd className="font-label text-bone-400 max-md:hidden">Esc</kbd>
           </button>
         </div>
 
-        <div className="row-start-3 flex items-center gap-4">
-          <button type="button" className="slate inline-flex h-10 items-center gap-2.5 rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10" onClick={toggle} aria-label={playing ? "Pause" : "Play"}>
-            {playing ? "Pause" : "Play"}
-          </button>
-          <span className="slate text-bone-400 tabular-nums">
-            {fmt(time)} / {fmt(duration)}
-          </span>
-          <div className="relative flex-1">
+        {/* Phones: the seek bar gets its own full-width row above the buttons; md+: one row. */}
+        <div className="row-start-3 grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-x-3 gap-y-4 md:flex md:gap-4">
+          <div className="relative col-span-5 md:order-3 md:flex-1">
             <input
               type="range"
               className="w-full accent-lilac-500"
@@ -218,10 +228,17 @@ export function ReelDialog({ open, origin, src, poster, title, chapters, onClose
                 : null}
             </div>
           </div>
-          <button type="button" className="slate inline-flex h-10 items-center gap-2.5 rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10" onClick={() => setMuted((m) => !m)} aria-pressed={muted}>
+          <button type="button" className="slate inline-flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3.5 text-[10px] shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10 md:h-10 md:px-4 md:text-[11px] md:order-1" onClick={toggle} aria-label={playing ? "Pause" : "Play"}>
+            {playing ? "Pause" : "Play"}
+          </button>
+          <span className="slate whitespace-nowrap text-bone-400 tabular-nums md:order-2">
+            {fmt(time)} / {fmt(duration)}
+          </span>
+          <span aria-hidden="true" className="md:hidden" />
+          <button type="button" className="slate inline-flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3.5 text-[10px] shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10 md:h-10 md:px-4 md:text-[11px] md:order-4" onClick={() => setMuted((m) => !m)} aria-pressed={muted}>
             {muted ? "Unmute" : "Mute"}
           </button>
-          <button type="button" className="slate inline-flex h-10 items-center gap-2.5 rounded-full px-4 shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10" onClick={fullscreen}>
+          <button type="button" className="slate inline-flex h-9 shrink-0 items-center gap-2.5 rounded-full px-3.5 text-[10px] shadow-[inset_0_0_0_1px_var(--color-line-strong)] hover:bg-white/10 md:h-10 md:px-4 md:text-[11px] md:order-5" onClick={fullscreen}>
             Full screen
           </button>
         </div>
