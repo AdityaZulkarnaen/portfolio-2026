@@ -5,6 +5,7 @@ import { type CSSProperties, type ReactNode, useRef, useSyncExternalStore } from
 import { tenure } from "@/lib/content/format";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
+import { useNear } from "@/lib/motion/use-near";
 
 const SCENES = "(min-width: 1024px)";
 /** Scroll per role, in viewport heights (the track's CSS height uses the same number). */
@@ -30,11 +31,13 @@ const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 export function ExperienceScenes({ count, rail, children }: { count: number; rail: ReactNode; children: ReactNode }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const allowed = useMotionAllowed();
+  // Set up just before it scrolls into view, not on load (main-thread time).
+  const near = useNear(trackRef);
 
   useGSAP(
     () => {
       const track = trackRef.current;
-      if (!track || !allowed) return;
+      if (!track || !allowed || !near) return;
       const stage = track.querySelector<HTMLElement>("[data-xp-stage]");
       if (!stage) return;
       const mm = gsap.matchMedia();
@@ -53,7 +56,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
         const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.inOut" } });
         tl.set({}, {}, LEAD + n);
         gsap.set(panels, { visibility: (i: number) => (i === 0 ? "visible" : "hidden") });
-        gsap.set(labels, { opacity: (i: number) => (i === 0 ? 1 : 0.4) });
+        gsap.set(labels, { opacity: (i: number) => (i === 0 ? 1 : 0.6) });
         gsap.set(bars, { scaleX: 0, transformOrigin: "0% 50%" });
         gsap.set(frames.flat(), { "--dev": 0, opacity: (i: number) => (i < frames[0].length ? 1 : 0) });
 
@@ -71,7 +74,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
           tl.to(frames[i], { "--dev": 0, duration: 0.34, stagger: 0.04, ease: "power2.in" }, at - 0.46);
           tl.to(frames[i], { opacity: 0, duration: 0.06, ease: "none" }, at - 0.05);
           tl.set(panels[i], { visibility: "hidden" }, at);
-          if (labels[i]) tl.to(labels[i], { opacity: 0.4, duration: 0.2 }, at - 0.1);
+          if (labels[i]) tl.to(labels[i], { opacity: 0.6, duration: 0.2 }, at - 0.1);
           // In: the next role's prints come up as ink and the wave develops them; text rises.
           tl.set(panels[i + 1], { visibility: "visible" }, at - 0.02);
           tl.set(frames[i + 1], { opacity: 1 }, at - 0.02);
@@ -148,7 +151,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
 
       return () => mm.revert();
     },
-    { scope: trackRef, dependencies: [allowed], revertOnUpdate: true },
+    { scope: trackRef, dependencies: [allowed, near], revertOnUpdate: true },
   );
 
   return (

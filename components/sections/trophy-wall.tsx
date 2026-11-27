@@ -4,6 +4,7 @@ import { useRef, type CSSProperties, type ReactNode } from "react";
 
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
+import { useNear } from "@/lib/motion/use-near";
 
 const WALL = "(min-width: 1024px)";
 const SPEED = [0.03, -0.025, 0.035, -0.03, 0.02, -0.035];
@@ -24,11 +25,13 @@ const ease = (v: number) => v * v * (3 - 2 * v);
 export function TrophyWall({ count, children }: { count: number; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const allowed = useMotionAllowed();
+  // Set up just before it scrolls into view, not on load (main-thread time).
+  const near = useNear(ref);
 
   useGSAP(
     () => {
       const root = ref.current;
-      if (!root || !allowed) return;
+      if (!root || !allowed || !near) return;
       const stage = root.querySelector<HTMLElement>("[data-wall-stage]")!;
       const track = root.querySelector<HTMLElement>("[data-wall-track]")!;
       const chrome = gsap.utils.toArray<HTMLElement>("[data-wall-chrome]", root);
@@ -143,7 +146,7 @@ export function TrophyWall({ count, children }: { count: number; children: React
         counter.textContent = `01 / ${total}`;
       };
     },
-    { scope: ref, dependencies: [allowed], revertOnUpdate: true },
+    { scope: ref, dependencies: [allowed, near], revertOnUpdate: true },
   );
 
   const total = String(count).padStart(2, "0");

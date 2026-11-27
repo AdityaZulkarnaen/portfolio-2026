@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { useMotionPrefs } from "@/lib/motion/motion-prefs";
+import { onSiteReady } from "@/lib/motion/site-ready";
 
 import { stageBridge } from "./bridge";
 import { detectBaseTier, effectiveTier, type TierInfo } from "./capabilities";
@@ -29,6 +30,40 @@ function debugEnabled(): boolean {
 
 function setGl(state: "on" | "off") {
   document.documentElement.dataset.gl = state;
+}
+
+/**
+ * T1 (phones, coarse pointers, few cores): wait for the first interaction, or a few seconds
+ * after the site is ready, before paying for three.js, shader compiles and texture uploads.
+ * The DOM stills carry the page meanwhile; the smoke fades in when the stage draws.
+ */
+const T1_DELAY_MS = 3500;
+function whenWanted(tier: number, cb: () => void): () => void {
+  if (tier >= 2) return idle(cb);
+  let done = false;
+  let cancelIdle = () => {};
+  const fire = () => {
+    if (done) return;
+    done = true;
+    cleanup();
+    cancelIdle = idle(cb);
+  };
+  const events = ["pointerdown", "touchstart", "wheel", "keydown", "scroll"] as const;
+  for (const e of events) window.addEventListener(e, fire, { passive: true, once: true });
+  let timer = 0;
+  const stopReady = onSiteReady(() => {
+    timer = window.setTimeout(fire, T1_DELAY_MS);
+  });
+  function cleanup() {
+    for (const e of events) window.removeEventListener(e, fire);
+    window.clearTimeout(timer);
+    stopReady();
+  }
+  return () => {
+    done = true;
+    cleanup();
+    cancelIdle();
+  };
 }
 
 function idle(cb: () => void): () => void {
@@ -89,7 +124,7 @@ export function StageProvider() {
     let created: StageApi | null = null;
     let canvas: HTMLCanvasElement | null = null;
 
-    const cancelIdle = idle(() => {
+    const cancelIdle = whenWanted(stageTier, () => {
       import("@/gl/stage")
         .then(({ createStage }) => {
           if (cancelled) return;

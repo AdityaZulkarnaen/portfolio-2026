@@ -5,10 +5,10 @@ import { useEffect, useRef } from "react";
 import { markSiteReady } from "@/lib/motion/site-ready";
 
 const HARD_CAP_MS = 3500;
-const MIN_MS = 1100;
+const MIN_MS = 650;
 /** How long the wave takes to wash the ink off (first visit / later page loads). */
-const WASH_MS = 1500;
-const QUICK_WASH_MS = 1000;
+const WASH_MS = 1150;
+const QUICK_WASH_MS = 800;
 /** Points across the wave front. */
 const STEPS = 32;
 
@@ -132,7 +132,7 @@ export function PreloaderController() {
         dot?.setAttribute("data-ready", "");
         overlay.dataset.state = "leaving";
         markSiteReady();
-        washFrom = performance.now() + 420;
+        washFrom = performance.now() + 220;
         raf = requestAnimationFrame(wash);
         return;
       }

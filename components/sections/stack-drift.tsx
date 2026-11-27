@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/motion/gsap";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
+import { useNear } from "@/lib/motion/use-near";
 
 export type DriftItem = { id: string; name: string; logo: { src: string; alt: string } | null };
 export type DriftGroup = { key: string; label: string; items: DriftItem[] };
@@ -33,11 +34,13 @@ const smooth = (a: number, b: number, v: number) => {
 export function StackDrift({ groups }: { groups: DriftGroup[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const allowed = useMotionAllowed();
+  // Set up just before it scrolls into view, not on load (main-thread time).
+  const near = useNear(ref);
 
   useGSAP(
     () => {
       const root = ref.current;
-      if (!root || !allowed) return;
+      if (!root || !allowed || !near) return;
       const items = gsap.utils.toArray<HTMLElement>("[data-drift]", root);
       const marks = items.map((el) => el.querySelector<HTMLElement>("[data-drift-mark]"));
       const names = items.map((el) => el.querySelector<HTMLElement>("[data-drift-name]"));
@@ -187,7 +190,7 @@ export function StackDrift({ groups }: { groups: DriftGroup[] }) {
         }
       };
     },
-    { scope: ref, dependencies: [allowed], revertOnUpdate: true },
+    { scope: ref, dependencies: [allowed, near], revertOnUpdate: true },
   );
 
   return (

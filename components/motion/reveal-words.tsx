@@ -3,6 +3,7 @@
 import { useRef, type ReactNode } from "react";
 
 import { gsap, SplitText, useGSAP } from "@/lib/motion/gsap";
+import { useNear } from "@/lib/motion/use-near";
 
 /**
  * Scroll-scrubbed reading light: each word brightens from 12% to full opacity as the
@@ -10,12 +11,14 @@ import { gsap, SplitText, useGSAP } from "@/lib/motion/gsap";
  */
 export function RevealWords({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const near = useNear(ref);
 
   useGSAP(
     () => {
       const el = ref.current;
-      if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const split = SplitText.create(el, { type: "words" });
+      if (!el || !near || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      // aria "none": the words stay real text (no aria-label on a generic div, no hidden words).
+      const split = SplitText.create(el, { type: "words", aria: "none" });
       gsap.fromTo(
         split.words,
         { opacity: 0.12 },
@@ -28,7 +31,7 @@ export function RevealWords({ children, className }: { children: ReactNode; clas
       );
       return () => split.revert();
     },
-    { scope: ref },
+    { scope: ref, dependencies: [near] },
   );
 
   return (

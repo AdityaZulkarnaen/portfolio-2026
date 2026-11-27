@@ -258,7 +258,15 @@ class Stage implements StageApi {
 
     this.measure();
     this.trail?.clear(this.renderer);
-    this.start();
+    // Compile the background program off the main thread where the driver allows it
+    // (KHR_parallel_shader_compile) before the first frame, instead of a blocking link
+    // inside it. Falls back to compiling on the first render.
+    this.renderer
+      .compileAsync(this.scene, this.camera)
+      .catch(() => {})
+      .then(() => {
+        if (!this.disposed && !this.lost) this.start();
+      });
   }
 
   // ------------------------------------------------------------------ public API

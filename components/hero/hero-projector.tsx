@@ -94,8 +94,9 @@ function nextReadySlide(root: HTMLElement | null, from: number, count: number): 
 const noop = () => () => {};
 
 /**
- * Which hero loop this page view may play: none with Save-Data (or before hydration), the
- * 480p loop on phones / coarse pointers, else 720p. Fixed for the page view.
+ * Which hero loop this page view may play: none with Save-Data (or before hydration) and none
+ * on phones / coarse pointers (a 3.7 MB loop is most of a phone's page weight; the stills
+ * cycle instead), else the 720p loop. Fixed for the page view.
  */
 function useHeroVideoSize(enabled: boolean): "large" | "small" | null {
   return useSyncExternalStore(
@@ -104,7 +105,7 @@ function useHeroVideoSize(enabled: boolean): "large" | "small" | null {
       if (!enabled) return null;
       const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
       if (conn?.saveData) return null;
-      return window.matchMedia("(pointer: coarse), (max-width: 767px)").matches ? "small" : "large";
+      return window.matchMedia("(pointer: coarse), (max-width: 767px)").matches ? null : "large";
     },
     () => null,
   );
@@ -466,7 +467,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photos, d
                     onClick={() => {
                       if (current.slug) scrollToTarget(`#work a[href="/work/${current.slug}"]`, { offset: -120 });
                     }}
-                    aria-label={`Now playing: ${current.number} / ${current.label}. Show the project`}
+                    aria-label={`Now playing ${current.number} / ${current.label}, show the project`}
                   >
                     <span className="slate text-bone-400">Now playing</span>
                     <span key={current.number} className="animate-fade-up truncate text-sm leading-tight font-medium text-bone-100">

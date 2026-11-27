@@ -67,7 +67,7 @@ export function OperatorPrints({ photos, name, running }: { photos: HeroPhoto[];
             onAnimationEnd={(e) => {
               if (e.animationName === "print-fling") setFlung(null);
             }}
-            className={`absolute inset-0 block overflow-hidden bg-ink-900 shadow-[0_18px_40px_-18px_rgb(0_0_0/0.7),0_0_0_1px_rgb(236_233_226/0.14)] transition-[transform,opacity,border-radius] duration-[900ms] ease-fluid [transform:translate(var(--x),var(--y))_rotate(var(--r))_scale(var(--s))] ${
+            className={`absolute inset-0 block overflow-hidden bg-ink-900 shadow-[0_18px_40px_-18px_rgb(0_0_0/0.7),0_0_0_1px_rgb(236_233_226/0.14)] transition-[transform,opacity] duration-[900ms] ease-fluid [transform:translate(var(--x),var(--y))_rotate(var(--r))_scale(var(--s))] ${
               depth === 0 ? "group-hover/prints:[transform:translate(0,-3%)_rotate(2deg)_scale(1.03)]" : ""
             } ${isFlung ? "animate-[print-fling_1s_var(--ease-fluid)]" : ""}`}
             style={

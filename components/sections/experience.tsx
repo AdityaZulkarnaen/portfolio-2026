@@ -331,7 +331,7 @@ export function Experience({
       className="absolute inset-x-gutter top-[calc(var(--spacing-header)+1.5rem)] z-10 hidden grid-cols-[repeat(var(--xp-n),minmax(0,1fr))] gap-3 motion-on:lg:grid"
     >
       {sorted.map((item, i) => (
-        <li key={item.id} data-xp-label className="grid gap-2.5 opacity-40 first:opacity-100">
+        <li key={item.id} data-xp-label className="grid gap-2.5 opacity-60 first:opacity-100">
           <span className="relative h-px overflow-hidden bg-line-strong">
             <span data-xp-bar className="absolute inset-0 origin-left scale-x-0 bg-bone-100" />
           </span>

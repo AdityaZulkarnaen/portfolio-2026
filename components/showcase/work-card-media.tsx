@@ -21,10 +21,15 @@ type Props = {
   className?: string;
 };
 
-/** Muted loop: plays while ≥50% visible and motion is allowed; shares the document-wide cap of two. */
-function CardLoop({ src, poster, label }: { src: string; poster: string | null; label: string }) {
+/**
+ * Muted loop: plays while ≥50% visible and motion is allowed; shares the document-wide cap of
+ * two. No poster (the optimised cover is already drawn underneath); the video only shows once
+ * it is actually playing, so it never covers the cover with an empty frame.
+ */
+function CardLoop({ src, label }: { src: string; label: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [inView, setInView] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const motion = useMotionAllowed();
 
   useEffect(() => {
@@ -49,9 +54,10 @@ function CardLoop({ src, poster, label }: { src: string; poster: string | null; 
   return (
     <video
       ref={ref}
-      className="absolute inset-0 size-full object-cover object-top"
+      className="absolute inset-0 size-full object-cover object-top opacity-0 transition-opacity duration-300 data-playing:opacity-100"
+      data-playing={playing || undefined}
+      onPlaying={() => setPlaying(true)}
       src={src}
-      poster={poster ?? undefined}
       muted
       loop
       playsInline
@@ -100,7 +106,7 @@ export function WorkCardMedia({ cover, loop, sizes, preload = false, label, clas
     <>
       {still}
       <div className="absolute inset-0 [opacity:clamp(0,calc((var(--dev,1)-0.92)*12.5),1)]">
-        <CardLoop src={loop.src} poster={cover?.src ?? null} label={label} />
+        <CardLoop src={loop.src} label={label} />
       </div>
     </>
   );

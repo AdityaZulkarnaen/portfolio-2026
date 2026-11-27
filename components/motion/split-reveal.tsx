@@ -3,6 +3,7 @@
 import { useRef, type ElementType, type ReactNode } from "react";
 
 import { gsap, ScrollTrigger, SplitText, useGSAP } from "@/lib/motion/gsap";
+import { useNear } from "@/lib/motion/use-near";
 
 type Props = {
   as?: ElementType;
@@ -21,15 +22,18 @@ type Props = {
  */
 export function SplitReveal({ as: Tag = "div", children, className, type = "lines", delay = 0, stagger, id }: Props) {
   const ref = useRef<HTMLElement>(null);
+  const near = useNear(ref);
 
   useGSAP(
     () => {
       const el = ref.current;
-      if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!el || !near || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       const split = SplitText.create(el, {
         type: type === "chars" ? "lines,chars" : "lines",
         mask: "lines",
+        // Keep the text itself readable; "auto" would put aria-label on a generic element.
+        aria: "none",
         // The masks get `split-line-mask` (globals.css): room under each line for descenders.
         linesClass: "split-line",
         autoSplit: true,
@@ -50,7 +54,7 @@ export function SplitReveal({ as: Tag = "div", children, className, type = "line
         ScrollTrigger.getAll().forEach((t) => t.trigger === el && t.kill());
       };
     },
-    { scope: ref },
+    { scope: ref, dependencies: [near] },
   );
 
   return (

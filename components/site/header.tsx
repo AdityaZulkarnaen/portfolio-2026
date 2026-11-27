@@ -36,28 +36,23 @@ function useActiveSection(enabled: boolean): SectionId | null {
   useEffect(() => {
     if (!enabled) return;
     const ids: SectionId[] = [...SECTIONS.map((s) => s.id).filter((id) => id !== "intro"), "contact"];
-    let raf = 0;
-    const read = () => {
-      raf = 0;
-      const line = window.innerHeight * 0.4;
-      let at: SectionId | null = "intro";
-      for (const id of ids) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= line) at = id;
-      }
-      setActive(at);
-    };
-    const onScroll = () => {
-      raf ||= requestAnimationFrame(read);
-    };
-    read();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
+    const els = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
+    // A 1px reading line 40% down the viewport: the section it crosses is the one being read.
+    // The observer reports crossings without forcing a layout on every scroll frame.
+    const crossing = new Set<string>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) crossing.add(e.target.id);
+          else crossing.delete(e.target.id);
+        }
+        const at = [...ids].reverse().find((id) => crossing.has(id));
+        setActive((at as SectionId | undefined) ?? "intro");
+      },
+      { rootMargin: "-40% 0px -60% 0px", threshold: 0 },
+    );
+    for (const el of els) io.observe(el);
+    return () => io.disconnect();
   }, [enabled]);
   return enabled ? active : null;
 }
