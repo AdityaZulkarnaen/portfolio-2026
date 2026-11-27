@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { PlaneWindow } from "@/components/showcase/plane-window";
-import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
+import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/plane-classes";
 import { SectionHead } from "@/components/site/section-head";
 import { hostOf, monthYear } from "@/lib/content/format";
 import type { Experience as ExperienceItem, Media, Project } from "@/lib/content/types";
@@ -59,9 +59,9 @@ function Browsers({ sites }: { sites: (Site & { media: Media })[] }) {
           <div
             data-frame
             data-reel-frame
-            className="relative grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-[8px] bg-ink-950 shadow-[inset_0_0_0_1px_var(--color-line)] max-lg:aspect-[16/11]"
+            className="relative grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-[8px] bg-ink-950 shadow-[inset_0_0_0_1px_var(--color-line)] max-lg:aspect-[16/11] gl-plane:bg-transparent"
           >
-            <span className="slate truncate border-b border-line px-2.5 py-1.5 text-[9px] tracking-[0.12em] text-bone-400 normal-case">
+            <span className="slate truncate border-b border-line bg-ink-950 px-2.5 py-1.5 text-[9px] tracking-[0.12em] text-bone-400 normal-case">
               {hostOf(site.href)}
             </span>
             <div className="relative min-h-0">

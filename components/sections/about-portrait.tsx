@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRef } from "react";
 
-import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
+import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/plane-classes";
 import { PlaneWindow } from "@/components/showcase/plane-window";
 import type { Media } from "@/lib/content/types";
 import { ScrollTrigger, useGSAP } from "@/lib/motion/gsap";

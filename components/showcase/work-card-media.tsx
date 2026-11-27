@@ -6,6 +6,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Media } from "@/lib/content/types";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 
+import { DEV_MASK, PLANE_MEDIA } from "./plane-classes";
 import { PlaneWindow } from "./plane-window";
 import { IN_VIEW_RATIO, IN_VIEW_THRESHOLDS, releasePlayback, requestPlayback } from "./playback";
 
@@ -19,16 +20,6 @@ type Props = {
   /** Extra classes on the media window (e.g. a phone screen radius). */
   className?: string;
 };
-
-/** DOM image under a GL plane: faded out once the plane draws, instantly back for snapshots. */
-export const PLANE_MEDIA = "transition-opacity duration-500 ease-io gl-plane:opacity-0 gl-handoff:transition-none";
-
-/**
- * Without GL the same `--dev` (0..1, set by the home sequence on the frame) develops the
- * media with a soft top-down mask. Unset (reduced motion, other pages) = fully shown.
- */
-export const DEV_MASK =
-  "[mask-image:linear-gradient(to_bottom,#000_calc(var(--dev,1)*130%-30%),transparent_calc(var(--dev,1)*130%))]";
 
 /** Muted loop: plays while ≥50% visible and motion is allowed; shares the document-wide cap of two. */
 function CardLoop({ src, poster, label }: { src: string; poster: string | null; label: string }) {

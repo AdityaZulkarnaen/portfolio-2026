@@ -9,17 +9,18 @@ import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 const SCENES = "(min-width: 1024px)";
 /** Scroll per role, in viewport heights (the track's CSS height uses the same number). */
 const PER_ROLE = 0.85;
+/** The approach (track top from the viewport bottom to the top), in role units. */
+const LEAD = 1 / PER_ROLE;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const SHOWN = "inset(0% 0% 0% 0%)";
-const BELOW = "inset(100% 0% 0% 0%)";
-const ABOVE = "inset(0% 0% 100% 0%)";
 
 /**
  * Experience as full-screen scenes (desktop, motion on): the stage holds the viewport
- * while the track scrolls past, and each role takes the whole screen in turn. The text of
- * the outgoing role lifts away, the next one rises in, and its pictures are wiped up from
- * the bottom (a frame clip-path inset, which the GL planes follow too).
+ * while the track scrolls past, and each role takes the whole screen in turn. Every
+ * hand-over is the featured cards' print develop: the outgoing pictures sink back into
+ * dark ink under the wave, the next role's prints come up as ink and the wave washes
+ * them in (`--dev` on each frame, read by the GL planes and by the DOM mask alike). Text
+ * lifts away and rises in around it.
  *
  * The stage is held by translating it (it is a `[data-pose]`, so its GL planes follow the
  * same transform), never by a CSS pin, so the page layout and plane measurements hold.
@@ -47,28 +48,37 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
         const bars = gsap.utils.toArray<HTMLElement>("[data-xp-bar]", stage);
         const labels = gsap.utils.toArray<HTMLElement>("[data-xp-label]", stage);
 
-        // Role i owns [i, i + 1] of the timeline; the hand-over runs across each boundary.
+        // [0, LEAD]: the section comes up and the first role develops. Then role i owns
+        // [LEAD + i, LEAD + i + 1]; each hand-over runs across the boundary.
         const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.inOut" } });
-        tl.set({}, {}, n);
+        tl.set({}, {}, LEAD + n);
         gsap.set(panels, { visibility: (i: number) => (i === 0 ? "visible" : "hidden") });
         gsap.set(labels, { opacity: (i: number) => (i === 0 ? 1 : 0.4) });
         gsap.set(bars, { scaleX: 0, transformOrigin: "0% 50%" });
+        gsap.set(frames.flat(), { "--dev": 0, opacity: (i: number) => (i < frames[0].length ? 1 : 0) });
+
+        // The first role: its prints develop and its text rises as the section arrives.
+        tl.to(frames[0], { "--dev": 1, duration: LEAD * 0.6, stagger: 0.08, ease: "none" }, LEAD * 0.3);
+        tl.fromTo(lines[0], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: LEAD * 0.4, stagger: 0.05, ease: "power3.out" }, LEAD * 0.45);
 
         for (let i = 0; i < n; i++) {
-          if (bars[i]) tl.fromTo(bars[i], { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 1, immediateRender: false }, i);
+          const start = LEAD + i;
+          if (bars[i]) tl.fromTo(bars[i], { scaleX: 0 }, { scaleX: 1, ease: "none", duration: 1, immediateRender: false }, start);
           if (i === n - 1) break;
-          const at = i + 1;
-          // Out: text lifts and fades, pictures are wiped up and away.
+          const at = start + 1;
+          // Out: text lifts away; the prints sink back into dark ink under the wave, then go.
           tl.to(lines[i], { yPercent: -40, opacity: 0, duration: 0.26, stagger: 0.025, ease: "power2.in" }, at - 0.42);
-          tl.to(frames[i], { clipPath: ABOVE, opacity: 0, duration: 0.3, stagger: 0.04, ease: "power3.in" }, at - 0.42);
+          tl.to(frames[i], { "--dev": 0, duration: 0.34, stagger: 0.04, ease: "power2.in" }, at - 0.46);
+          tl.to(frames[i], { opacity: 0, duration: 0.06, ease: "none" }, at - 0.05);
           tl.set(panels[i], { visibility: "hidden" }, at);
           if (labels[i]) tl.to(labels[i], { opacity: 0.4, duration: 0.2 }, at - 0.1);
-          // In: the next role rises, its pictures wipe up from the bottom and settle.
-          tl.set(panels[at], { visibility: "visible" }, at - 0.02);
-          tl.fromTo(lines[at], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.4, stagger: 0.04, ease: "power3.out" }, at);
-          tl.fromTo(frames[at], { clipPath: BELOW, opacity: 0 }, { clipPath: SHOWN, opacity: 1, duration: 0.5, stagger: 0.06, ease: "power3.out" }, at - 0.02);
-          if (imgs[at].length) tl.fromTo(imgs[at], { scale: 1.18 }, { scale: 1, duration: 0.7, ease: "power3.out" }, at - 0.02);
-          if (labels[at]) tl.to(labels[at], { opacity: 1, duration: 0.2 }, at - 0.1);
+          // In: the next role's prints come up as ink and the wave develops them; text rises.
+          tl.set(panels[i + 1], { visibility: "visible" }, at - 0.02);
+          tl.set(frames[i + 1], { opacity: 1 }, at - 0.02);
+          tl.to(frames[i + 1], { "--dev": 1, duration: 0.55, stagger: 0.07, ease: "power1.out" }, at);
+          if (imgs[i + 1].length) tl.fromTo(imgs[i + 1], { scale: 1.14 }, { scale: 1, duration: 0.7, ease: "power3.out" }, at);
+          tl.fromTo(lines[i + 1], { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.4, stagger: 0.04, ease: "power3.out" }, at + 0.04);
+          if (labels[i + 1]) tl.to(labels[i + 1], { opacity: 1, duration: 0.2 }, at - 0.1);
         }
 
         let span = 0;
@@ -76,6 +86,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
         const measure = () => {
           span = Math.max(1, track.offsetHeight - stage.offsetHeight);
         };
+        const progressAt = (top: number) => clamp01((window.innerHeight - top) / (window.innerHeight + span));
         const render = () => {
           // Read live: pins above (the hero) shift this track after it was measured.
           const top = track.getBoundingClientRect().top;
@@ -84,7 +95,7 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
             lastY = y;
             gsap.set(stage, { y });
           }
-          gsap.to(tl, { progress: clamp01(-top / span), duration: 0.45, ease: "power3.out", overwrite: true });
+          gsap.to(tl, { progress: progressAt(top), duration: 0.45, ease: "power3.out", overwrite: true });
         };
 
         const st = ScrollTrigger.create({
@@ -100,15 +111,16 @@ export function ExperienceScenes({ count, rail, children }: { count: number; rai
         });
         measure();
         render();
-        tl.progress(clamp01(-track.getBoundingClientRect().top / span));
+        tl.progress(progressAt(track.getBoundingClientRect().top));
 
         return () => {
           st.kill();
           gsap.killTweensOf(tl);
           tl.kill();
           gsap.set([stage, ...panels, ...lines.flat(), ...frames.flat(), ...imgs.flat(), ...bars, ...labels], {
-            clearProps: "transform,visibility,opacity,clipPath",
+            clearProps: "transform,visibility,opacity",
           });
+          frames.flat().forEach((f) => f.style.removeProperty("--dev"));
         };
       });
 

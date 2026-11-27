@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { type CSSProperties, useEffect, useState } from "react";
 
-import { DEV_MASK } from "@/components/showcase/work-card-media";
+import { DEV_MASK } from "@/components/showcase/plane-classes";
 
 import type { HeroPhoto } from "./hero-projector";
 

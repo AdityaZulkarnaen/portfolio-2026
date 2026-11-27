@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 
 import { VelocityMarquee } from "@/components/motion/velocity-marquee";
 import { PlaneWindow } from "@/components/showcase/plane-window";
-import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
+import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/plane-classes";
 import { Markup } from "@/components/site/markup";
 import { SectionHead } from "@/components/site/section-head";
 import type { Achievement, AchievementKind, Media, Project } from "@/lib/content/types";
