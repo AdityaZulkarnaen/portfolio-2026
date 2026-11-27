@@ -22,6 +22,7 @@ export default async function WorkPage() {
     role: p.role,
     accent: accentOrDefault(p.accent),
     featured: p.featured,
+    phone: p.device === "mobile",
     cover:
       p.cover && p.cover.width && p.cover.height
         ? { src: p.cover.src, width: p.cover.width, height: p.cover.height, lqip: p.cover.lqip }

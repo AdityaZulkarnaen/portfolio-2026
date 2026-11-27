@@ -6,8 +6,7 @@ import { ViewTransition, type CSSProperties } from "react";
 import { SplitReveal } from "@/components/motion/split-reveal";
 import { RouteSignal } from "@/components/runtime/route-signal";
 import { StageTint } from "@/components/runtime/stage-tint";
-import { EditorialGrid } from "@/components/showcase/editorial-grid";
-import { GridMotion } from "@/components/showcase/grid-motion";
+import { CaseGallery } from "@/components/showcase/case-gallery";
 import { MediaFrame } from "@/components/showcase/media-frame";
 import { Markup } from "@/components/site/markup";
 import { PageTransition } from "@/components/site/page-transition";
@@ -69,7 +68,7 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
         </header>
 
         {project.cover ? (
-          <div className={isPhone ? "mx-auto w-[min(78vw,400px)]" : undefined}>
+          <div className={isPhone ? "mx-auto w-[min(70vw,300px)]" : "mx-auto max-w-[1100px]"}>
             <ViewTransition name={`cover-${project.slug}`} share="morph" default="none">
               <div>
                 <MediaFrame
@@ -77,7 +76,7 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
                   chrome={coverFrame?.frame ?? (isPhone ? "phone" : "browser")}
                   behavior="static"
                   ratio={isPhone ? 9 / 19.5 : Math.max(1.3, coverFrame?.ratio ?? 16 / 9)}
-                  sizes={isPhone ? "(min-width: 768px) 34vw, 80vw" : "100vw"}
+                  sizes={isPhone ? "(min-width: 768px) 22vw, 70vw" : "(min-width: 1200px) 1100px, 92vw"}
                   address={host}
                   preload
                   quality={85}
@@ -154,9 +153,9 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
         </div>
 
         {frames.length > 0 ? (
-          <GridMotion className="pb-[clamp(5rem,10vw,10rem)]">
-            <EditorialGrid frames={frames} address={host} poster={project.cover?.src} />
-          </GridMotion>
+          <div className="pb-[clamp(5rem,10vw,10rem)]">
+            <CaseGallery frames={frames} address={host} />
+          </div>
         ) : null}
 
         {next ? (

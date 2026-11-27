@@ -14,6 +14,8 @@ export type WorkRow = {
   role: string;
   accent: string;
   featured: boolean;
+  /** A mobile app: the hover preview is a phone, not a landscape screen. */
+  phone: boolean;
   cover: { src: string; width: number; height: number; lqip: string | null } | null;
 };
 
@@ -108,13 +110,23 @@ export function WorkIndex({ rows }: { rows: WorkRow[] }) {
       </ol>
 
       {fine ? (
-        <div
-          ref={previewRef}
-          className="pointer-events-none fixed top-0 left-0 z-40 -mt-[calc(clamp(240px,26vw,440px)*0.3125)] -ml-[calc(clamp(240px,26vw,440px)*0.5)] aspect-[16/10] w-[clamp(240px,26vw,440px)] scale-85 opacity-0 transition-[opacity,scale] duration-(--dur-base) ease-fluid data-[visible]:scale-100 data-[visible]:opacity-100"
-          data-visible={active?.cover ? true : undefined} aria-hidden="true">
+        <div ref={previewRef} className="pointer-events-none fixed top-0 left-0 z-40" aria-hidden="true">
+          {/* Centred on the cursor; a phone shape for mobile apps, a landscape screen otherwise. */}
+          <div
+            className={`-translate-1/2 scale-85 opacity-0 transition-[opacity,scale] duration-(--dur-base) ease-fluid data-[visible]:scale-100 data-[visible]:opacity-100 ${
+              active?.phone
+                ? "aspect-[9/19.5] w-[clamp(150px,13vw,230px)] rounded-[clamp(20px,2vw,32px)] bg-[#101217] p-[clamp(4px,0.45vw,7px)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.14),0_40px_80px_-30px_rgb(0_0_0/0.9)]"
+                : "aspect-[16/10] w-[clamp(240px,26vw,440px)]"
+            }`}
+            data-visible={active?.cover ? true : undefined}
+          >
           {active?.cover ? (
             <ViewTransition key={active.slug} name={`cover-${active.slug}`} share="morph" default="none">
-              <div className="absolute inset-0 overflow-hidden rounded-[10px] shadow-[0_40px_80px_-30px_rgb(0_0_0/0.9)]">
+              <div
+                className={`relative size-full overflow-hidden ${
+                  active.phone ? "rounded-[clamp(16px,1.6vw,26px)]" : "rounded-[10px] shadow-[0_40px_80px_-30px_rgb(0_0_0/0.9)]"
+                }`}
+              >
                 <Image
                   src={active.cover.src}
                   alt=""
@@ -128,6 +140,7 @@ export function WorkIndex({ rows }: { rows: WorkRow[] }) {
               </div>
             </ViewTransition>
           ) : null}
+          </div>
         </div>
       ) : null}
     </div>
