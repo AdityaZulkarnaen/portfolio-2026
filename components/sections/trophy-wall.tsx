@@ -87,8 +87,10 @@ export function TrophyWall({ count, children }: { count: number; children: React
             setX[i](-shift + off * SPEED[i % SPEED.length]);
             setY[i](hold);
             setS[i](DEPTH[i % DEPTH.length] + 0.04 * ease(f));
-            // Develops from entering at the right edge until its left edge is ~20% in from the left.
-            frames[i]?.style.setProperty("--dev", clamp01((vw - (left[i] - shift)) / (vw * 0.8)).toFixed(4));
+            // Develops from entering at the right edge until its left edge is ~20% in from the
+            // left, or by the end of the run for the last cards, which never get that far.
+            const span = Math.max(vw * 0.25, Math.min(vw * 0.8, vw - (left[i] - reach) - vw * 0.04));
+            frames[i]?.style.setProperty("--dev", clamp01((vw - (left[i] - shift)) / span).toFixed(4));
             return f;
           });
           chromeY.forEach((set) => set(hold));
