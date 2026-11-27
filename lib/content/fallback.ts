@@ -185,14 +185,14 @@ export async function fallbackSkills(): Promise<Skill[]> {
   return bundle.skills.map((s) => {
     const id = `seed-skill-${s.position}`;
     const slug = s.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    // The seed writes each processed mark to public/seed/skills/<slug>.webp.
+    // The seed writes each processed mark to public/seed/skills/<slug>-color.webp.
     const logo: MediaRow | null =
       s.name in marks
         ? {
             id: `${id}-logo`,
             kind: "image",
             source: "public",
-            path: `seed/skills/${slug}.webp`,
+            path: `seed/skills/${slug}-color.webp`,
             width: null,
             height: null,
             alt: `${s.name} logo`,

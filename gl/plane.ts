@@ -76,8 +76,8 @@ type Look = { tone: [Tone, Tone] | null; fade: boolean; contain: boolean; bg: [n
 
 const TONES: Record<string, [Tone, Tone]> = {
   portrait: [
-    [1, 0.14, 1.12, 0.54],
-    [0.35, 0.05, 1.05, 0.68],
+    [0, 0, 1.04, 0.8],
+    [0, 0, 1.02, 0.95],
   ],
 };
 const IDENTITY_TONE: Tone = [0, 0, 1, 1];

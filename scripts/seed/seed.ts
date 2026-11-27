@@ -480,16 +480,16 @@ async function seedSectionMedia() {
 
 /** Edge length of a processed skill mark. */
 const MARK_SIZE = 128;
-/** Light the marks are repainted in (the site's bone), so every logo reads as one family. */
+/** Light that dark marks are repainted in (the site's bone), so they read on the dark page. */
 const MARK_RGB = [236, 233, 226] as const;
 
 /**
- * One logo → a monochrome mark: trimmed, fitted into MARK_SIZE, repainted in bone with the
- * artwork's tonal structure kept in the alpha (lighter parts more opaque, never below 40%),
- * so two-tone logos stay two-tone and knockouts survive. Dark-on-transparent marks (flagged,
- * or measured dark) are reversed first.
+ * One logo → a mark: trimmed and fitted into MARK_SIZE, in its own colours. Dark-on-transparent
+ * marks (flagged, or measured dark) would vanish on the dark page, so those are reversed and
+ * repainted in bone with the artwork's tonal structure kept in the alpha (lighter parts more
+ * opaque, never below 40%), so knockouts survive.
  */
-async function monochromeMark(input: Buffer, reverse: boolean) {
+async function skillMark(input: Buffer, reverse: boolean) {
   const { data, info } = await sharp(input, { density: 384 })
     .ensureAlpha()
     .trim({ threshold: 1 })
@@ -508,6 +508,12 @@ async function monochromeMark(input: Buffer, reverse: boolean) {
     weight += a;
   }
   const flip = reverse || (weight > 0 && sum / weight < 0.22);
+  if (!flip) {
+    const webp = await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
+      .webp({ quality: 92, alphaQuality: 100 })
+      .toBuffer();
+    return { data: webp, width: info.width, height: info.height };
+  }
   const sorted = lums.map((l) => (flip ? 1 - l : l)).sort((x, y) => x - y);
   const lo = sorted[Math.floor(sorted.length * 0.05)] ?? 0;
   const hi = sorted[Math.floor(sorted.length * 0.95)] ?? 1;
@@ -530,7 +536,7 @@ async function monochromeMark(input: Buffer, reverse: boolean) {
 /**
  * Skill marks for the stack section: the old portfolio's logos (Sanity CDN, via
  * legacy-content.json) plus Simple Icons files for skills it had none for, mapped in
- * supabase/seed/skill-logos.json. Uploaded to `skills/<slug>.webp`, linked through
+ * supabase/seed/skill-logos.json. Uploaded to `skills/<slug>-color.webp`, linked through
  * skills.logo_media_id, and written to public/seed/skills for the offline fallback.
  */
 async function seedSkillLogos() {
@@ -539,7 +545,7 @@ async function seedSkillLogos() {
     return;
   }
   const map = JSON.parse(readFileSync(resolve(seedDir, "skill-logos.json"), "utf8")) as {
-    logos: Record<string, { legacy?: string; file?: string; reverse?: boolean }>;
+    logos: Record<string, { legacy?: string; file?: string; color?: string; reverse?: boolean }>;
   };
   mkdirSync(resolve(publicDir, "seed", "skills"), { recursive: true });
   let count = 0;
@@ -558,11 +564,14 @@ async function seedSkillLogos() {
       reverse ||= tool.reverse;
     } else if (src.file) {
       input = readFileSync(resolve(seedDir, "assets", src.file));
+      // Simple Icons ship without a fill (black): paint the brand colour in.
+      if (src.color) input = Buffer.from(input.toString("utf8").replace("<svg ", `<svg fill="${src.color}" `));
     } else continue;
 
-    const mark = await monochromeMark(input, reverse);
+    const mark = await skillMark(input, reverse);
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const file = `skills/${slug}.webp`;
+    // `-color`: a new URL, so the year-long caches of the earlier monochrome marks are bypassed.
+    const file = `skills/${slug}-color.webp`;
     const uploaded = await db.storage.from(BUCKET).upload(file, mark.data, {
       contentType: "image/webp",
       cacheControl: "31536000",

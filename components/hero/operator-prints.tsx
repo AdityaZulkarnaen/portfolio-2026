@@ -90,7 +90,7 @@ export function OperatorPrints({ photos, name, running }: { photos: HeroPhoto[];
               quality={75}
               placeholder={photo.lqip ? "blur" : "empty"}
               blurDataURL={photo.lqip ?? undefined}
-              className={`object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.62)] transition-[filter] duration-700 ease-fluid group-hover/prints:filter-[grayscale(0)_contrast(1.05)_brightness(0.85)] ${DEV_MASK}`}
+              className={`object-cover filter-[contrast(1.03)_brightness(0.86)] transition-[filter] duration-700 ease-fluid group-hover/prints:filter-[contrast(1.03)_brightness(1)] ${DEV_MASK}`}
               style={{
                 objectPosition: photo.focalX != null && photo.focalY != null ? `${photo.focalX * 100}% ${photo.focalY * 100}%` : "50% 25%",
               }}

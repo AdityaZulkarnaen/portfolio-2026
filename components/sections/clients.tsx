@@ -261,7 +261,7 @@ function Portrait({ media, large }: { media: Media | null; large: boolean }) {
           fill
           sizes={large ? "(min-width: 768px) 26vw, 100vw" : "(min-width: 768px) 14vw, 100vw"}
           quality={75}
-          className={`object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.54)] group-hover/q:filter-[grayscale(0.35)_sepia(0.05)_contrast(1.05)_brightness(0.68)] motion-safe:transition-[filter,opacity] motion-safe:duration-(--dur-slower) motion-safe:ease-fluid ${PLANE_MEDIA}`}
+          className={`object-cover filter-[contrast(1.04)_brightness(0.8)] group-hover/q:filter-[contrast(1.02)_brightness(0.95)] motion-safe:transition-[filter,opacity] motion-safe:duration-(--dur-slower) motion-safe:ease-fluid ${PLANE_MEDIA}`}
           style={{ objectPosition: `${(media.focalX ?? 0.5) * 100}% ${(media.focalY ?? 0.3) * 100}%` }}
         />
       </PlaneWindow>

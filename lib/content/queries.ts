@@ -161,6 +161,7 @@ export async function getExperiences(): Promise<Experience[]> {
   return (data ?? []).map(mapExperience);
 }
 
+/** Published skills with their marks (`logo`, null for text-only skills), in marquee-row order. */
 export async function getSkills(): Promise<Skill[]> {
   "use cache";
   cacheLife("days");

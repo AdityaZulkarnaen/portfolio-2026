@@ -1,29 +1,83 @@
 {
-  "$comment": "Skill name → logo source. `legacy`: a tool label in legacy-content.json (the old portfolio's Sanity logos). `file`: a file in supabase/seed/assets (Simple Icons, CC0, for skills the old site had no logo for). `reverse`: a mark that ships dark on transparent, repainted light. Skills not listed here are shown as text only.",
+  "$comment": "`color`: brand colour painted into a Simple Icons file (they ship uncoloured). Skill name → logo source. `legacy`: a tool label in legacy-content.json (the old portfolio's Sanity logos). `file`: a file in supabase/seed/assets (Simple Icons, CC0, for skills the old site had no logo for). `reverse`: a mark that ships dark on transparent, repainted light. Skills not listed here are shown as text only.",
   "logos": {
-    "JavaScript": { "legacy": "js" },
-    "Python": { "legacy": "py" },
-    "PHP": { "legacy": "php" },
-    "Solidity": { "legacy": "Solidity" },
-    "React": { "legacy": "react" },
-    "Next.js": { "legacy": "Next" },
-    "SvelteKit": { "legacy": "svelte" },
-    "TailwindCSS": { "legacy": "tailwind" },
-    "Laravel": { "legacy": "Laravel" },
-    "React Native (Expo)": { "legacy": "expo" },
-    "Flutter": { "legacy": "flutter" },
-    "Supabase": { "legacy": "supabase" },
-    "Firebase": { "legacy": "firebase" },
-    "Docker": { "legacy": "docker" },
-    "Figma": { "legacy": "figma" },
-    "TypeScript": { "file": "skills/typescript.svg" },
-    "Dart": { "file": "skills/dart.svg" },
-    "Express.js": { "file": "skills/express.svg" },
-    "FastAPI": { "file": "skills/fastapi.svg" },
-    "Flask": { "file": "skills/flask.svg" },
-    "PostgreSQL": { "file": "skills/postgresql.svg" },
-    "Git": { "file": "skills/git.svg" },
-    "PM2": { "file": "skills/pm2.svg" },
-    "Linux": { "file": "skills/linux.svg" }
+    "JavaScript": {
+      "legacy": "js"
+    },
+    "Python": {
+      "legacy": "py"
+    },
+    "PHP": {
+      "legacy": "php"
+    },
+    "Solidity": {
+      "legacy": "Solidity"
+    },
+    "React": {
+      "legacy": "react"
+    },
+    "Next.js": {
+      "legacy": "Next"
+    },
+    "SvelteKit": {
+      "legacy": "svelte"
+    },
+    "TailwindCSS": {
+      "legacy": "tailwind"
+    },
+    "Laravel": {
+      "legacy": "Laravel"
+    },
+    "React Native (Expo)": {
+      "legacy": "expo"
+    },
+    "Flutter": {
+      "legacy": "flutter"
+    },
+    "Supabase": {
+      "legacy": "supabase"
+    },
+    "Firebase": {
+      "legacy": "firebase"
+    },
+    "Docker": {
+      "legacy": "docker"
+    },
+    "Figma": {
+      "legacy": "figma"
+    },
+    "TypeScript": {
+      "file": "skills/typescript.svg",
+      "color": "#3178C6"
+    },
+    "Dart": {
+      "file": "skills/dart.svg",
+      "color": "#0175C2"
+    },
+    "Express.js": {
+      "file": "skills/express.svg"
+    },
+    "FastAPI": {
+      "file": "skills/fastapi.svg",
+      "color": "#009688"
+    },
+    "Flask": {
+      "file": "skills/flask.svg"
+    },
+    "PostgreSQL": {
+      "file": "skills/postgresql.svg",
+      "color": "#4169E1"
+    },
+    "Git": {
+      "file": "skills/git.svg",
+      "color": "#F05032"
+    },
+    "PM2": {
+      "file": "skills/pm2.svg"
+    },
+    "Linux": {
+      "file": "skills/linux.svg",
+      "color": "#FCC624"
+    }
   }
 }
