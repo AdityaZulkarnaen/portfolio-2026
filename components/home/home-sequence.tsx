@@ -17,8 +17,7 @@ import { useMotionAllowed } from "@/lib/motion/motion-prefs";
  *   C  the frame shrinks into the lead card's live rect while the featured section
  *      (pulled up under the pin by −C) scrolls in; the reel parks on slide 0, which is
  *      the lead project, then the frame fades over the identical card underneath.
- * Cards 1–4 start scattered around the frame and settle as they reach their place;
- * the rest scatter locally as they enter.
+ * The grid cards hold still and only develop (the GL wave) as they scroll in.
  *
  * One scroll function writes every inline style and the stage's window rect from the same
  * numbers (no per-frame layout reads: rects are measured on ScrollTrigger refresh). Without
@@ -55,12 +54,6 @@ function holdRect(vw: number, vh: number): Rect {
   }
   const w = Math.min(vw * 0.82, space * 2.4);
   return { x: (vw - w) / 2, y: HOLD_TOP, w, h: space };
-}
-
-/** Deterministic 0..1 noise per (card, channel). */
-function seeded(i: number, k: number) {
-  const s = Math.sin(i * 127.1 + k * 311.7) * 43758.5453;
-  return s - Math.floor(s);
 }
 
 export function HomeSequence({ children }: { children: ReactNode }) {
@@ -235,45 +228,9 @@ export function HomeSequence({ children }: { children: ReactNode }) {
       measure();
       render(pin);
 
-      // Scatter → settle. Cards 1..near start tossed around the edges and corners of the
-      // viewport during C (behind the lead, captions hidden); later cards scatter locally
-      // as they enter. Every card is at identity by the time its top is ~65% down.
-      const maxRot = touch ? 4 : 8;
-      // Where the tossed (still undeveloped) prints sit at the landing moment, as fractions
-      // of the viewport: desktop, mostly off the side edges beside the lead image, so they
-      // peek in and stay clear of the lead caption; phones, just below the fold.
-      const SPOTS = touch
-        ? [
-            [0.12, 1.1],
-            [0.88, 1.16],
-          ]
-        : [
-            [-0.08, 0.6],
-            [1.08, 0.52],
-            [-0.06, 0.88],
-            [1.06, 0.82],
-          ];
-      const appliers: (() => void)[] = [];
-      const devTriggers: ScrollTrigger[] = [];
-      const tweens = poses.map((el, j) => {
-        const i = j + 1;
-        const r = (k: number) => seeded(i, k);
-        const rotation = (r(3) * 2 - 1) * maxRot;
-        const scale = touch ? 0.62 + r(4) * 0.18 : 0.55 + r(4) * 0.2;
-        const pulled = i <= near;
-        const spot = SPOTS[(i - 1) % SPOTS.length];
-        // Desktop prints peek in from the side edges by at most 6vw, whatever their size,
-        // so they never reach the 85vw column (and the lead caption in it).
-        const spotX = () => {
-          if (touch) return vw * (spot[0] + (r(1) - 0.5) * 0.06);
-          const half = (el.offsetWidth * scale) / 2;
-          const peek = vw * (0.035 + r(1) * 0.025);
-          return spot[0] < 0.5 ? peek - half : vw - peek + half;
-        };
-        const spotY = () => vh * (spot[1] + (r(2) - 0.5) * 0.08);
-        // Pulled prints ride up with the section through C and are on their spot when the
-        // pin ends; they settle from there.
-        const landAt = () => pin.end;
+      // The grid holds still: every card sits in its place from the start and only develops
+      // (dark ink → picture, the GL wave) as it scrolls in, and goes dark again going back.
+      const devTriggers = poses.map((el) => {
         const caption = el.querySelector<HTMLElement>("[data-pose-caption]");
         const frame = el.querySelector<HTMLElement>("[data-frame]");
         // Develop (0 = dark ink, 1 = picture): the GL wave reads it from the frame
@@ -283,91 +240,20 @@ export function HomeSequence({ children }: { children: ReactNode }) {
           if (caption) caption.style.opacity = String(range(d, 0.7, 1));
         };
         develop(0);
-
-        el.removeAttribute("data-settled");
-        if (frame) frame.style.boxShadow = "none";
-        // Earlier prints above later ones, all below the lead (z-10): a print still on its
-        // way never lands on a caption that has already settled above it.
-        el.style.zIndex = String(Math.max(1, 9 - i));
-        // Settled state (and, for tossed prints, the develop) from the settle animation's
-        // progress, so settling and developing are one gesture that ends together. Also
-        // run after every refresh: a refresh can re-seat a scrubbed tween without onUpdate.
-        const apply = (t: number) => {
-          if (pulled) develop(range(t, 0.35, 1));
-          const settled = t > 0.999;
-          if (settled !== (el.dataset.settled !== undefined)) {
-            if (settled) el.dataset.settled = "";
-            else el.removeAttribute("data-settled");
-            // Frame chrome (edge line, phone shell) is DOM and would sit above every GL
-            // plane; while prints overlap in flight, only their pictures show.
-            if (frame) frame.style.boxShadow = settled ? "" : "none";
-          }
-        };
-        // Grid cards develop with the scroll as they come up (and go dark again going back).
-        const devTrigger = pulled
-          ? null
-          : ScrollTrigger.create({
-              trigger: el.parentElement ?? el,
-              start: "top 85%",
-              end: "top 40%",
-              onUpdate: (self) => develop(self.progress),
-              onRefresh: (self) => develop(self.progress),
-            });
-        if (devTrigger) devTriggers.push(devTrigger);
-        const tween = gsap.fromTo(
-          el,
-          {
-            x: () => {
-              if (!pulled) return (r(1) * 2 - 1) * vw * (touch ? 0.06 : 0.14);
-              const b = el.getBoundingClientRect();
-              return spotX() - (b.left + b.width / 2 - (Number(gsap.getProperty(el, "x")) || 0));
-            },
-            y: () => {
-              if (!pulled) return vh * (touch ? 0.06 : 0.12) * (0.5 + r(2));
-              const b = el.getBoundingClientRect();
-              const naturalDocY = b.top + window.scrollY - (Number(gsap.getProperty(el, "y")) || 0) + b.height / 2;
-              return spotY() - (naturalDocY - landAt());
-            },
-            rotation,
-            scale,
-          },
-          {
-            x: 0,
-            y: 0,
-            rotation: 0,
-            scale: 1,
-            ease: "none",
-            immediateRender: true,
-            // The scrubbed animation's own progress (it lags the scroll): a card counts as
-            // settled, and gets its GL plane, only once it really sits at identity.
-            onUpdate() {
-              apply(this.progress());
-            },
-            scrollTrigger: {
-              // The untransformed link around the pose: the pose itself is translated
-              // and would skew the measured start/end.
-              trigger: el.parentElement ?? el,
-              start: pulled ? () => landAt() : "top bottom",
-              end: "top 75%",
-              scrub: touch ? 0.3 : 0.5,
-              invalidateOnRefresh: true,
-            },
-          },
-        );
-        appliers.push(() => apply(tween.progress()));
-        return tween;
+        el.dataset.settled = "";
+        return ScrollTrigger.create({
+          trigger: el.parentElement ?? el,
+          start: "top 88%",
+          end: "top 35%",
+          onUpdate: (self) => develop(self.progress),
+          onRefresh: (self) => develop(self.progress),
+        });
       });
-      const syncAll = () => {
-        for (const fn of appliers) fn();
-      };
-      ScrollTrigger.addEventListener("refresh", syncAll);
 
       setSequenceState({ active: true });
 
       return () => {
         ScrollTrigger.removeEventListener("refreshInit", setOverlap);
-        ScrollTrigger.removeEventListener("refresh", syncAll);
-        for (const t of tweens) t.scrollTrigger?.kill();
         for (const t of devTriggers) t.kill();
         pin.kill(true);
         work.style.marginTop = "";
