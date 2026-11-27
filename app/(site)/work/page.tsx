@@ -6,10 +6,16 @@ import { PageTransition } from "@/components/site/page-transition";
 import { WorkIndex, type WorkRow } from "@/components/work/work-index";
 import { accentOrDefault } from "@/lib/content/format";
 import { getAllProjects } from "@/lib/content/queries";
+import { SITE_NAME } from "@/lib/site";
+
+const DESCRIPTION = "Every project by Aditya Zulkarnaen: web platforms, mobile apps, Web3 and games, 2024–2026.";
 
 export const metadata: Metadata = {
   title: "Work",
-  description: "Every project by Aditya Zulkarnaen: web platforms, mobile apps, Web3 and games, 2024–2026.",
+  description: DESCRIPTION,
+  alternates: { canonical: "/work" },
+  openGraph: { type: "website", url: "/work", siteName: SITE_NAME, title: `Work — ${SITE_NAME}`, description: DESCRIPTION, locale: "en_US" },
+  twitter: { card: "summary_large_image", title: `Work — ${SITE_NAME}`, description: DESCRIPTION },
 };
 
 export default async function WorkPage() {

@@ -23,6 +23,7 @@ import {
   getTestimonials,
 } from "@/lib/content/queries";
 import { DEFAULT_METRICS } from "@/lib/content/mappers";
+import { abs, jsonLd, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export default async function HomePage() {
   const [profile, featured, all, reel, skills, experiences, achievements, clients, testimonials, sectionMedia] = await Promise.all([
@@ -38,8 +39,35 @@ export default async function HomePage() {
     getSectionMedia(),
   ]);
 
+  const ld = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      inLanguage: "en",
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: profile?.fullName ?? "Aditya Lucky Zulkarnaen",
+      alternateName: "Aditya Zulkarnaen",
+      url: SITE_URL,
+      image: profile?.portrait[0]?.src ?? abs("/apple-icon.png"),
+      jobTitle: profile?.roles[0] ?? "Full-stack developer",
+      description: profile?.headline ?? SITE_DESCRIPTION,
+      email: profile?.email ? `mailto:${profile.email}` : undefined,
+      address: { "@type": "PostalAddress", addressLocality: "Yogyakarta", addressCountry: "ID" },
+      alumniOf: { "@type": "CollegeOrUniversity", name: "Universitas Gadjah Mada", url: "https://ugm.ac.id" },
+      knowsAbout: skills.slice(0, 24).map((s) => s.name),
+      sameAs: (profile?.socials ?? []).map((s) => s.href).filter((h) => h.startsWith("http")),
+    },
+  ];
+
   return (
     <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(ld) }} />
       <RouteSignal />
       <HomeSequence>
         <Hero profile={profile} featured={featured} reel={reel} order={all.map((p) => p.slug)} />

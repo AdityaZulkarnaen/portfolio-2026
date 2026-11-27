@@ -13,6 +13,7 @@ import { PageTransition } from "@/components/site/page-transition";
 import { TransitionLink } from "@/components/site/transition-link";
 import { accentOrDefault, framesFor, hostOf, reelNumber } from "@/lib/content/format";
 import { getAllProjects, getProject, getProjectSlugs } from "@/lib/content/queries";
+import { abs, jsonLd, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const EMPTY_SLUG = "__none__";
 
@@ -26,10 +27,15 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
   const { slug } = await params;
   const project = slug === EMPTY_SLUG ? null : await getProject(slug);
   if (!project) return {};
+  const title = project.seoTitle ?? project.name;
+  const description = project.seoDescription ?? project.summary;
+  const url = `/work/${project.slug}`;
   return {
-    title: project.seoTitle ?? project.name,
-    description: project.seoDescription ?? project.summary,
-    openGraph: project.cover ? { images: [{ url: project.cover.src }] } : undefined,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "article", url, siteName: SITE_NAME, title: `${title} — ${SITE_NAME}`, description, locale: "en_US" },
+    twitter: { card: "summary_large_image", title: `${title} — ${SITE_NAME}`, description },
   };
 }
 
@@ -47,8 +53,35 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
   const frames = framesFor(project.frames, "case").filter((f) => f.media.id !== project.cover?.id);
   const isPhone = project.device === "mobile";
 
+  const ld = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      name: project.name,
+      headline: project.seoTitle ?? project.name,
+      description: project.seoDescription ?? project.summary,
+      url: abs(`/work/${project.slug}`),
+      image: project.cover?.src,
+      dateCreated: /^\d{4}/.test(project.year) ? project.year.slice(0, 4) : undefined,
+      genre: project.kind,
+      keywords: project.stack.join(", "),
+      creator: { "@type": "Person", name: "Aditya Lucky Zulkarnaen", url: SITE_URL },
+      ...(project.liveUrl ? { sameAs: project.liveUrl } : {}),
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Work", item: abs("/work") },
+        { "@type": "ListItem", position: 3, name: project.name, item: abs(`/work/${project.slug}`) },
+      ],
+    },
+  ];
+
   return (
     <PageTransition>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(ld) }} />
       <RouteSignal />
       <StageTint accent={accent} scope="page" />
       <article className="px-gutter pt-[calc(var(--spacing-header)+3rem)]" style={{ "--accent": accent } as CSSProperties} aria-labelledby="case-title">
