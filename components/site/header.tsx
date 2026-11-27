@@ -12,6 +12,7 @@ import { TransitionLink } from "./transition-link";
 
 /** Home sections in page order. `Work` is the featured grid on home and its own route elsewhere. */
 const SECTIONS = [
+  { id: "intro", label: "Intro" },
   { id: "work", label: "Work" },
   { id: "clients", label: "Clients" },
   { id: "about", label: "About" },
@@ -22,22 +23,24 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"] | "contact";
 
-const hrefOf = (id: SectionId, home: boolean) => (id === "work" && !home ? "/work" : `/#${id}`);
+/** "intro" is the hero: the top of home, no element id (it is what is read before #work). */
+
+const hrefOf = (id: SectionId, home: boolean) => (id === "intro" ? "/" : id === "work" && !home ? "/work" : `/#${id}`);
 
 /**
  * Which home section is under the reading line (40% down the viewport): the last one whose
- * top has passed it. Null above the first (the hero).
+ * top has passed it; "intro" (the hero) above the first.
  */
 function useActiveSection(enabled: boolean): SectionId | null {
   const [active, setActive] = useState<SectionId | null>(null);
   useEffect(() => {
     if (!enabled) return;
-    const ids: SectionId[] = [...SECTIONS.map((s) => s.id), "contact"];
+    const ids: SectionId[] = [...SECTIONS.map((s) => s.id).filter((id) => id !== "intro"), "contact"];
     let raf = 0;
     const read = () => {
       raf = 0;
       const line = window.innerHeight * 0.4;
-      let at: SectionId | null = null;
+      let at: SectionId | null = "intro";
       for (const id of ids) {
         const el = document.getElementById(id);
         if (el && el.getBoundingClientRect().top <= line) at = id;
@@ -93,7 +96,7 @@ type Props = { shortName: string; timezone: string; location: string };
  *
  * The island is a scroll-spy: a soft lilac marker slides under the section being read. While
  * scrolling down it folds to just that section ("04 Experience"); scrolling up, hovering or
- * focusing it opens the full index again. Small screens: a Menu button and a full-screen index.
+ * focusing it opens the full index again. Below xl: a Menu button and a full-screen index.
  */
 export function Header({ shortName, timezone, location }: Props) {
   const pathname = usePathname();
@@ -161,6 +164,11 @@ export function Header({ shortName, timezone, location }: Props) {
     if (dialogRef.current?.open) dialogRef.current.close();
     if (!home) return;
     e.preventDefault();
+    if (id === "intro") {
+      history.replaceState(null, "", "/");
+      scrollToTarget("#main");
+      return;
+    }
     history.replaceState(null, "", `#${id}`);
     scrollToTarget(`#${id}`);
   };
@@ -185,7 +193,7 @@ export function Header({ shortName, timezone, location }: Props) {
       {/* The island. */}
       <nav
         aria-label="Sections"
-        className="glass absolute top-3.5 left-1/2 hidden h-11 -translate-x-1/2 overflow-hidden rounded-full transition-[width] duration-500 ease-fluid lg:block"
+        className="glass absolute top-3.5 left-1/2 hidden h-11 -translate-x-1/2 overflow-hidden rounded-full transition-[width] duration-500 ease-fluid xl:block"
         style={widths ? { width: collapsed ? widths.compact : widths.full } : undefined}
         onPointerEnter={() => setHover(true)}
         onPointerLeave={() => setHover(false)}
@@ -262,7 +270,7 @@ export function Header({ shortName, timezone, location }: Props) {
         </TransitionLink>
         <button
           type="button"
-          className="slate h-11 text-bone-100 lg:hidden"
+          className="slate h-11 text-bone-100 xl:hidden"
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={openMenu}

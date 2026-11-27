@@ -167,12 +167,21 @@ export default async function CasePage({ params }: PageProps<"/work/[slug]">) {
             data-cursor-label="Next"
             style={{ "--accent": accentOrDefault(next.accent) } as CSSProperties}
           >
-            <span className="slate opacity-70">Next reel · {reelNumber((index + 1) % all.length)}</span>
+            <span className="slate opacity-70">Next project · {reelNumber((index + 1) % all.length)}</span>
             <span className="display max-w-[12ch] text-[clamp(3rem,11vw,13rem)] tracking-[-0.045em] wrap-anywhere">{next.name}</span>
             {next.cover ? (
               <ViewTransition name={`cover-${next.slug}`} share="morph" default="none">
-                <span className="relative block aspect-[16/10] w-[clamp(180px,24vw,380px)] overflow-hidden rounded-[10px] shadow-[0_30px_60px_-30px_rgb(0_0_0/0.8)] md:absolute md:top-1/2 md:right-gutter md:-translate-y-1/2 md:rotate-3 md:transition-transform md:duration-900 md:ease-out-expo md:group-hover/next:-rotate-2 md:group-hover/next:scale-105" aria-hidden="true">
-                  <Image src={next.cover.src} alt="" fill sizes="(min-width: 768px) 24vw, 60vw" quality={60} className="object-cover object-top" />
+                <span
+                  className={`relative block shadow-[0_30px_60px_-30px_rgb(0_0_0/0.8)] md:absolute md:top-1/2 md:right-gutter md:-translate-y-1/2 md:rotate-3 md:transition-transform md:duration-900 md:ease-out-expo md:group-hover/next:-rotate-2 md:group-hover/next:scale-105 ${
+                    next.device === "mobile"
+                      ? "aspect-[9/19.5] w-[clamp(120px,13vw,200px)] rounded-[clamp(18px,2vw,30px)] bg-[#101217] p-[clamp(4px,0.45vw,7px)]"
+                      : "aspect-[16/10] w-[clamp(180px,24vw,380px)] overflow-hidden rounded-[10px]"
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className={`relative block size-full overflow-hidden ${next.device === "mobile" ? "rounded-[clamp(14px,1.6vw,24px)]" : ""}`}>
+                    <Image src={next.cover.src} alt="" fill sizes="(min-width: 768px) 24vw, 60vw" quality={60} className="object-cover object-top" />
+                  </span>
                 </span>
               </ViewTransition>
             ) : null}
