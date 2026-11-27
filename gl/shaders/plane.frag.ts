@@ -6,7 +6,7 @@ import { noiseChunk, waveChunk } from "./common";
  * the frame's clip-path inset. Hover RGB split.
  *
  * Reveal (scroll- or page-driven, reverses when scrolling back): the shared wave washes
- * down the picture like a print developing. Ahead of it the plane is dark ink;
+ * down the picture like a print developing. Ahead of it the plane is see-through;
  * at its front the image refracts, darkens and splits RGB on the crest, a ripple trails
  * behind, and once the front has passed the image is clean.
  */
@@ -90,13 +90,14 @@ void main() {
   col *= 1.0 - w.x * 0.6;
   col += vec3(0.85, 0.95, 1.0) * w.x * (1.0 - w.z) * 0.35;
 
-  // Ahead of the wave the card is dark ink (undeveloped), not see-through.
+  // Ahead of the wave nothing is there yet (see-through); the front itself carries a thin
+  // dark-ink fringe, so the wave still reads as a dark front washing the picture in.
   col = mix(vec3(0.047, 0.055, 0.071), col, alpha);
   float fade = 1.0;
   if (uFade.x > 0.5) {
     float t = uFade.x < 1.5 ? vLocal.x : vLocal.y;
     fade = 1.0 - clamp((t - uFade.y) / max(1e-3, uFade.z - uFade.y), 0.0, 1.0);
   }
-  outColor = vec4(col, mask * uOpacity * fade);
+  outColor = vec4(col, mask * uOpacity * fade * smoothstep(0.0, 0.35, alpha));
 }
 `;
