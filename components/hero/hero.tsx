@@ -55,12 +55,11 @@ export function Hero({ profile, featured, reel, order }: Props) {
   // The large rotating line: profile roles (admin-editable), lowercase, "Full-stack developer" → "full-stack / developer".
   const roles = (profile?.roles?.length ? profile.roles : DEFAULT_ROLES).map((r) => r.trim().toLowerCase()).filter(Boolean);
 
-  // The operator's print: the second profile photo (the first is the About portrait).
-  const shot = profile?.aboutPhotos?.[0] ?? profile?.portrait?.[1] ?? null;
-  const photo: HeroPhoto | null =
-    shot && shot.width && shot.height
-      ? { src: shot.src, width: shot.width, height: shot.height, alt: shot.alt, lqip: shot.lqip, focalX: shot.focalX, focalY: shot.focalY }
-      : null;
+  // The operator's prints: every profile photo (About shots first), each once.
+  const seen = new Set<string>();
+  const photos: HeroPhoto[] = [...(profile?.aboutPhotos ?? []), ...(profile?.portrait ?? [])]
+    .filter((m) => m.width && m.height && !seen.has(m.src) && seen.add(m.src))
+    .map((m) => ({ src: m.src, width: m.width!, height: m.height!, alt: m.alt, lqip: m.lqip, focalX: m.focalX, focalY: m.focalY }));
 
   return (
     <HeroProjector
@@ -69,7 +68,7 @@ export function Hero({ profile, featured, reel, order }: Props) {
       name={name}
       descriptor={["Software engineer", `Based in ${city}`]}
       roles={roles}
-      photo={photo}
+      photos={photos}
       devProbe={process.env.NODE_ENV === "development"}
     />
   );

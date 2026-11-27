@@ -15,10 +15,8 @@ import { scrollToTarget } from "@/lib/motion/lenis-store";
 import { useMotionAllowed } from "@/lib/motion/motion-prefs";
 import { onSiteReady } from "@/lib/motion/site-ready";
 
-import { PlaneWindow } from "@/components/showcase/plane-window";
-import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
-
 import { DevReelProbe } from "./dev-reel-probe";
+import { OperatorPrints } from "./operator-prints";
 import { HERO_PILL, PlayReelButton } from "./play-reel-button";
 
 export type HeroSlide = {
@@ -59,8 +57,8 @@ type Props = {
   descriptor: [string, string];
   /** Rotating roles, lowercase ("full-stack developer"). Set on two lines: first word / the rest. */
   roles: string[];
-  /** The operator's print on the HUD line; null = none. */
-  photo: HeroPhoto | null;
+  /** The operator's prints, shuffled left of the reel; empty = none. */
+  photos: HeroPhoto[];
   devProbe: boolean;
 };
 
@@ -141,7 +139,7 @@ function Plus({ className }: { className: string }) {
  * the window (and is the GL source), the slide follows the chapter on screen, and a
  * "Now playing: 0X / Project" chip under the window scrolls to that project's card.
  */
-export function HeroProjector({ slides, reel, name, descriptor, roles, photo, devProbe }: Props) {
+export function HeroProjector({ slides, reel, name, descriptor, roles, photos, devProbe }: Props) {
   const [cycled, setIndex] = useState(0);
   const [roleIndex, setRoleIndex] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -256,12 +254,10 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photo, de
       if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       if (document.documentElement.dataset.motion === "off") return;
       const q = gsap.utils.selector(root);
-      const line = q("[data-hud-line]");
       const rise = q("[data-rise]");
       const fade = q("[data-hud-fade]");
       const win = windowRef.current;
       const print = printRef.current;
-      gsap.set(line, { scaleX: 0 });
       // The print develops through the GL wave (and the DOM mask without GL) as the room opens.
       if (print) gsap.set(print, { "--dev": 0 });
       gsap.set(rise, { yPercent: 112 });
@@ -269,7 +265,6 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photo, de
       if (win) gsap.set(win, { "--reveal": 0 });
       return onSiteReady(() => {
         const tl = gsap.timeline({ delay: 0.1 });
-        tl.to(line, { scaleX: 1, duration: 1.5, ease: "expo" }, 0);
         if (win) tl.to(win, { "--reveal": 1, duration: 1.25, ease: "expo" }, 0.4);
         if (print) tl.to(print, { "--dev": 1, duration: 2.2, ease: "power2.inOut" }, 0.6);
         tl.to(rise, { yPercent: 0, duration: 1.3, ease: "expo", stagger: 0.07 }, 0.5);
@@ -346,45 +341,16 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photo, de
         </h1>
       </div>
 
-      {/* The operator's print, pinned on the HUD line (top right on phones). Developed through
-          the GL plane wave like the work prints, graded like the testimonial portraits. */}
-      {photo ? (
+      {/* The operator's prints: a shuffling stack, left of the reel (top right on phones). */}
+      {photos.length ? (
         <div
           data-seq-out
-          data-gl-mover
-          className="absolute top-[calc(var(--spacing-header)+1.25rem)] right-gutter z-20 w-[19vw] md:top-[calc(50%-clamp(140px,12vw,230px)*0.625)] md:right-auto md:left-gutter md:w-[clamp(140px,12vw,230px)]"
+          className="absolute top-[calc(var(--spacing-header)+1.25rem)] right-gutter z-20 w-[19vw] [--pw:clamp(110px,min(11vw,22svh),210px)] md:top-[calc(50%-var(--pw)*0.625)] md:right-auto md:left-[calc(var(--spacing-gutter)+1rem)] md:w-(--pw)"
         >
           <div data-hud-fade>
-            <div
-              ref={printRef}
-              data-frame
-              className="relative aspect-[4/5] overflow-hidden rounded-[8px] shadow-[0_0_0_1px_rgb(236_233_226/0.12)]"
-              style={{ "--dev": 1 } as React.CSSProperties}
-            >
-              <PlaneWindow className="absolute inset-0 bg-ink-900 gl-plane:bg-transparent" behavior="static" look={{ tone: "portrait" }}>
-                <Image
-                  src={photo.src}
-                  alt={photo.alt || name}
-                  fill
-                  sizes="(min-width: 768px) 12vw, 20vw"
-                  quality={75}
-                  placeholder={photo.lqip ? "blur" : "empty"}
-                  blurDataURL={photo.lqip ?? undefined}
-                  className={`object-cover filter-[grayscale(1)_sepia(0.14)_contrast(1.12)_brightness(0.54)] ${PLANE_MEDIA} ${DEV_MASK}`}
-                  style={{
-                    objectPosition:
-                      photo.focalX != null && photo.focalY != null ? `${photo.focalX * 100}% ${photo.focalY * 100}%` : "50% 25%",
-                  }}
-                />
-              </PlaneWindow>
-              {(["top-1.5 left-1.5", "top-1.5 right-1.5", "bottom-1.5 left-1.5", "right-1.5 bottom-1.5"] as const).map((pos) => (
-                <span key={pos} aria-hidden="true" className={`absolute size-[3px] rounded-full bg-bone-100/70 ${pos}`} />
-              ))}
+            <div ref={printRef} style={{ "--dev": 1 } as React.CSSProperties}>
+              <OperatorPrints photos={photos} name={name} running={motion && visible && !parked} />
             </div>
-            <p className="slate mt-2 flex justify-between gap-2 text-bone-400 max-md:hidden">
-              <span>Operator</span>
-              <span className="text-bone-100">{name.split(" ")[0]}</span>
-            </p>
           </div>
         </div>
       ) : null}
@@ -393,12 +359,6 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photo, de
       <div data-seq-row className="pointer-events-none relative z-10 order-2 my-auto pt-16 pb-16 [--win:86vw] md:absolute md:inset-x-gutter md:top-1/2 md:my-0 md:-translate-y-1/2 md:p-0 [--cx:50%] md:[--win:clamp(300px,30vw,660px)] lg:[--cx:66%]">
         <div className="relative">
           <div data-seq-out className="pointer-events-none absolute inset-0">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2">
-            <div data-hud-line className="absolute inset-0 origin-center bg-[rgb(236_233_226/0.2)]" />
-            <span data-hud-fade className="absolute top-1/2 left-0 size-[5px] -translate-1/2 rounded-full bg-bone-100" />
-            <span data-hud-fade className="absolute top-1/2 right-0 size-[5px] translate-x-1/2 -translate-y-1/2 rounded-full bg-bone-100" />
-          </div>
-
           {/* HUD labels: along the line on desktop, above the window on phones. */}
           <div
             data-hud-fade
@@ -536,8 +496,7 @@ export function HeroProjector({ slides, reel, name, descriptor, roles, photo, de
       {/* Bottom left: the role, large, turning over on its own clock; the one call to action beside it. */}
       <div data-seq-out className="order-3 flex flex-col items-start gap-6 md:absolute md:bottom-[clamp(1.25rem,3.2svh,2.75rem)] md:left-gutter md:flex-row md:items-end md:gap-[clamp(2rem,4vw,4rem)]">
         <div>
-          <p data-hud-fade className="slate flex items-center gap-2.5 text-bone-400">
-            <span aria-hidden="true" className="size-1.5 rounded-full bg-(--accent) transition-colors duration-700" />
+          <p data-hud-fade className="slate text-bone-400">
             Working as
           </p>
           <p className="sr-only">{roles.join(", ")}</p>

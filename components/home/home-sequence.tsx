@@ -87,9 +87,11 @@ export function HomeSequence({ children }: { children: ReactNode }) {
       const poses = [...work.querySelectorAll<HTMLElement>("[data-pose]")].filter((el) => el.dataset.pose !== "0");
 
       const touch = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
-      const A = touch ? 0.6 : 0.9;
-      const B = touch ? 0.25 : 0.45;
-      const C = touch ? 0.5 : 0.6;
+      // Lengths in viewport heights. The hold (B) is long on purpose: a small flick of the
+      // wheel while the reel is fullscreen should linger on it, not throw the page onward.
+      const A = touch ? 0.75 : 1.1;
+      const B = touch ? 0.7 : 1.4;
+      const C = touch ? 0.6 : 0.85;
       const T = A + B + C;
       const pA = A / T;
       const pB = (A + B) / T;
