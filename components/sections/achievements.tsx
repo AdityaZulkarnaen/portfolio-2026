@@ -33,7 +33,14 @@ const OWNER_PHOTOS: Record<string, string> = {
   "gdgoc-ugm-hackathon-2026": "gdgoc-2026",
 };
 
-type Photo = { media: Media; name: string; position: string; own: boolean };
+type Photo = { media: Media; name: string; position: string; own: boolean; lift?: number };
+
+/**
+ * Owner prints that sit too low in the portrait card (a landscape photo, so object-position
+ * can't move it): the picture is raised by this fraction of the card, cropping its top, so
+ * the faces clear the caption. The GL plane reads the image box, so the develop follows.
+ */
+const OWNER_LIFT: Record<string, number> = { "pkm-kc-2026": 0.26 };
 
 type Glyph = "pulse" | "wing";
 
@@ -197,7 +204,7 @@ const SLOT = "shrink-0 snap-start lg:motion-on:grid lg:motion-on:h-full lg:motio
 
 type TrophyProps = { item: Achievement; index: number; total: number; photo: Photo | null };
 
-/** An owner photo: the print fills the top of the card and fades into it; the text sits below, clear of the picture. */
+/** An owner photo: a portrait print, full bleed, the text on a gradient at its foot. */
 function PortraitTrophy({ item, index, total, photo }: TrophyProps & { photo: Photo }) {
   const rhythm = RHYTHM[index % RHYTHM.length];
   return (
@@ -206,11 +213,10 @@ function PortraitTrophy({ item, index, total, photo }: TrophyProps & { photo: Ph
         <article
           data-pose
           data-trophy
-          className="relative flex h-full flex-col overflow-hidden rounded-[14px] bg-ink-900/60 lg:motion-on:will-change-transform"
+          className="relative flex h-full flex-col justify-between overflow-hidden rounded-[14px] p-[clamp(1rem,1.4vw,1.4rem)] lg:motion-on:will-change-transform"
         >
-          {/* The print takes whatever height the caption leaves, so it is never under the text. */}
-          <div data-frame data-trophy-frame className="relative min-h-[42%] flex-1 rounded-t-[14px] bg-ink-900 gl-plane:bg-transparent">
-            <PlaneWindow className="absolute inset-0 overflow-hidden rounded-t-[14px] bg-ink-900 gl-plane:bg-transparent" behavior="static">
+          <div data-frame data-trophy-frame className="absolute inset-0 rounded-[14px] bg-ink-900 gl-plane:bg-transparent">
+            <PlaneWindow className="absolute inset-0 overflow-hidden rounded-[14px] bg-ink-900 gl-plane:bg-transparent" behavior="static">
               <Image
                 src={photo.media.src}
                 alt={photo.media.alt || photo.name}
@@ -220,16 +226,19 @@ function PortraitTrophy({ item, index, total, photo }: TrophyProps & { photo: Ph
                 placeholder={photo.media.lqip ? "blur" : "empty"}
                 blurDataURL={photo.media.lqip ?? undefined}
                 className={`object-cover ${PLANE_MEDIA} ${DEV_MASK}`}
-                style={{ objectPosition: photo.position }}
+                style={{
+                  objectPosition: photo.position,
+                  ...(photo.lift ? { top: `${-photo.lift * 100}%`, bottom: "auto" } : null),
+                }}
               />
             </PlaneWindow>
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[34%] bg-linear-to-b from-ink-950/70 to-transparent" />
-            <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[22%] bg-linear-to-b from-transparent to-[rgb(12_14_18/0.55)]" />
-            <div className="absolute inset-x-0 top-0 p-[clamp(1rem,1.4vw,1.4rem)]">
-              <Slate item={item} index={index} total={total} />
-            </div>
           </div>
-          <div className="relative grid gap-3 p-[clamp(1rem,1.4vw,1.4rem)] pt-4">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[38%] bg-linear-to-b from-ink-950/80 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-[64%] bg-linear-to-t from-ink-950 via-ink-950/80 to-transparent" />
+          <div className="relative">
+            <Slate item={item} index={index} total={total} />
+          </div>
+          <div className="relative grid gap-3">
             <Caption item={item} clamp />
           </div>
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_0_1px_var(--color-line)]" />
@@ -284,7 +293,7 @@ export function Achievements({
   const bySlug = new Map(projects.map((p) => [p.slug, p]));
   const photoOf = (a: Achievement): Photo | null => {
     const own = media[OWNER_PHOTOS[a.slug] ?? ""];
-    if (own) return { media: own, name: splitTitle(a.title)[1], position: "50% 30%", own: true };
+    if (own) return { media: own, name: splitTitle(a.title)[1], position: "50% 30%", own: true, lift: OWNER_LIFT[a.slug] };
     const p = bySlug.get(PHOTOS[a.slug] ?? "");
     return p?.cover ? { media: p.cover, name: p.name, position: "50% 0%", own: false } : null;
   };
