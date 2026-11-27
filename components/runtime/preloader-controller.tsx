@@ -6,8 +6,9 @@ import { markSiteReady } from "@/lib/motion/site-ready";
 
 const HARD_CAP_MS = 3500;
 const MIN_MS = 1100;
-/** How long the wave takes to wash the ink off. */
+/** How long the wave takes to wash the ink off (first visit / later page loads). */
 const WASH_MS = 1500;
+const QUICK_WASH_MS = 1000;
 /** Points across the wave front. */
 const STEPS = 32;
 
@@ -63,18 +64,12 @@ export function PreloaderController() {
       return;
     }
 
-    if (mode === "quick") {
-      overlay.dataset.state = "quick";
-      markSiteReady();
-      const t = window.setTimeout(finish, 420);
-      return () => window.clearTimeout(t);
-    }
-
     // JS is running: the CSS failsafe would cut the wash short, so this controller owns the exit.
     overlay.style.animation = "none";
+    const quick = mode === "quick";
     const ink = overlay.querySelector<HTMLElement>("[data-preloader-ink]");
-    const count = overlay.querySelector<HTMLElement>("[data-preloader-count]");
-    const wave = overlay.querySelector<SVGRectElement>("[data-preloader-wave]");
+    const mark = overlay.querySelector<SVGPathElement>("[data-preloader-mark]");
+    const dot = overlay.querySelector<SVGCircleElement>("[data-preloader-dot]");
     const edgeSvg = overlay.querySelector<SVGSVGElement>("[data-preloader-edge]");
     const edge = edgeSvg?.querySelector("path");
 
@@ -93,7 +88,11 @@ export function PreloaderController() {
     const amp = 0.06;
     const wash = (now: number) => {
       if (cancelled) return;
-      const k = Math.min(1, (now - washFrom) / WASH_MS);
+      if (now < washFrom) {
+        raf = requestAnimationFrame(wash);
+        return;
+      }
+      const k = Math.min(1, (now - washFrom) / (quick ? QUICK_WASH_MS : WASH_MS));
       const front = easeInOut(k) * (1 + 2 * amp) - amp;
       const t = now / 1000;
       const ys: number[] = [];
@@ -126,19 +125,31 @@ export function PreloaderController() {
       shown += (target - shown) * 0.09;
       if (target === 1 && 1 - shown < 0.004) shown = 1;
 
-      if (count) count.textContent = String(Math.round(shown * 100)).padStart(3, "0");
-      if (wave) wave.setAttribute("width", Math.max(0, shown * 1000).toFixed(1));
+      if (mark) mark.style.strokeDashoffset = String(Math.max(0, 1 - shown));
 
       if (shown >= 1) {
+        // The point lands, a beat, then the wash.
+        dot?.setAttribute("data-ready", "");
         overlay.dataset.state = "leaving";
         markSiteReady();
-        washFrom = performance.now();
+        washFrom = performance.now() + 420;
         raf = requestAnimationFrame(wash);
         return;
       }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+
+    if (quick) {
+      // Seen this session: the mark is already drawn; just the (shorter) wash.
+      if (mark) mark.style.strokeDashoffset = "0";
+      dot?.setAttribute("data-ready", "");
+      overlay.dataset.state = "leaving";
+      markSiteReady();
+      washFrom = performance.now() + 120;
+      raf = requestAnimationFrame(wash);
+    } else {
+      raf = requestAnimationFrame(tick);
+    }
 
     return () => {
       cancelled = true;

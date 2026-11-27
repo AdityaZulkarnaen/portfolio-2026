@@ -121,7 +121,9 @@ export function HomeSequence({ children }: { children: ReactNode }) {
       };
 
       let lastRoomGl: boolean | null = null;
-      const near = touch ? 2 : 4;
+      // No prints are tossed in from the edges any more (they landed over settled cards):
+      // every card scatters locally and develops as it scrolls in, like the rest of the grid.
+      const near = 0;
       const pulledEls = poses.slice(0, near);
 
       const render = (self: ScrollTrigger) => {
