@@ -364,6 +364,14 @@
       "summary": "Ground control station software for the university's UAV team."
     },
     {
+      "slug": "komatik-ugm",
+      "kind": "organization",
+      "title": "KOMATIK UGM",
+      "org": "Software Research & Development Member",
+      "period": "2024–2025",
+      "summary": ""
+    },
+    {
       "slug": "gdgoc-ugm-hacker-division",
       "kind": "organization",
       "title": "GDGoC UGM",
@@ -674,6 +682,6 @@
       "PyTorch",
       "TensorFlow"
     ],
-    "achievements": ["universitas-gadjah-mada"]
+    "achievements": []
   }
 }

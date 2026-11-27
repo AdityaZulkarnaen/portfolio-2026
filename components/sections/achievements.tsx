@@ -343,11 +343,11 @@ export function Achievements({
               return (
                 <li
                   key={a.id}
-                  className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-5 gap-y-1 border-t border-line py-5 md:grid-cols-[3.5rem_minmax(0,1.4fr)_minmax(0,1fr)_8rem] md:gap-x-8"
+                  className="grid grid-cols-[3.75rem_minmax(0,1fr)] items-center gap-x-5 gap-y-1 border-t border-line py-5 md:grid-cols-[5rem_minmax(0,1.4fr)_minmax(0,1fr)_8rem] md:gap-x-8"
                 >
-                  <span className="relative row-span-2 grid size-12 place-items-center overflow-hidden rounded-[12px] bg-ink-900 shadow-[inset_0_0_0_1px_var(--color-line)] md:row-span-1 md:size-14">
+                  <span className="relative row-span-2 grid size-[3.75rem] place-items-center md:row-span-1 md:size-20">
                     {logo ? (
-                      <Image src={logo} alt="" fill sizes="56px" className="object-contain p-2" />
+                      <Image src={logo} alt="" fill sizes="80px" className="object-contain" />
                     ) : (
                       <span aria-hidden="true" className="slate text-bone-400">
                         {initials(a.title)}
