@@ -168,20 +168,20 @@ export function Header({ shortName, timezone, location }: Props) {
 
   return (
     <header
-      className="pointer-events-none fixed inset-x-0 top-0 z-60 flex items-center justify-between gap-4 px-gutter py-3.5 *:pointer-events-auto"
+      className="pointer-events-none fixed inset-x-0 top-0 z-60 flex items-center justify-between gap-4 px-gutter py-3.5 *:pointer-events-auto before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:-z-10 before:h-28 before:bg-linear-to-b before:from-ink-950/75 before:via-ink-950/30 before:to-transparent"
       style={{ viewTransitionName: "site-header" }}
     >
       <TransitionLink
         href="/"
         transition="nav-back"
-        className="glass inline-flex h-11 items-center gap-3 rounded-full pr-[1.1rem] pl-3.5 transition-colors duration-(--dur-fast) hover:bg-ink-800/80"
+        className="group/home inline-flex h-11 items-center gap-3 text-bone-100"
         aria-label={`${shortName}, home`}
       >
         <span
           aria-hidden="true"
           className="size-3.5 animate-spin-slow rounded-full bg-[conic-gradient(var(--color-lilac-500)_0_25%,transparent_0_50%,var(--color-lilac-500)_0_75%,transparent_0)] shadow-[inset_0_0_0_1.5px_var(--color-lilac-500)] motion-off:animate-none"
         />
-        <span className="slate">{shortName}</span>
+        <span className="slate transition-colors duration-(--dur-fast) group-hover/home:text-lilac-300">{shortName}</span>
       </TransitionLink>
 
       {/* The island. */}
@@ -238,25 +238,34 @@ export function Header({ shortName, timezone, location }: Props) {
         </div>
       </nav>
 
-      <div className="flex items-center gap-2">
-        <span className="glass slate hidden h-11 items-center gap-2 rounded-full px-4 text-bone-400 tabular-nums xl:inline-flex" aria-hidden="true">
+      <div className="flex items-center gap-6">
+        <span className="slate hidden items-center gap-2 text-bone-400 tabular-nums xl:inline-flex" aria-hidden="true">
           YK <LocalTime timeZone={timezone} />
         </span>
         <TransitionLink
           href="/#contact"
           transition="nav-back"
-          className="slate hidden h-11 items-center gap-2 rounded-full bg-lilac-500 px-5 text-ink-950 transition-[background-color,translate] duration-(--dur-fast) ease-fluid hover:-translate-y-px hover:bg-lilac-300 aria-[current=true]:bg-lilac-300 lg:inline-flex"
+          className="group/cta slate relative hidden h-11 items-center gap-2 text-bone-100 transition-colors duration-(--dur-fast) hover:text-lilac-300 aria-[current=true]:text-lilac-300 lg:inline-flex"
           aria-current={current === "contact" || active === "contact" ? "true" : undefined}
           onClick={(e) => onSectionClick(e, "contact")}
         >
           Contact
-          <svg viewBox="0 0 12 12" aria-hidden="true" className="size-3">
+          <svg
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+            className="size-3 text-lilac-500 transition-transform duration-(--dur-base) ease-fluid group-hover/cta:translate-x-0.5"
+          >
             <path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
           </svg>
+          {/* A lilac hairline that draws out on hover (and stays while Contact is in view). */}
+          <span
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-2.5 h-px origin-left scale-x-25 bg-lilac-500 transition-transform duration-(--dur-base) ease-fluid group-hover/cta:scale-x-100 group-aria-[current=true]/cta:scale-x-100"
+          />
         </TransitionLink>
         <button
           type="button"
-          className="glass slate h-11 rounded-full px-5 text-bone-100 lg:hidden"
+          className="slate h-11 text-bone-100 lg:hidden"
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={openMenu}
