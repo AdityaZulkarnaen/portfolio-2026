@@ -34,6 +34,16 @@ export function monthStamp(iso: string | null): string {
   return m ? `${m}.${y}` : y;
 }
 
+/** Inclusive length of a run of months, "1 yr 4 mos". `end` is an ISO date ("2025-11-01"). */
+export function tenure(start: string, end: string): string {
+  const [sy, sm = 1] = start.split("-").map(Number);
+  const [ey, em = 1] = end.split("-").map(Number);
+  const months = Math.max(1, (ey - sy) * 12 + (em - sm) + 1);
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return [y ? `${y} yr${y > 1 ? "s" : ""}` : "", m ? `${m} mo${m > 1 ? "s" : ""}` : ""].filter(Boolean).join(" ");
+}
+
 export function timecodeRange(start: string, end: string | null): string {
   return `${monthStamp(start)} — ${monthStamp(end)}`;
 }

@@ -3,10 +3,10 @@ import Image from "next/image";
 import { PlaneWindow } from "@/components/showcase/plane-window";
 import { DEV_MASK, PLANE_MEDIA } from "@/components/showcase/work-card-media";
 import { SectionHead } from "@/components/site/section-head";
-import { hostOf, monthStamp } from "@/lib/content/format";
+import { hostOf, monthYear } from "@/lib/content/format";
 import type { Experience as ExperienceItem, Media, Project } from "@/lib/content/types";
 
-import { ReelStack } from "./reel-stack";
+import { ExperienceScenes, Tenure } from "./experience-scenes";
 
 /** "BOT Launchpad: no-code deployment…" → lead + rest, so project names scan first. */
 function splitLead(text: string): [string | null, string] {
@@ -46,14 +46,6 @@ const VISUALS: Record<string, Visual> = {
 
 type Shot = { media: Media; name: string; year: string; position?: string };
 
-function Tick({ iso, className }: { iso: string | null; className?: string }) {
-  return (
-    <span data-tick={iso ? iso.slice(0, 7) : undefined} className={className}>
-      {monthStamp(iso)}
-    </span>
-  );
-}
-
 function focus(media: Media, fallback: string) {
   return media.focalX != null && media.focalY != null ? `${media.focalX * 100}% ${media.focalY * 100}%` : fallback;
 }
@@ -92,6 +84,7 @@ function Browsers({ sites }: { sites: (Site & { media: Media })[] }) {
             target="_blank"
             rel="noreferrer"
             data-cursor="open"
+            data-xp-line
             className="slate truncate text-bone-400 transition-colors duration-(--dur-fast) hover:text-bone-100"
           >
             {site.label} ↗
@@ -128,7 +121,7 @@ function Collage({ photo, app }: { photo: Media; app: Project | undefined }) {
             />
           </PlaneWindow>
         </div>
-        <figcaption className="slate flex justify-between gap-3 text-bone-400">
+        <figcaption data-xp-line className="slate flex justify-between gap-3 text-bone-400 max-lg:justify-end">
           <span className="min-w-0 truncate">Team · KATY SMAN 1 Yogyakarta</span>
         </figcaption>
       </figure>
@@ -136,7 +129,7 @@ function Collage({ photo, app }: { photo: Media; app: Project | undefined }) {
         <div
           data-reel-frame
           data-reel-phone
-          className="relative z-10 col-[9/13] row-start-1 self-end max-lg:mr-3 max-lg:translate-y-[38%] lg:col-[8/13] lg:h-[88%] lg:self-center lg:justify-self-end"
+          className="relative z-10 col-[1/5] row-start-1 self-end max-lg:ml-3 max-lg:translate-y-[38%] lg:col-[8/13] lg:h-[88%] lg:self-center lg:justify-self-end"
         >
           <div className="h-full rounded-[clamp(16px,2.2vw,30px)] bg-[#101217] p-[clamp(4px,0.45vw,7px)] shadow-[inset_0_0_0_1px_rgb(255_255_255/0.12),0_24px_60px_-18px_rgb(0_0_0/0.8)]">
             <div className="relative aspect-[9/19.5] overflow-hidden rounded-[clamp(12px,1.8vw,24px)] lg:h-full">
@@ -184,7 +177,7 @@ function Shots({ shots }: { shots: Shot[] }) {
               />
             </PlaneWindow>
           </div>
-          <figcaption className="slate flex justify-between gap-3 text-bone-400 tabular-nums">
+          <figcaption data-xp-line className="slate flex justify-between gap-3 text-bone-400 tabular-nums">
             <span className="min-w-0 truncate">{shot.name}</span>
             <span className="shrink-0">{shot.year}</span>
           </figcaption>
@@ -312,9 +305,9 @@ function Dossier({ visual, stack }: { visual: Extract<Visual, { kind: "dossier" 
 }
 
 /**
- * Credits as a reel stack: each role a full-height film-slate card. On desktop the cards
- * hold and stack, the one underneath receding (motion in <ReelStack>); on small screens
- * and without motion they are plain cards in order. Current roles first, then most recent start.
+ * Experience as full-screen scenes: one role per screen, current roles first, then most
+ * recent start. Motion and layout live in <ExperienceScenes>; periods read as months
+ * ("Mar 2025 — Present") with the tenure beside them.
  */
 export function Experience({
   items,
@@ -332,16 +325,34 @@ export function Experience({
   const bySlug = new Map(projects.map((p) => [p.slug, p]));
   const total = String(sorted.length).padStart(2, "0");
 
+  const rail = (
+    <ol
+      aria-hidden="true"
+      className="absolute inset-x-gutter top-[calc(var(--spacing-header)+1.5rem)] z-10 hidden grid-cols-[repeat(var(--xp-n),minmax(0,1fr))] gap-3 motion-on:lg:grid"
+    >
+      {sorted.map((item, i) => (
+        <li key={item.id} data-xp-label className="grid gap-2.5 opacity-40 first:opacity-100">
+          <span className="relative h-px overflow-hidden bg-line-strong">
+            <span data-xp-bar className="absolute inset-0 origin-left scale-x-0 bg-bone-100" />
+          </span>
+          <span className="slate truncate text-bone-100 tabular-nums">
+            {String(i + 1).padStart(2, "0")} <span className="text-bone-400">· {item.org.split(" · ")[0]}</span>
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+
   return (
-    <section aria-labelledby="exp-title" className="border-t border-line pb-[clamp(4rem,8vw,8rem)]">
+    <section aria-labelledby="exp-title" className="border-t border-line">
       <SectionHead
         id="exp-title"
         variant="booth"
-        kicker="Experience"
-        title="credits"
+        kicker="Career"
+        title="experience"
         lede="Internship, freelance and team work, most recent first."
       />
-      <ReelStack className="mx-gutter grid grid-cols-1 gap-4 lg:block">
+      <ExperienceScenes count={sorted.length} rail={rail}>
         {sorted.map((item, i) => {
           const [org, place] = item.org.split(" · ");
           const visual = VISUALS[item.slug];
@@ -355,90 +366,87 @@ export function Experience({
           const sites =
             visual?.kind === "ship" ? visual.sites.flatMap((site) => (media[site.key] ? [{ ...site, media: media[site.key] }] : [])) : [];
           const highlights = item.highlights.slice(0, 4).map(splitLead);
+          const from = monthYear(item.startDate);
+          const to = monthYear(item.endDate);
           return (
-            <li key={item.id} data-reel-slot className="lg:mb-[22vh] lg:h-[min(88svh,calc(100svh-9.75rem))] lg:last:mb-0">
-              <article
-                data-pose
-                data-reel
-                aria-labelledby={`reel-${item.slug}`}
-                className="relative flex h-full flex-col overflow-hidden rounded-[14px] bg-ink-900 lg:will-change-transform"
-                style={{ zIndex: i + 1 }}
-              >
-                <header className="slate flex items-center justify-between gap-4 border-b border-line px-[clamp(1.1rem,2vw,1.75rem)] py-3 text-bone-400 tabular-nums">
-                  <span className="text-bone-100">
-                    Reel {String(i + 1).padStart(2, "0")} / {total}
-                  </span>
-                  <span className="hidden truncate sm:block">{org}</span>
-                  <span>
-                    TC {monthStamp(item.startDate)}
-                    <span className="max-sm:hidden"> — {monthStamp(item.endDate)}</span>
-                  </span>
-                </header>
-                <div className="grid min-h-0 flex-1 grid-cols-1 gap-[clamp(1.5rem,3vw,3rem)] p-[clamp(1.1rem,2vw,1.75rem)] lg:grid-cols-12">
-                  <div className="flex min-h-0 flex-col gap-6 lg:col-span-7">
-                    <p aria-label={`${monthStamp(item.startDate)} to ${monthStamp(item.endDate)}`} className="grid leading-[0.84] font-light tracking-[-0.055em] tabular-nums">
-                      <Tick iso={item.startDate} className="text-[clamp(3.25rem,min(6.4vw,14vh),7.5rem)] text-bone-100" />
-                      <span className="text-[clamp(1.75rem,min(3.2vw,7vh),3.75rem)] text-bone-400">
-                        — <Tick iso={item.endDate} className={item.endDate ? "" : "text-ember-500"} />
+            <li
+              key={item.id}
+              data-xp-panel
+              aria-labelledby={`xp-${item.slug}`}
+              className="relative border-t border-line px-gutter py-[clamp(2.5rem,8vw,4rem)] lg:h-svh lg:pt-[calc(var(--spacing-header)+5.5rem)] lg:pb-[clamp(1.5rem,4svh,3rem)] motion-on:lg:absolute motion-on:lg:inset-0 motion-on:lg:border-t-0 motion-on:lg:not-first:invisible"
+            >
+              <div className="grid h-full min-h-0 grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-x-[4vw]">
+                <div className="flex min-h-0 flex-col gap-5 lg:col-span-6">
+                  <div data-xp-line className="grid gap-3">
+                    <p className="slate text-bone-400 tabular-nums motion-on:lg:hidden">
+                      {String(i + 1).padStart(2, "0")} / {total}
+                    </p>
+                    <p aria-label={`${from} to ${to}`} className="grid leading-[0.9] font-light tracking-[-0.05em]">
+                      <span className="text-[clamp(2.75rem,min(5.4vw,11svh),6.25rem)] text-bone-100">{from}</span>
+                      <span className="text-[clamp(1.5rem,min(2.8vw,5.5svh),3.25rem)] text-bone-400">
+                        — <span className={item.endDate ? "" : "text-ember-500"}>{to}</span>
                       </span>
                     </p>
-                    <div className="mt-auto grid gap-4">
-                      <header className="grid gap-2">
-                        <h3
-                          id={`reel-${item.slug}`}
-                          className="text-[clamp(1.75rem,min(3vw,6.5vh),3.25rem)] leading-[0.98] font-light tracking-[-0.04em] text-balance text-bone-100 lowercase"
-                        >
-                          {item.role}
-                        </h3>
-                        <p className="slate text-bone-400">
-                          @ <span className="text-bone-100">{org}</span>
-                          {place ? ` · ${place}` : null}
-                        </p>
-                      </header>
-                      {item.summary ? <p className="max-w-[62ch] leading-snug text-pretty text-bone-100">{item.summary}</p> : null}
-                      {highlights.length > 0 ? (
-                        <ul className="grid gap-x-6 gap-y-2.5 text-[0.875rem] leading-snug text-bone-400 sm:grid-cols-2">
-                          {highlights.map(([lead, rest]) => (
-                            <li key={rest} className="grid grid-cols-[0.875rem_1fr] gap-x-1.5">
-                              <span aria-hidden="true" className="mt-[0.65em] h-px w-2 bg-(--tint,var(--color-line-strong))" />
-                              <span className="lg:line-clamp-3">
-                                {lead ? <span className="text-bone-100">{lead} · </span> : null}
-                                {rest}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      {item.stack.length > 0 ? (
-                        <ul className="slate flex flex-wrap gap-x-4 gap-y-1 text-bone-400" aria-label="Stack">
-                          {item.stack.map((s) => (
-                            <li key={s}>{s}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
+                    <p className="slate text-bone-400"><Tenure start={item.startDate} end={item.endDate} /></p>
                   </div>
-                  <div className="min-h-0 max-lg:order-first lg:col-span-5">
-                    {visual?.kind === "collage" && media[visual.photo] ? (
-                      <Collage photo={media[visual.photo]} app={bySlug.get(visual.app)} />
-                    ) : shots.length > 0 ? (
-                      <Shots shots={shots} />
-                    ) : sites.length > 0 ? (
-                      <Browsers sites={sites} />
-                    ) : visual?.kind === "ship" ? (
-                      <ShipLog visual={visual} nodes={highlights.map(([lead, rest]) => lead ?? rest.split(" ").slice(0, 2).join(" "))} />
-                    ) : visual?.kind === "dossier" ? (
-                      <Dossier visual={visual} stack={item.stack} />
+                  <div className="mt-auto grid gap-4">
+                    <header data-xp-line className="grid gap-2">
+                      <h3
+                        id={`xp-${item.slug}`}
+                        className="text-[clamp(1.75rem,min(2.8vw,6svh),3.25rem)] leading-[0.98] font-light tracking-[-0.04em] text-balance text-bone-100 lowercase"
+                      >
+                        {item.role}
+                      </h3>
+                      <p className="slate text-bone-400">
+                        @ <span className="text-bone-100">{org}</span>
+                        {place ? ` · ${place}` : null}
+                      </p>
+                    </header>
+                    {item.summary ? (
+                      <p data-xp-line className="max-w-[62ch] leading-snug text-pretty text-bone-100">
+                        {item.summary}
+                      </p>
+                    ) : null}
+                    {highlights.length > 0 ? (
+                      <ul data-xp-line className="grid gap-x-6 gap-y-2.5 text-[0.875rem] leading-snug text-bone-400 sm:grid-cols-2">
+                        {highlights.map(([lead, rest]) => (
+                          <li key={rest} className="grid grid-cols-[0.875rem_1fr] gap-x-1.5">
+                            <span aria-hidden="true" className="mt-[0.65em] h-px w-2 bg-line-strong" />
+                            <span className="lg:line-clamp-3">
+                              {lead ? <span className="text-bone-100">{lead} · </span> : null}
+                              {rest}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {item.stack.length > 0 ? (
+                      <ul data-xp-line className="slate flex flex-wrap gap-x-4 gap-y-1 text-bone-400" aria-label="Stack">
+                        {item.stack.map((s) => (
+                          <li key={s}>{s}</li>
+                        ))}
+                      </ul>
                     ) : null}
                   </div>
                 </div>
-                <div aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_0_0_1px_var(--color-line)]" />
-                <div aria-hidden="true" data-reel-dim className="pointer-events-none absolute inset-0 bg-ink-950 opacity-0" />
-              </article>
+                <div className="min-h-0 max-lg:order-first lg:col-span-6">
+                  {visual?.kind === "collage" && media[visual.photo] ? (
+                    <Collage photo={media[visual.photo]} app={bySlug.get(visual.app)} />
+                  ) : shots.length > 0 ? (
+                    <Shots shots={shots} />
+                  ) : sites.length > 0 ? (
+                    <Browsers sites={sites} />
+                  ) : visual?.kind === "ship" ? (
+                    <ShipLog visual={visual} nodes={highlights.map(([lead, rest]) => lead ?? rest.split(" ").slice(0, 2).join(" "))} />
+                  ) : visual?.kind === "dossier" ? (
+                    <Dossier visual={visual} stack={item.stack} />
+                  ) : null}
+                </div>
+              </div>
             </li>
           );
         })}
-      </ReelStack>
+      </ExperienceScenes>
     </section>
   );
 }
