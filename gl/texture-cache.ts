@@ -110,11 +110,14 @@ export class TextureCache {
           this.images.set(key, e);
           // Upload now (off the critical frame) instead of on first draw.
           this.renderer.initTexture(texture);
-          this.enforceCap("image");
         }
       }
+      // Ref before enforcing the cap: a fresh entry has refs 0 and lastUsed 0, so it used to
+      // be the first "idle" one evicted once the cache was full, leaving this handle on a
+      // disposed texture whose bitmap was closed (drawn black).
       this.ref(e);
       entry = e;
+      this.enforceCap("image");
     };
     const run = () => {
       void attach();
@@ -148,9 +151,10 @@ export class TextureCache {
       };
       if (video.readyState >= 1) onMeta();
       else video.addEventListener("loadedmetadata", onMeta, { once: true });
-      this.enforceCap("video");
     }
+    // Ref first, then enforce the cap (a fresh entry would otherwise be evicted as "idle").
     this.ref(e);
+    this.enforceCap("video");
     const entry = e;
     let released = false;
     return {

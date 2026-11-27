@@ -309,7 +309,16 @@ export function Achievements({
 }) {
   if (items.length === 0) return null;
   const wall = items.filter((a) => a.kind === "award" || a.kind === "competition" || a.kind === "certification");
-  const crew = items.filter((a) => a.kind === "organization" || a.kind === "education");
+  // Teams first, then schools; most recent first within each ("2024–2026": start, then end).
+  const years = (p: string) => (p.match(/\d{4}/g) ?? ["0"]).map(Number);
+  const crew = items
+    .filter((a) => a.kind === "organization" || a.kind === "education")
+    .sort((a, b) => {
+      const kind = Number(a.kind === "education") - Number(b.kind === "education");
+      const [as, ae = as] = years(a.period);
+      const [bs, be = bs] = years(b.period);
+      return kind || bs - as || be - ae;
+    });
   const bySlug = new Map(projects.map((p) => [p.slug, p]));
   const photoOf = (a: Achievement): Photo | null => {
     const own = media[OWNER_PHOTOS[a.slug] ?? ""];
