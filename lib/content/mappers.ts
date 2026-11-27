@@ -225,7 +225,9 @@ export function mapExperience(row: Tables<"experiences">): Experience {
 
 const CATEGORIES: readonly SkillCategory[] = ["language", "frontend", "backend", "mobile", "data", "web3", "tools"];
 
-export function mapSkill(row: Tables<"skills">): Skill {
+export type SkillRowWithLogo = Tables<"skills"> & { logo?: MediaRow | null };
+
+export function mapSkill(row: SkillRowWithLogo): Skill {
   const marqueeRow = num(row.marquee_row, 1);
   return {
     id: row.id,
@@ -233,6 +235,7 @@ export function mapSkill(row: Tables<"skills">): Skill {
     category: oneOf(row.category, CATEGORIES, "tools"),
     marqueeRow: marqueeRow === 2 || marqueeRow === 3 ? marqueeRow : 1,
     position: row.position,
+    logo: row.logo ? mapMedia(row.logo) : null,
   };
 }
 

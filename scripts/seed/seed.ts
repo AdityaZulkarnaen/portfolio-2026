@@ -478,6 +478,115 @@ async function seedSectionMedia() {
   console.log(`  ✓ ${count} section images`);
 }
 
+/** Edge length of a processed skill mark. */
+const MARK_SIZE = 128;
+/** Light the marks are repainted in (the site's bone), so every logo reads as one family. */
+const MARK_RGB = [236, 233, 226] as const;
+
+/**
+ * One logo → a monochrome mark: trimmed, fitted into MARK_SIZE, repainted in bone with the
+ * artwork's tonal structure kept in the alpha (lighter parts more opaque, never below 40%),
+ * so two-tone logos stay two-tone and knockouts survive. Dark-on-transparent marks (flagged,
+ * or measured dark) are reversed first.
+ */
+async function monochromeMark(input: Buffer, reverse: boolean) {
+  const { data, info } = await sharp(input, { density: 384 })
+    .ensureAlpha()
+    .trim({ threshold: 1 })
+    .resize({ width: MARK_SIZE, height: MARK_SIZE, fit: "inside" })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const px = info.width * info.height;
+  const lums: number[] = [];
+  let sum = 0;
+  let weight = 0;
+  for (let i = 0; i < px; i++) {
+    const a = data[i * 4 + 3] / 255;
+    const l = (0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2]) / 255;
+    if (a > 0.5) lums.push(l);
+    sum += l * a;
+    weight += a;
+  }
+  const flip = reverse || (weight > 0 && sum / weight < 0.22);
+  const sorted = lums.map((l) => (flip ? 1 - l : l)).sort((x, y) => x - y);
+  const lo = sorted[Math.floor(sorted.length * 0.05)] ?? 0;
+  const hi = sorted[Math.floor(sorted.length * 0.95)] ?? 1;
+  const out = Buffer.alloc(px * 4);
+  for (let i = 0; i < px; i++) {
+    let l = (0.2126 * data[i * 4] + 0.7152 * data[i * 4 + 1] + 0.0722 * data[i * 4 + 2]) / 255;
+    if (flip) l = 1 - l;
+    const n = hi - lo < 0.08 ? 1 : Math.min(1, Math.max(0, (l - lo) / (hi - lo)));
+    out[i * 4] = MARK_RGB[0];
+    out[i * 4 + 1] = MARK_RGB[1];
+    out[i * 4 + 2] = MARK_RGB[2];
+    out[i * 4 + 3] = Math.round(data[i * 4 + 3] * (0.4 + 0.6 * n));
+  }
+  const webp = await sharp(out, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .webp({ quality: 92, alphaQuality: 100 })
+    .toBuffer();
+  return { data: webp, width: info.width, height: info.height };
+}
+
+/**
+ * Skill marks for the stack section: the old portfolio's logos (Sanity CDN, via
+ * legacy-content.json) plus Simple Icons files for skills it had none for, mapped in
+ * supabase/seed/skill-logos.json. Uploaded to `skills/<slug>.webp`, linked through
+ * skills.logo_media_id, and written to public/seed/skills for the offline fallback.
+ */
+async function seedSkillLogos() {
+  if ((await db.from("skills").select("logo_media_id").limit(1)).error) {
+    console.warn("  ! skills.logo_media_id missing: run `pnpm db:push`, then re-seed.");
+    return;
+  }
+  const map = JSON.parse(readFileSync(resolve(seedDir, "skill-logos.json"), "utf8")) as {
+    logos: Record<string, { legacy?: string; file?: string; reverse?: boolean }>;
+  };
+  mkdirSync(resolve(publicDir, "seed", "skills"), { recursive: true });
+  let count = 0;
+  for (const [i, [name, src]] of Object.entries(map.logos).entries()) {
+    let input: Buffer;
+    let reverse = src.reverse ?? false;
+    if (src.legacy) {
+      const tool = legacy.tools.find((t) => t.label === src.legacy);
+      if (!tool?.logo_url) {
+        console.warn(`  ! no legacy logo "${src.legacy}" for ${name}`);
+        continue;
+      }
+      const response = await fetch(tool.logo_url);
+      if (!response.ok) throw new Error(`download ${tool.logo_url}: HTTP ${response.status}`);
+      input = Buffer.from(await response.arrayBuffer());
+      reverse ||= tool.reverse;
+    } else if (src.file) {
+      input = readFileSync(resolve(seedDir, "assets", src.file));
+    } else continue;
+
+    const mark = await monochromeMark(input, reverse);
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    const file = `skills/${slug}.webp`;
+    const uploaded = await db.storage.from(BUCKET).upload(file, mark.data, {
+      contentType: "image/webp",
+      cacheControl: "31536000",
+      upsert: true,
+    });
+    if (uploaded.error) throw new Error(`upload ${file}: ${uploaded.error.message}`);
+    const media = must(
+      `media ${file}`,
+      await db
+        .from("media")
+        .upsert(
+          { kind: "image", source: "storage", path: file, width: mark.width, height: mark.height, alt: `${name} logo`, position: i },
+          { onConflict: "source,path" },
+        )
+        .select("id")
+        .single(),
+    );
+    check(`skill ${name}`, await db.from("skills").update({ logo_media_id: media.id }).eq("name", name));
+    writeFileSync(resolve(publicDir, "seed", file), mark.data);
+    count++;
+  }
+  console.log(`  ✓ ${count} skill logos`);
+}
+
 async function seedAdmin() {
   if (!adminEmail) {
     console.warn("  ! ADMIN_EMAIL is not set — skipping the admins row.");
@@ -502,6 +611,10 @@ async function seedAdmin() {
 
 async function main() {
   console.log(`Seeding ${new URL(url as string).host}${reset ? " (reset)" : ""}`);
+  if (process.argv.includes("--only=skill-logos")) {
+    await seedSkillLogos();
+    return;
+  }
   if (reset) await resetContent();
   await seedProjects();
   await seedProfile();
@@ -509,6 +622,7 @@ async function main() {
   await seedTestimonials();
   await seedClients();
   await seedSectionMedia();
+  await seedSkillLogos();
   await seedAdmin();
   console.log("Done. Revalidate the site (tag `content`) to see changes.");
 }

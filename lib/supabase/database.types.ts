@@ -241,17 +241,23 @@ isOneToOne: false
                   ]
                 },"skills": {
                   Row: {
-                    "category": string,"created_at": string,"id": string,"marquee_row": number,"name": string,"position": number,"published": boolean,"updated_at": string
+                    "category": string,"created_at": string,"id": string,"logo_media_id": string | null,"marquee_row": number,"name": string,"position": number,"published": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": string,"created_at"?: string,"id"?: string,"marquee_row"?: number,"name": string,"position"?: number,"published"?: boolean,"updated_at"?: string
+                    "category": string,"created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"marquee_row"?: number,"name": string,"position"?: number,"published"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "category"?: string,"created_at"?: string,"id"?: string,"marquee_row"?: number,"name"?: string,"position"?: number,"published"?: boolean,"updated_at"?: string
+                    "category"?: string,"created_at"?: string,"id"?: string,"logo_media_id"?: string | null,"marquee_row"?: number,"name"?: string,"position"?: number,"published"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "skills_logo_media_id_fkey"
+      columns: ["logo_media_id"]
+isOneToOne: false
+      referencedRelation: "media"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"testimonials": {
                   Row: {

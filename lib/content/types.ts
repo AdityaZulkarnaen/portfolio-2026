@@ -137,6 +137,8 @@ export type Skill = {
   category: SkillCategory;
   marqueeRow: 1 | 2 | 3;
   position: number;
+  /** Monochrome mark (bone on transparent), or null: the skill is shown as text only. */
+  logo: Media | null;
 };
 
 export type AchievementKind = "award" | "competition" | "certification" | "education" | "organization";

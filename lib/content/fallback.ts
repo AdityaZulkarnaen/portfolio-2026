@@ -181,17 +181,41 @@ export async function fallbackExperiences(): Promise<Experience[]> {
 
 export async function fallbackSkills(): Promise<Skill[]> {
   const bundle = await loadBundle();
-  return bundle.skills.map((s) =>
-    mapSkill({
-      id: `seed-skill-${s.position}`,
+  const marks = (await import("@/supabase/seed/skill-logos.json")).logos as Record<string, unknown>;
+  return bundle.skills.map((s) => {
+    const id = `seed-skill-${s.position}`;
+    const slug = s.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    // The seed writes each processed mark to public/seed/skills/<slug>.webp.
+    const logo: MediaRow | null =
+      s.name in marks
+        ? {
+            id: `${id}-logo`,
+            kind: "image",
+            source: "public",
+            path: `seed/skills/${slug}.webp`,
+            width: null,
+            height: null,
+            alt: `${s.name} logo`,
+            lqip: null,
+            focal_x: null,
+            focal_y: null,
+            duration_s: null,
+            position: s.position,
+            ...stamps,
+          }
+        : null;
+    return mapSkill({
+      id,
       name: s.name,
       category: s.category,
       marquee_row: s.marquee_row,
       published: true,
       position: s.position,
+      logo_media_id: logo ? logo.id : null,
+      logo,
       ...stamps,
-    }),
-  );
+    });
+  });
 }
 
 export async function fallbackAchievements(): Promise<Achievement[]> {

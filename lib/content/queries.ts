@@ -171,7 +171,7 @@ export async function getSkills(): Promise<Skill[]> {
 
   const { data, error } = await supabase
     .from("skills")
-    .select("*")
+    .select("*, logo:media!skills_logo_media_id_fkey(*)")
     .eq("published", true)
     .order("marquee_row", { ascending: true })
     .order("position", { ascending: true });
