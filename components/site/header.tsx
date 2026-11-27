@@ -7,6 +7,7 @@ import { gsap } from "@/lib/motion/gsap";
 import { lockScroll, scrollToTarget, unlockScroll } from "@/lib/motion/lenis-store";
 
 import { LocalTime } from "./local-time";
+import { LogoMark } from "./logo-mark";
 import { TransitionLink } from "./transition-link";
 
 /** Home sections in page order. `Work` is the featured grid on home and its own route elsewhere. */
@@ -174,13 +175,10 @@ export function Header({ shortName, timezone, location }: Props) {
       <TransitionLink
         href="/"
         transition="nav-back"
-        className="group/home inline-flex h-11 items-center gap-3 text-bone-100"
+        className="group/home inline-flex h-11 items-center gap-2.5 text-bone-100"
         aria-label={`${shortName}, home`}
       >
-        <span
-          aria-hidden="true"
-          className="size-3.5 animate-spin-slow rounded-full bg-[conic-gradient(var(--color-lilac-500)_0_25%,transparent_0_50%,var(--color-lilac-500)_0_75%,transparent_0)] shadow-[inset_0_0_0_1.5px_var(--color-lilac-500)] motion-off:animate-none"
-        />
+        <LogoMark className="size-7 text-bone-100" />
         <span className="slate transition-colors duration-(--dur-fast) group-hover/home:text-lilac-300">{shortName}</span>
       </TransitionLink>
 

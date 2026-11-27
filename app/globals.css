@@ -36,6 +36,7 @@
   --animate-fade-up: fade-up 0.8s var(--ease-out-expo) both;
   --animate-failsafe: failsafe 0.6s var(--ease-fluid) 4.5s forwards;
   --animate-wipe-in: wipe-in 0.6s var(--ease-out-expo) both;
+  --animate-mark-draw: mark-draw 0.9s var(--ease-fluid) both;
 
   @keyframes grain {
     0%, 100% { transform: translate3d(0, 0, 0); }
@@ -61,6 +62,11 @@
     42% { transform: translate(-78%, -14%) rotate(-24deg) scale(0.96); z-index: 30; }
     52% { z-index: 0; }
     100% { transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(var(--s)); z-index: 0; }
+  }
+  /* The logo mark's stroke redrawing (pathLength 1, dasharray 1). */
+  @keyframes mark-draw {
+    from { stroke-dashoffset: 1; }
+    to { stroke-dashoffset: 0; }
   }
   @keyframes wipe-in {
     from { clip-path: inset(0 0 100% 0); }
