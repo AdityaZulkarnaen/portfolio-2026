@@ -25,6 +25,8 @@ async function Shell({ children }: { children: React.ReactNode }) {
 
   const links = [
     { href: "/admin", label: "Dashboard" },
+    { href: "/admin/projects", label: "Projects" },
+    { href: "/admin/media", label: "Media" },
     { href: "/admin/messages", label: "Messages", badge: unread ?? 0 },
   ];
 
