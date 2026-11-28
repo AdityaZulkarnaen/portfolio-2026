@@ -1,9 +1,9 @@
 /** Canonical origin and the site-wide words search engines and link previews use. */
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.adityazulkarnaen.xyz").replace(/\/$/, "");
 export const SITE_NAME = "Aditya Zulkarnaen";
-export const SITE_TITLE = "Aditya Zulkarnaen — Full-stack & Creative Developer";
+export const SITE_TITLE = "Aditya Zulkarnaen | Full-stack & Creative Developer";
 export const SITE_DESCRIPTION =
-  "Portfolio of Aditya Lucky Zulkarnaen, a full-stack web, mobile and Web3 developer studying Software Engineering at Universitas Gadjah Mada, Yogyakarta.";
+  "Full-stack web, mobile and Web3 developer at UGM, Yogyakarta. See the work, then let's build yours.";
 export const SITE_KEYWORDS = [
   "Aditya Zulkarnaen",
   "Aditya Lucky Zulkarnaen",

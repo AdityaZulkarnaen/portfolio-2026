@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   title: "Work",
   description: DESCRIPTION,
   alternates: { canonical: "/work" },
-  openGraph: { type: "website", url: "/work", siteName: SITE_NAME, title: `Work — ${SITE_NAME}`, description: DESCRIPTION, locale: "en_US" },
-  twitter: { card: "summary_large_image", title: `Work — ${SITE_NAME}`, description: DESCRIPTION },
+  openGraph: { type: "website", url: "/work", siteName: SITE_NAME, title: `Work | ${SITE_NAME}`, description: DESCRIPTION, locale: "en_US" },
+  twitter: { card: "summary_large_image", title: `Work | ${SITE_NAME}`, description: DESCRIPTION },
 };
 
 export default async function WorkPage() {

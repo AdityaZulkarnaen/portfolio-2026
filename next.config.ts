@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   // The OG image fonts are read from disk at request time: ship them with those functions.
   outputFileTracingIncludes: {
-    "/opengraph-image": ["./assets/og/**"],
     "/work/[slug]/opengraph-image*": ["./assets/og/**"],
   },
   partialPrefetching: true,
